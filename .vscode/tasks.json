@@ -1,0 +1,53 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: clang-10 build active file",
+            "command": "/usr/bin/clang-10",
+            "args": [
+                "-g",
+                "${workspaceFolder}/src/main.c",
+                "-o",
+                "${workspaceFolder}/bin/app",
+                "-I/usr/include/SDL2",
+                "-lSDL2", "-lSDL2main", "-lm", "-lSDL2_image"
+            ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Generated task by Debugger"
+        },
+        {
+            "type": "cppbuild",
+            "label": "Tilemap C/C++: clang-10 build active file",
+            "command": "/usr/bin/clang-10",
+            "args": [
+                "-g",
+                "${workspaceFolder}/src/tilemap_editor.c",
+                "-o",
+                "${workspaceFolder}/bin/tilemap_editor",
+                "-I/usr/include/SDL2",
+                "-lSDL2", "-lSDL2main", "-lm", "-lSDL2_image"
+            ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Generated task by Debugger"
+        }
+    ],
+    "version": "2.0.0"
+}

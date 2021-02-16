@@ -1,0 +1,14 @@
+Pacmonster
+
+- Eat the pellets
+- Avoid the ghosts
+- Eat the super pellet to eat the ghosts for a time limit
+
+
+- Tech specs
+    - Pacmonster
+        - position
+        - texture_atlas
+        - collision rect
+        - direction
+        - current_frame
