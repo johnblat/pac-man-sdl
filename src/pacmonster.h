@@ -79,13 +79,20 @@ Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
     
 }
 
-int pac_inc_frame(int frame) {
-    ++frame;
-    // adjust the frame so that it doesn't play too fast. Each frame will play five times, then move to the next
-    if (frame / 20 >= PAC_ANIMATION_FRAMES) {
-        frame = 0;
+// TODO - put these variables somewhere else
+float frame_interval_seconds = 0.08;
+float accumulator_ms = 0;
+
+void pac_inc_animation_frame( Pacmonster *pacmonster, float delta_time ) {
+    accumulator_ms += delta_time ;//* 1000;
+    if ( accumulator_ms > frame_interval_seconds ) {
+        accumulator_ms = 0;
+        pacmonster->current_animation_frame++;
     }
-    return frame;
+    if ( pacmonster->current_animation_frame >= PAC_ANIMATION_FRAMES ) {
+        pacmonster->current_animation_frame = 0;
+    }
+    
 }
 
 void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, SDL_Rect *world_rect ) {
@@ -122,11 +129,13 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
     }
 }
 
-void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect ) {
-     
+void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, float delta_time ) {
+    
+    int pac_speed = 200;
     switch( pacmonster->direction ){
+
         case DIR_UP:
-            pacmonster->position.y -= .5;
+            pacmonster->position.y -= pac_speed * delta_time;
             pacmonster->collision_rect.y = pacmonster->position.y;
             // top screen bound
             if( pacmonster->collision_rect.y < 0 ) {
@@ -139,8 +148,9 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect ) {
                 pacmonster->collision_rect.y = pacmonster->position.y;
             }
             break;
+
         case DIR_DOWN:
-            pacmonster->position.y += .5;
+            pacmonster->position.y += pac_speed * delta_time;
             pacmonster->collision_rect.y = pacmonster->position.y;
             // bottom screen bound
             if( pacmonster->collision_rect.y + pacmonster->collision_rect.h > SCREEN_HEIGHT ) {
@@ -153,8 +163,9 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect ) {
                 pacmonster->collision_rect.y = pacmonster->position.y;
             }
             break;
+
         case DIR_LEFT:
-            pacmonster->position.x -= .5;
+            pacmonster->position.x -= pac_speed * delta_time;
             pacmonster->collision_rect.x = pacmonster->position.x;
             // left screen bound
             if( pacmonster->collision_rect.x < 0 ) {
@@ -167,8 +178,9 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect ) {
                 pacmonster->collision_rect.x = pacmonster->position.x;
             }
             break;
+
         case DIR_RIGHT:
-            pacmonster->position.x += .5;
+            pacmonster->position.x += pac_speed * delta_time;
             pacmonster->collision_rect.x = pacmonster->position.x;
             // right screen bound
             if( pacmonster->collision_rect.x + pacmonster->collision_rect.w > SCREEN_WIDTH  ) {
@@ -181,6 +193,7 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect ) {
                 pacmonster->collision_rect.x = pacmonster->position.x;
             }
             break;
+
         case DIR_NONE:
             break;
     }
@@ -218,7 +231,8 @@ void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
     SDL_RenderClear( renderer );
     
     // adjust the frame so that it doesn't play too fast. Each  frame will play five times, then move to the next
-    SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_sprite_clips[ pacmonster->current_animation_frame / 20 ], &pacmonster->collision_rect, pac_rotation, NULL, pac_flip );
+    //int frame = ( int ) pacmonster->current_animation_frame; // frame is a float because need to account for delta time
+    SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_sprite_clips[ pacmonster->current_animation_frame ], &pacmonster->collision_rect, pac_rotation, NULL, pac_flip );
 
 }
 
