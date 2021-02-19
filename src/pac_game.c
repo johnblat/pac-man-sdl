@@ -2,12 +2,14 @@
 #include <SDL2/SDL_image.h>
 #include "jb_types.h"
 #include "pacmonster.h"
+#include "tiles.h"
 
 
 int main() {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Pacmonster *pacmonster;
+    char tile_map[ TILE_ROWS ][ TILE_COLS ];
     SDL_Rect rect_test = { SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5, 192, 192}; // to test collisions
 
     // Initializing stuff
@@ -33,9 +35,13 @@ int main() {
         exit( EXIT_FAILURE );
     }
 
+    // INIT PACMONSTER
     pacmonster = init_pacmonster( renderer );
 
-    // PREPARE VARS FOR LOOP
+    // INIT TILEMAP
+    load_tile_map_from_file( tile_map );
+
+    // PREPARE VARIABLES FOR LOOP
     SDL_Event event;
     int quit = 0;
 
@@ -65,11 +71,13 @@ int main() {
         const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
 
         // UPDATE PACMONSTER
-        pac_try_set_direction( pacmonster, current_key_states, &rect_test );
-        pac_try_move( pacmonster, &rect_test, delta_time );
+        pac_try_set_direction( pacmonster, current_key_states, &rect_test, tile_map);
+        pac_try_move( pacmonster, &rect_test, tile_map, delta_time );
 
         // RENDER
         pac_render( renderer, pacmonster );
+        tiles_render( renderer, tile_map );
+
         SDL_SetRenderDrawColor( renderer, 255,255,255,255);
         SDL_RenderFillRect( renderer, &rect_test );
 

@@ -14,8 +14,7 @@
 
 const int ROWS = 31;
 const int COLS = 28;
-const int TOTAL_NUMBER_OF_TILES = ROWS * COLS;
-const int MAX_FILESIZE = TOTAL_NUMBER_OF_TILES + ROWS; // ROWS for newline
+//const int TOTAL_NUMBER_OF_TILES = ROWS * COLS;
 
 void save_level( char tile_map[ ROWS ][ COLS ], char *contents ) {
     //char contents[ MAX_FILESIZE ];
@@ -38,7 +37,7 @@ void save_level( char tile_map[ ROWS ][ COLS ], char *contents ) {
     }
     //memcpy( addr, contents, MAX_FILESIZE);
     // Why isn't this syncing with the file
-    int result = msync( contents, MAX_FILESIZE, MS_SYNC );
+    int result = msync( contents, MAX_TILEMAP_FILESIZE, MS_SYNC );
     printf("Result : %d\n", result);
 }
 
@@ -68,20 +67,20 @@ int main() {
             } 
     // is file empty?
     if ( file_size(fd) == 0 ) {
-        for ( int i = 0; i < MAX_FILESIZE; ++i) {
+        for ( int i = 0; i < MAX_TILEMAP_FILESIZE; ++i) {
             write(fd, " ", 1);
         }
     }
     
 
-    char *contents = mmap( NULL, MAX_FILESIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    char *contents = mmap( NULL, MAX_TILEMAP_FILESIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if ( contents == NULL ) {
         printf("here\n");
     }
     // read in file to 2D tilemap
     int row = 0;
     int col = 0;
-    for( int i = 0; i < MAX_FILESIZE; ++i ) {
+    for( int i = 0; i < MAX_TILEMAP_FILESIZE; ++i ) {
         if ( contents[ i ] == 'x' ) {
             tile_map[ row ][ col ] = 'x';
             ++col;
@@ -184,8 +183,8 @@ int main() {
         if ( left_button_pressed ) {
             SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
             SDL_Point tile_grid_point;
-            tile_grid_point.x = mouse_point.x / 32;//* 0.015625;
-            tile_grid_point.y = mouse_point.y / 32;//* 0.015625;
+            tile_grid_point.x = mouse_point.x / TILE_SIZE;//* 0.015625;
+            tile_grid_point.y = mouse_point.y / TILE_SIZE;//* 0.015625;
             if ( tile_grid_point.x > COLS - 1) {
                 tile_grid_point.x = COLS - 1;
             }
@@ -197,8 +196,8 @@ int main() {
         else if ( right_button_pressed ) {
             SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
             SDL_Point tile_grid_point;
-            tile_grid_point.x = mouse_point.x / 32;//* 0.015625;
-            tile_grid_point.y = mouse_point.y / 32;//* 0.015625;
+            tile_grid_point.x = mouse_point.x / TILE_SIZE;//* 0.015625;
+            tile_grid_point.y = mouse_point.y / TILE_SIZE;//* 0.015625;
             if ( tile_grid_point.x > COLS - 1) {
                 tile_grid_point.x = COLS - 1;
             }
@@ -239,7 +238,7 @@ int main() {
         for ( int row = 0; row < ROWS; ++row ) {
             for( int col = 0; col < COLS; ++col ) {
                 if ( tile_map[ row ][ col ] == 'x') {
-                    SDL_Rect rect = {col * 32, row * 32, 32, 32};
+                    SDL_Rect rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
                     SDL_RenderFillRect( renderer, &rect);
                 }
                 

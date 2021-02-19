@@ -1,6 +1,6 @@
 CC=clang
 
-OBJS = ./src/main.c 
+OBJS = ./src/pac_game.c 
 TILEMAP_OBJS = ./src/tilemap_editor.c
 
 COMPILER_FLAGS = -w -O0
@@ -10,7 +10,7 @@ SDL_INC = -I/usr/include/SDL2
 SDL_LIBS = -lSDL2 -lSDL2main -lm  -lSDL2_image
 
 
-EXE = ./bin/app
+EXE = ./bin/pac_game
 TM_EXE = ./bin/tilemap_editor
 
 tilemap: $(TILEMAP_OBJS)

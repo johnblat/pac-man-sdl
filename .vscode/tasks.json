@@ -6,9 +6,9 @@
             "command": "/usr/bin/clang-10",
             "args": [
                 "-g",
-                "${workspaceFolder}/src/main.c",
+                "${workspaceFolder}/src/pac_game.c",
                 "-o",
-                "${workspaceFolder}/bin/app",
+                "${workspaceFolder}/bin/pac_game",
                 "-I/usr/include/SDL2",
                 "-lSDL2", "-lSDL2main", "-lm", "-lSDL2_image"
             ],

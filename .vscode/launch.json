@@ -9,7 +9,7 @@
             "name": "clang-10 - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/app",
+            "program": "${workspaceFolder}/bin/pac_game",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

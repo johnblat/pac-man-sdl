@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "jb_types.h"
+#include "tiles.h"
+#include <sys/stat.h>
 
 
 typedef enum Direction {
@@ -95,53 +97,174 @@ void pac_inc_animation_frame( Pacmonster *pacmonster, float delta_time ) {
     
 }
 
-void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, SDL_Rect *world_rect ) {
+
+void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, SDL_Rect *world_rect, char tile_map[ TILE_ROWS ][ TILE_COLS ] ) {
 
     // set quad here. Try to break up the world into chunks and only check the chunk that pacmonster is in
 
 
     if( current_key_states[ SDL_SCANCODE_UP ] ) {
         SDL_Rect pac_extension_rect = { pacmonster->collision_rect.x, pacmonster->collision_rect.y - 1, pacmonster->collision_rect.w, 1 };
-        if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
-            pacmonster->direction = DIR_UP;
+
+        // COLLISIONS IN TILEMAP
+        SDL_bool collided = SDL_FALSE;
+        
+        for ( int row = 0; row < TILE_ROWS; ++row ) 
+        {
+            for ( int col = 0; col < TILE_COLS; ++col ) 
+            {
+                if( tile_map[ row ][ col ] == 'x') 
+                {
+                    SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                    if ( SDL_HasIntersection( &pac_extension_rect, &current_tile_rect ) ) 
+                    {
+                        collided = SDL_TRUE;
+                        break;
+                    }
+                }
+                
+            }
+            if (collided) break;
         }
+        if ( !collided ) {
+            pacmonster->direction = DIR_UP;
+            return;
+        }
+        // END COLLISIONS IN TILEMAP
+
+        // if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
+            // pacmonster->direction = DIR_UP;
+        // }
     }
     else if( current_key_states[ SDL_SCANCODE_DOWN ] ) {
         SDL_Rect pac_extension_rect = { pacmonster->collision_rect.x, pacmonster->collision_rect.y + pacmonster->collision_rect.h, pacmonster->collision_rect.w, 1 };
-        if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
-            pacmonster->direction = DIR_DOWN;
+
+        // COLLISIONS IN TILEMAP
+        SDL_bool collided = SDL_FALSE;
+        
+        for ( int row = 0; row < TILE_ROWS; ++row ) {
+            for ( int col = 0; col < TILE_COLS; ++col ) {
+                if( tile_map[ row ][ col ] == 'x') 
+                {
+                    SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                    if ( SDL_HasIntersection( &pac_extension_rect, &current_tile_rect ) ) 
+                    {
+                        collided = SDL_TRUE;
+                        break;
+                    }
+                }
+            }
         }
+        if ( !collided ) {
+            pacmonster->direction = DIR_DOWN;
+            return;
+        }
+        // END COLLISIONS IN TILEMAP
+
+        // if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
+        //     pacmonster->direction = DIR_DOWN;
+        // }
     }
     else if( current_key_states[ SDL_SCANCODE_LEFT ] ) {
         SDL_Rect pac_extension_rect = { pacmonster->collision_rect.x - 1, pacmonster->collision_rect.y, 1, pacmonster->collision_rect.h };
-        if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
-            pacmonster->direction = DIR_LEFT;
+
+        // COLLISIONS IN TILEMAP
+        SDL_bool collided = SDL_FALSE;
+        
+        for ( int row = 0; row < TILE_ROWS; ++row ) {
+            for ( int col = 0; col < TILE_COLS; ++col ) {
+                if( tile_map[ row ][ col ] == 'x') 
+                {
+                    SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                    if ( SDL_HasIntersection( &pac_extension_rect, &current_tile_rect ) ) 
+                    {
+                        collided = SDL_TRUE;
+                        break;
+                    }
+                }
+            }
         }
+        if ( !collided ) {
+            pacmonster->direction = DIR_LEFT;
+            return;
+        }
+        // END COLLISIONS IN TILEMAP
+
+        // if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
+        //     pacmonster->direction = DIR_LEFT;
+        // }
     }
     else if( current_key_states[ SDL_SCANCODE_RIGHT ] ) {
         SDL_Rect pac_extension_rect = { pacmonster->collision_rect.x + pacmonster->collision_rect.w, pacmonster->collision_rect.y, 1, pacmonster->collision_rect.h };
-        if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
-            pacmonster->direction = DIR_RIGHT;
+
+        // COLLISIONS IN TILEMAP
+        SDL_bool collided = SDL_FALSE;
+        
+        for ( int row = 0; row < TILE_ROWS; ++row ) {
+            for ( int col = 0; col < TILE_COLS; ++col ) {
+                if( tile_map[ row ][ col ] == 'x') 
+                {
+                    SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                    if ( SDL_HasIntersection( &pac_extension_rect, &current_tile_rect ) ) 
+                    {
+                        collided = SDL_TRUE;
+                        break;
+                    }
+                }
+            }
         }
+        if ( !collided ) {
+            pacmonster->direction = DIR_RIGHT;
+            return;
+        }
+        // END COLLISIONS IN TILEMAP
+
+        // if ( ! SDL_HasIntersection( &pac_extension_rect, world_rect ) ) {
+        //     pacmonster->direction = DIR_RIGHT;
+        // }
     }
     else if (current_key_states[ SDL_SCANCODE_SPACE ] ){
         pacmonster->direction = DIR_NONE;
     }
 }
 
-void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, float delta_time ) {
+void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, char tile_map[ TILE_ROWS ][ TILE_COLS ], float delta_time ) {
     
-    int pac_speed = 200;
+    int pac_speed = 275;
     switch( pacmonster->direction ){
 
         case DIR_UP:
             pacmonster->position.y -= pac_speed * delta_time;
             pacmonster->collision_rect.y = pacmonster->position.y;
+
             // top screen bound
             if( pacmonster->collision_rect.y < 0 ) {
                 pacmonster->position.y = 0;
                 pacmonster->collision_rect.y = pacmonster->position.y;
             }
+
+            // tile_map bound
+            for ( int row = 0; row < TILE_ROWS; ++row ) {
+                for ( int col = 0; col < TILE_COLS; ++col ) {
+                    if( tile_map[ row ][ col ] == 'x') 
+                    {
+                        SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
+                        {
+                            pacmonster->position.y = current_tile_rect.y + current_tile_rect.h;
+                            pacmonster->collision_rect.y = pacmonster->position.y;
+            
+                            break;
+                        }
+                    }
+                }
+            }
+
             // other rect bound
             if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
                 pacmonster->position.y = world_rect->y + world_rect->h;
@@ -157,6 +280,25 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, float delta_tim
                 pacmonster->position.y = SCREEN_HEIGHT - pacmonster->collision_rect.h;
                 pacmonster->collision_rect.y = pacmonster->position.y;
             }
+
+            // tile_map bound
+            for ( int row = 0; row < TILE_ROWS; ++row ) {
+                for ( int col = 0; col < TILE_COLS; ++col ) {
+                    if( tile_map[ row ][ col ] == 'x') 
+                    {
+                        SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
+                        {
+                            pacmonster->position.y = current_tile_rect.y - pacmonster->collision_rect.h;
+                            pacmonster->collision_rect.y = pacmonster->position.y;
+            
+                            break;
+                        }
+                    }
+                }
+            }
+
             // other rect bound
             if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
                 pacmonster->position.y = world_rect->y - pacmonster->collision_rect.h;
@@ -172,6 +314,25 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, float delta_tim
                 pacmonster->position.x = 0;
                 pacmonster->collision_rect.x = pacmonster->position.x;
             }
+
+            // tile_map bound
+            for ( int row = 0; row < TILE_ROWS; ++row ) {
+                for ( int col = 0; col < TILE_COLS; ++col ) {
+                    if( tile_map[ row ][ col ] == 'x') 
+                    {
+                        SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
+                        {
+                            pacmonster->position.x = current_tile_rect.x + current_tile_rect.w;
+                            pacmonster->collision_rect.x = pacmonster->position.x;
+            
+                            break;
+                        }
+                    }
+                }
+            }
+
             // other rect bound
             if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
                 pacmonster->position.x = world_rect->x + world_rect->w;
@@ -187,6 +348,25 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, float delta_tim
                 pacmonster->position.x = SCREEN_WIDTH - pacmonster->collision_rect.w;
                 pacmonster->collision_rect.x = pacmonster->position.x;
             }
+
+            // tile_map bound
+            for ( int row = 0; row < TILE_ROWS; ++row ) {
+                for ( int col = 0; col < TILE_COLS; ++col ) {
+                    if( tile_map[ row ][ col ] == 'x') 
+                    {
+                        SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+
+                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
+                        {
+                            pacmonster->position.x = current_tile_rect.x - pacmonster->collision_rect.w;
+                            pacmonster->collision_rect.x = pacmonster->position.x;
+
+                            break;
+                        }
+                    }
+                }
+            }
+
             // other rect bound
             if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
                 pacmonster->position.x = world_rect->x - pacmonster->collision_rect.w;
