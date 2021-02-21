@@ -98,7 +98,7 @@ void pac_inc_animation_frame( Pacmonster *pacmonster, float delta_time ) {
 }
 
 
-void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, SDL_Rect *world_rect, char tile_map[ TILE_ROWS ][ TILE_COLS ] ) {
+void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, char tile_map[ TILE_ROWS ][ TILE_COLS ] ) {
 
     // set quad here. Try to break up the world into chunks and only check the chunk that pacmonster is in
 
@@ -232,7 +232,7 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
     }
 }
 
-void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, char tile_map[ TILE_ROWS ][ TILE_COLS ], float delta_time ) {
+void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COLS ], float delta_time ) {
     
     int pac_speed = 275;
     switch( pacmonster->direction ){
@@ -266,10 +266,10 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, char tile_map[ 
             }
 
             // other rect bound
-            if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
-                pacmonster->position.y = world_rect->y + world_rect->h;
-                pacmonster->collision_rect.y = pacmonster->position.y;
-            }
+            // if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
+            //     pacmonster->position.y = world_rect->y + world_rect->h;
+            //     pacmonster->collision_rect.y = pacmonster->position.y;
+            // }
             break;
 
         case DIR_DOWN:
@@ -300,10 +300,10 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, char tile_map[ 
             }
 
             // other rect bound
-            if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
-                pacmonster->position.y = world_rect->y - pacmonster->collision_rect.h;
-                pacmonster->collision_rect.y = pacmonster->position.y;
-            }
+            // if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
+            //     pacmonster->position.y = world_rect->y - pacmonster->collision_rect.h;
+            //     pacmonster->collision_rect.y = pacmonster->position.y;
+            // }
             break;
 
         case DIR_LEFT:
@@ -334,10 +334,10 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, char tile_map[ 
             }
 
             // other rect bound
-            if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
-                pacmonster->position.x = world_rect->x + world_rect->w;
-                pacmonster->collision_rect.x = pacmonster->position.x;
-            }
+            // if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
+            //     pacmonster->position.x = world_rect->x + world_rect->w;
+            //     pacmonster->collision_rect.x = pacmonster->position.x;
+            // }
             break;
 
         case DIR_RIGHT:
@@ -368,10 +368,10 @@ void pac_try_move( Pacmonster *pacmonster, SDL_Rect *world_rect, char tile_map[ 
             }
 
             // other rect bound
-            if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
-                pacmonster->position.x = world_rect->x - pacmonster->collision_rect.w;
-                pacmonster->collision_rect.x = pacmonster->position.x;
-            }
+            // if ( SDL_HasIntersection( &pacmonster->collision_rect, world_rect ) ) {
+            //     pacmonster->position.x = world_rect->x - pacmonster->collision_rect.w;
+            //     pacmonster->collision_rect.x = pacmonster->position.x;
+            // }
             break;
 
         case DIR_NONE:

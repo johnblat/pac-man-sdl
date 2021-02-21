@@ -10,7 +10,7 @@ int main() {
     SDL_Renderer *renderer;
     Pacmonster *pacmonster;
     char tile_map[ TILE_ROWS ][ TILE_COLS ];
-    SDL_Rect rect_test = { SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5, 192, 192}; // to test collisions
+    //SDL_Rect rect_test = { SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5, 192, 192}; // to test collisions
 
     // Initializing stuff
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -71,15 +71,14 @@ int main() {
         const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
 
         // UPDATE PACMONSTER
-        pac_try_set_direction( pacmonster, current_key_states, &rect_test, tile_map);
-        pac_try_move( pacmonster, &rect_test, tile_map, delta_time );
+        pac_try_set_direction( pacmonster, current_key_states, tile_map);
+        pac_try_move( pacmonster, tile_map, delta_time );
 
         // RENDER
         pac_render( renderer, pacmonster );
         tiles_render( renderer, tile_map );
 
         SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-        SDL_RenderFillRect( renderer, &rect_test );
 
         pac_inc_animation_frame( pacmonster, delta_time);
         SDL_RenderPresent( renderer );
