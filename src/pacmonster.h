@@ -5,7 +5,6 @@
 #include <SDL2/SDL_image.h>
 #include "jb_types.h"
 #include "tiles.h"
-#include <sys/stat.h>
 
 
 typedef enum Direction {
@@ -410,8 +409,6 @@ void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     
-    // adjust the frame so that it doesn't play too fast. Each  frame will play five times, then move to the next
-    //int frame = ( int ) pacmonster->current_animation_frame; // frame is a float because need to account for delta time
     SDL_Rect pac_rect = {pacmonster->position.x - 8, pacmonster->position.y - 8, pac_size, pac_size };
     SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_sprite_clips[ pacmonster->current_animation_frame ], &pac_rect, pac_rotation, NULL, pac_flip );
 

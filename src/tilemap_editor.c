@@ -1,25 +1,14 @@
 // MAIN
 #include <SDL2/SDL.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/mman.h>
 #include "tiles.h"
 #include "jb_types.h"
 
 
-
-//const int TOTAL_NUMBER_OF_TILES = ROWS * COLS;
-
-void save_level( char tile_map[ TILE_ROWS ][ TILE_COLS ], char *contents ) {
-    //char contents[ MAX_FILESIZE ];
+void save_level( char tile_map[ TILE_ROWS ][ TILE_COLS ] ) {
     int row = 0;
     int col = 0;
 
+    char contents[ MAX_TILEMAP_CHARS_IN_FILE ];
     int i = 0;
     for ( int row = 0; row < TILE_ROWS; ++row ) {
         for ( int col = 0; col < TILE_COLS; ++col ) {
@@ -34,10 +23,12 @@ void save_level( char tile_map[ TILE_ROWS ][ TILE_COLS ], char *contents ) {
         contents[ i ] = '\n';
         ++i;
     }
-    //memcpy( addr, contents, MAX_FILESIZE);
-    // Why isn't this syncing with the file
-    int result = msync( contents, MAX_TILEMAP_FILESIZE, MS_SYNC );
-    printf("Result : %d\n", result);
+
+    SDL_RWops *file = SDL_RWFromFile("level", "w");
+    size_t num_bytes_wrote = SDL_RWwrite( file, contents, sizeof( char ), MAX_TILEMAP_CHARS_IN_FILE );
+    SDL_RWclose( file );
+
+    printf("Result : %lu\n", num_bytes_wrote);
 }
 
 int file_size( int fd ) {
@@ -50,7 +41,6 @@ int main() {
     SDL_Point mouse_point;
     char tile_map[TILE_ROWS][TILE_COLS];
     char *filename = "level";
-    int fd = open(filename,  O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR );
 
     // Initializing stuff
     if( SDL_Init( SDL_INIT_VIDEO ) < 0) {
@@ -58,47 +48,14 @@ int main() {
         exit( EXIT_FAILURE );
     }
 
-    // TODO Fill tilemap with null characters 
     for ( int row = 0; row < TILE_ROWS; ++row ) {
-                for( int col = 0; col < TILE_COLS; ++col ) {
-                    tile_map[ row ][ col ] = '\0';
-                }
-            } 
-    // is file empty?
-    if ( file_size(fd) == 0 ) {
-        for ( int i = 0; i < MAX_TILEMAP_FILESIZE; ++i) {
-            write(fd, " ", 1);
-        }
-    }
-    
-
-    char *contents = mmap( NULL, MAX_TILEMAP_FILESIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if ( contents == NULL ) {
-        printf("here\n");
-    }
-    // read in file to 2D tilemap
-    int row = 0;
-    int col = 0;
-    for( int i = 0; i < MAX_TILEMAP_FILESIZE; ++i ) {
-        if ( contents[ i ] == 'x' ) {
-            tile_map[ row ][ col ] = 'x';
-            ++col;
-        }
-        else if ( contents[ i ] == ' ') {
+        for( int col = 0; col < TILE_COLS; ++col ) {
             tile_map[ row ][ col ] = '\0';
-            ++col;
         }
-        else if ( contents[ i ] == '\n') {
-            ++row;
-            col = 0;
-        }
-        else {
-            break;
-        }
-        printf("%c", contents[ i ]);
-        
-    } 
+    }
 
+    load_tile_map_from_file( tile_map );
+    
     window = SDL_CreateWindow( "JB Pacmonster", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if ( window == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
@@ -112,8 +69,6 @@ int main() {
     }
 
    
-
-
     SDL_Event event;
     int quit = 0;
 
@@ -127,54 +82,24 @@ int main() {
             }
             if ( event.type == SDL_KEYDOWN ) {
                 if ( event.key.keysym.sym == SDLK_SPACE ) {
-                    save_level( tile_map, contents );
+                    save_level( tile_map );
                 }
             }
             if ( event.type == SDL_MOUSEBUTTONDOWN ) {
                 if (  event.button.button == ( SDL_BUTTON_LEFT ) ) {
                     left_button_pressed = 1;
-                    // SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
-                    // SDL_Point tile_grid_point;
-                    // tile_grid_point.x = mouse_point.x / 32;//* 0.015625;
-                    // tile_grid_point.y = mouse_point.y / 32;//* 0.015625;
-                    // tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
                 }
                 else if ( event.button.button == ( SDL_BUTTON_RIGHT ) ) {
                     right_button_pressed = 1;
-                    // SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
-                    // SDL_Point tile_grid_point;
-                    // tile_grid_point.x = mouse_point.x / 32;//* 0.015625;
-                    // tile_grid_point.y = mouse_point.y / 32;//* 0.015625;
-                    // tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
                 }
-                // SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
-                // SDL_Point tile_grid_point;
-                // tile_grid_point.x = mouse_point.x / 32;//* 0.015625;
-                // tile_grid_point.y = mouse_point.y / 32;//* 0.015625;
-                // if ( tile_map[ tile_grid_point.y ][ tile_grid_point.x ] == '\0' ) {
-                //     tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
-                // } 
-                // else {
-                //     tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
-                // }
                 
             }
             if ( event.type == SDL_MOUSEBUTTONUP ) {
                 if (  event.button.button == ( SDL_BUTTON_LEFT ) ) {
                     left_button_pressed = 0;
-                    // SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
-                    // SDL_Point tile_grid_point;
-                    // tile_grid_point.x = mouse_point.x / 32;//* 0.015625;
-                    // tile_grid_point.y = mouse_point.y / 32;//* 0.015625;
-                    // tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
                 }
                 else if ( event.button.button == ( SDL_BUTTON_RIGHT ) ) {
                     right_button_pressed = 0;
-                    // SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
-                    // SDL_Point tile_grid_point;
-                    // tile_grid_point.x = mouse_point.x / 32;//* 0.015625;
-                    // tile_grid_point.y = mouse_point.y / 32;//* 0.015625;
-                    // tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
                 }
             }
         }
@@ -206,30 +131,6 @@ int main() {
             tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
         }
 
-
-        //Uint32 mouse_button_state = SDL_GetMouseState(&mouse_point.x, &mouse_point.y);
-        //if( mouse_button_state ) {
-            // if( mouse_button_state & SDL_BUTTON( SDL_BUTTON_LEFT ) ) {
-            //     printf("here!\n");
-            //     SDL_Point tile_grid_point;
-            //     tile_grid_point.x = mouse_point.x * 0.015625; // 1/64
-            //     tile_grid_point.y = mouse_point.y * 0.015625; // 1/64
-            //     tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
-
-            //     for ( int row = 0; row < 14; ++row ) {
-            //         for( int col = 0; col < 15; ++col ) {
-            //             printf("%c", tile_map[ row ][ col ] );
-            //         }
-            //         printf("\n");
-            //     }
-            // } 
-            // else if ( mouse_button_state & SDL_BUTTON( SDL_BUTTON_RIGHT ) ) {
-            //     SDL_Point tile_grid_point;
-            //     tile_grid_point.x = mouse_point.x * 0.015625; // 1/64
-            //     tile_grid_point.y = mouse_point.y * 0.015625; // 1/64
-            //     tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
-            // }
-        //printf("%s\n", SDL_GetError());
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );
 
