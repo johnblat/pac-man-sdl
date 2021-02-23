@@ -18,6 +18,7 @@ typedef enum Direction {
 
 const int PAC_ANIMATION_FRAMES = 4;
 
+int pac_size = 64; // pacmonster will be inside of a 48x48 tile, but his sprite overflows the tile
 
 typedef struct Pacmonster {
     Position_f position;
@@ -38,8 +39,8 @@ Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
     pacmonster->direction = DIR_NONE;
     pacmonster->collision_rect.x = pacmonster->position.x;
     pacmonster->collision_rect.y = pacmonster->position.y;
-    pacmonster->collision_rect.w = 64;
-    pacmonster->collision_rect.h = 64;
+    pacmonster->collision_rect.w = 48;
+    pacmonster->collision_rect.h = 48;
     pacmonster->current_animation_frame = 0;
 
     SDL_Surface *pacmonster_surface = IMG_Load("pac_monster.png");
@@ -406,13 +407,19 @@ void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
             break;
     }
 
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    SDL_SetRenderDrawColor( renderer, 0,0,0,255);
-    SDL_RenderClear( renderer );
     
     // adjust the frame so that it doesn't play too fast. Each  frame will play five times, then move to the next
     //int frame = ( int ) pacmonster->current_animation_frame; // frame is a float because need to account for delta time
-    SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_sprite_clips[ pacmonster->current_animation_frame ], &pacmonster->collision_rect, pac_rotation, NULL, pac_flip );
+    SDL_Rect pac_rect = {pacmonster->position.x - 8, pacmonster->position.y - 8, pac_size, pac_size };
+    SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_sprite_clips[ pacmonster->current_animation_frame ], &pac_rect, pac_rotation, NULL, pac_flip );
+
+
+    // DEBUG
+    
+    SDL_SetRenderDrawColor( renderer, 255,255,0,200 );
+    SDL_RenderFillRect( renderer, &pacmonster->collision_rect);
 
 }
 

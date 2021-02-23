@@ -4,7 +4,8 @@
 #include "pacmonster.h"
 #include "tiles.h"
 
-
+void test() {
+}
 int main() {
     SDL_Window *window;
     SDL_Renderer *renderer;
@@ -75,12 +76,26 @@ int main() {
         pac_try_move( pacmonster, tile_map, delta_time );
 
         // RENDER
-        pac_render( renderer, pacmonster );
+        SDL_SetRenderDrawColor( renderer, 0,0,0,255);
+        SDL_RenderClear( renderer );    
+
         tiles_render( renderer, tile_map );
+
+        pac_render( renderer, pacmonster );
 
         SDL_SetRenderDrawColor( renderer, 255,255,255,255);
 
         pac_inc_animation_frame( pacmonster, delta_time);
+
+
+        // DEBUG
+        SDL_SetRenderDrawColor( renderer, 255,100,100,255);
+        for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
+            SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
+        }
+        for ( int x = 0; x < SCREEN_WIDTH; x+= TILE_SIZE) {
+            SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
+        }
         SDL_RenderPresent( renderer );
     }
 

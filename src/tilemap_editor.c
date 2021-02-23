@@ -12,18 +12,17 @@
 #include "jb_types.h"
 
 
-const int ROWS = 31;
-const int COLS = 28;
+
 //const int TOTAL_NUMBER_OF_TILES = ROWS * COLS;
 
-void save_level( char tile_map[ ROWS ][ COLS ], char *contents ) {
+void save_level( char tile_map[ TILE_ROWS ][ TILE_COLS ], char *contents ) {
     //char contents[ MAX_FILESIZE ];
     int row = 0;
     int col = 0;
 
     int i = 0;
-    for ( int row = 0; row < ROWS; ++row ) {
-        for ( int col = 0; col < COLS; ++col ) {
+    for ( int row = 0; row < TILE_ROWS; ++row ) {
+        for ( int col = 0; col < TILE_COLS; ++col ) {
             if ( tile_map[ row ][ col ] == 'x' ) {
                 contents[ i ] = 'x';
             }
@@ -49,7 +48,7 @@ int main() {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Point mouse_point;
-    char tile_map[ROWS][COLS];
+    char tile_map[TILE_ROWS][TILE_COLS];
     char *filename = "level";
     int fd = open(filename,  O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR );
 
@@ -60,8 +59,8 @@ int main() {
     }
 
     // TODO Fill tilemap with null characters 
-    for ( int row = 0; row < ROWS; ++row ) {
-                for( int col = 0; col < COLS; ++col ) {
+    for ( int row = 0; row < TILE_ROWS; ++row ) {
+                for( int col = 0; col < TILE_COLS; ++col ) {
                     tile_map[ row ][ col ] = '\0';
                 }
             } 
@@ -185,11 +184,11 @@ int main() {
             SDL_Point tile_grid_point;
             tile_grid_point.x = mouse_point.x / TILE_SIZE;//* 0.015625;
             tile_grid_point.y = mouse_point.y / TILE_SIZE;//* 0.015625;
-            if ( tile_grid_point.x > COLS - 1) {
-                tile_grid_point.x = COLS - 1;
+            if ( tile_grid_point.x > TILE_COLS - 1) {
+                tile_grid_point.x = TILE_COLS - 1;
             }
-            if ( tile_grid_point.y > ROWS - 1) {
-                tile_grid_point.y = ROWS - 1;
+            if ( tile_grid_point.y > TILE_ROWS - 1) {
+                tile_grid_point.y = TILE_ROWS - 1;
             }
             tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
         }
@@ -198,11 +197,11 @@ int main() {
             SDL_Point tile_grid_point;
             tile_grid_point.x = mouse_point.x / TILE_SIZE;//* 0.015625;
             tile_grid_point.y = mouse_point.y / TILE_SIZE;//* 0.015625;
-            if ( tile_grid_point.x > COLS - 1) {
-                tile_grid_point.x = COLS - 1;
+            if ( tile_grid_point.x > TILE_COLS - 1) {
+                tile_grid_point.x = TILE_COLS - 1;
             }
-            if ( tile_grid_point.y > ROWS - 1) {
-                tile_grid_point.y = ROWS - 1;
+            if ( tile_grid_point.y > TILE_ROWS - 1) {
+                tile_grid_point.y = TILE_ROWS - 1;
             }
             tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
         }
@@ -235,8 +234,8 @@ int main() {
         SDL_RenderClear( renderer );
 
         SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-        for ( int row = 0; row < ROWS; ++row ) {
-            for( int col = 0; col < COLS; ++col ) {
+        for ( int row = 0; row < TILE_ROWS; ++row ) {
+            for( int col = 0; col < TILE_COLS; ++col ) {
                 if ( tile_map[ row ][ col ] == 'x') {
                     SDL_Rect rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
                     SDL_RenderFillRect( renderer, &rect);
