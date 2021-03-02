@@ -3,7 +3,7 @@ CC=clang
 OBJS = ./src/pac_game.c 
 TILEMAP_OBJS = ./src/tilemap_editor.c
 
-COMPILER_FLAGS = -w -O0
+COMPILER_FLAGS = -w 
 
 SDL_INC = -I/usr/include/SDL2
 

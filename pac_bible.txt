@@ -1,0 +1,158 @@
+PAC BILBE
+---------
+
+    - Contains a functionality spec sheet from a player perspective
+    - Contains all rules, items, level concepts, controls, etc that the players will use 
+    - Also contains any known issues any of the gameplay mechanics 
+
+
+CONCEPT
+---------
+
+- 2 to 4 player Pac-Man style game where the winner is whomever gets the highest score once the final pac-dot is eaten
+    - once a player gets too high, spawn a score bonus item
+    - player dies - pac-dots get released on the maze
+    - items that add abilities that aren't score based
+    - board randomizer
+    - approach player from behind, damage them, maybe player has certain number of hits they can take
+    - attack player with item that damages them
+
+
+BALANCING GAME SESSION
+------------------------
+
+- The game should end once the maze is cleared
+- There should be a way that players that have a lower score can catch up
+- Problem: 
+    - Say there are a total of 100 points
+    - Once player 1 gets 51 points, they win
+    - Instead, there should be a way so that other players can get the points back
+
+
+CONTROLS
+----------
+
+- Each player gets Four directional buttons and an Action Button 
+
+- Possible controllers
+    - Keyboard Sets
+        - WASD + E/Q 
+        - IJKL + O/U 
+        - ARROW KEYS + CTRL/0 
+        - 8456 + 7/9
+    - Gamepads
+        - DPAD + Any Face Button
+
+- Players can choose to use a gamepad or one of the Keyboard Sets to use 
+
+- Keyboard sets may need to be deprecated if any of the items or gameplay mechanics require more buttons. For instance, one idea for an item would be "double pac-man." This item would create a clone of the player who gets it and they would be able to control it with the four face buttons acting as another DPAD. And control the original pac-man with the left DPAD. 
+
+
+ITEMS 
+------
+
+- Power Pellet 
+    - Turns ghosts blue
+        - Eat for points
+    - Turns other Players blue 
+        - Eat to kill
+        - Get however many pacdots they've eaten 
+- Drill 
+    - Player can drill through walls for a specified time limit 
+    - Heavily damages players that collide
+    - Problems:
+        - Players would be able to create corridors that are two tiles wide which may cause issues with the gameplay
+    - Solutions: 
+        - Always lock a player to a given tile, do not allow player to travel in between tiles 
+        - Add unbreakable walls to ensure there's never a 2-tile wide corridors
+            - May want to limit the drill item to one map in this case or a few maps that utilize the drill item 
+                - maybe this would be a case where different levels have a finite number of items that can spawn in it and the items can play into the level design
+
+- Jump
+    - Player can jump over walls, ghosts, or other players 
+
+- Speed boost
+    - Player gains a speed boost that lasts for a finite amount of time 
+
+- Dash
+    - Player blasts through at super speed and can stun other players or ghosts 
+    - Player can not turn 
+    - Once player hits wall they return to normal
+
+- Fire trail
+    - Player leaves a trail of fire behind them 
+    - damges other players that touch it 
+
+- Spike 
+    - Player gets spiky
+    - Damages other players it touches
+
+- Riot Shield 
+    - Player gets shielded
+    - Nothing can damage Player
+    - Player can push other players. Other players no longer overlap or can cross paths
+
+- Wall Block
+    - Player can drop a wall wherever they stand
+    - Problems:
+        - Other players can get trapped.
+    - Solutions:
+        - Work this into a seperate game mode where the objective is to "capture" other pacman
+        - Allow players to commit suicide to respawn somewhere
+
+- Clone 
+    - Player gets a clone 
+    - Player can control clone with other face buttons acting as a d-pad 
+
+- Bomberman
+    - Drop a bomb similar to the bomberman game
+    - Fire will explode in a Cross shape ( --|-- )
+    - Will explode wall-to-wall
+    - Kills any player including the dropping player 
+
+- Score multiplier
+    - Pac pellets give a certain multiplier more
+        - x1.5, x2, x3, etc 
+
+        
+LEVEL EDITOR
+--------------
+
+2 Windows
+
+1. Map Window 
+    Displays the map, along with a grid like layout
+    Left click to place a selected tile
+    Right click to delete a selected tile
+    S to save level to file
+    O to open file to edit
+    Will auto name level to be the next level number not in the directory 
+    
+2. Tile Selection Window
+    Contains the tile selection to choose
+    Contains the skin for the level to choose
+    Save button
+    Left and Right buttons to flip through the levels
+    
+    
+    
+LEVELS TECH
+----------
+
+Level
+    TextureAtlas
+    WallTiles
+    SpawnPoints
+Tile
+    TextureIndex
+    Position
+
+
+    
+    
+88KeysonaPiano!
+
+Put pacmonster stuff on flash drive.
+Can use my laptop and MSC laptop.
+can use cyla's monitor. Take table and chair into her bedroom to work.
+Trackball. 

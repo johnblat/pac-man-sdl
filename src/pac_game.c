@@ -1,12 +1,13 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <stdio.h>
 #include "jb_types.h"
 #include "pacmonster.h"
 #include "tiles.h"
 
-void test() {
-}
-int main() {
+
+
+int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Pacmonster *pacmonster;
@@ -19,7 +20,7 @@ int main() {
         exit( EXIT_FAILURE );
     }
 
-    window = SDL_CreateWindow( "JB Pacmonster", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow( "JB Pacmonster", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
     if ( window == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
@@ -31,10 +32,14 @@ int main() {
         exit( EXIT_FAILURE );
     }
 
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
     if (! ( IMG_Init( IMG_INIT_PNG ) & IMG_INIT_PNG ) ) {
         fprintf( stderr, "Error %s\n ", IMG_GetError() );
         exit( EXIT_FAILURE );
     }
+    
+    
 
     // INIT PACMONSTER
     pacmonster = init_pacmonster( renderer );

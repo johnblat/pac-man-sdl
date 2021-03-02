@@ -1,5 +1,6 @@
 // MAIN
 #include <SDL2/SDL.h>
+#include <stdio.h>
 #include "tiles.h"
 #include "jb_types.h"
 
@@ -31,11 +32,11 @@ void save_level( char tile_map[ TILE_ROWS ][ TILE_COLS ] ) {
     printf("Result : %lu\n", num_bytes_wrote);
 }
 
-int file_size( int fd ) {
-    return lseek(fd, 0, SEEK_END);
-}
+// int file_size( int fd ) {
+//     return lseek(fd, 0, SEEK_END);
+// }
 
-int main() {
+int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Point mouse_point;

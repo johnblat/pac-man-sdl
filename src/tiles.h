@@ -45,11 +45,13 @@ void tile_map_init( SDL_Rect tile_map[TILE_ROWS][TILE_COLS] ) {
 }
 
 void tiles_render( SDL_Renderer *renderer, char tile_map[ TILE_ROWS ][ TILE_COLS ] ) {
+    //int padding_top_ui_height = TILE_SIZE * 2;
+    
     SDL_SetRenderDrawColor( renderer, 255,255,255,255);
     for ( int row = 0; row < TILE_ROWS; ++row ) {
         for( int col = 0; col < TILE_COLS; ++col ) {
             if ( tile_map[ row ][ col ] == 'x') {
-                SDL_Rect rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+                SDL_Rect rect = {col * TILE_SIZE, row * TILE_SIZE , TILE_SIZE, TILE_SIZE};
                 SDL_RenderFillRect( renderer, &rect);
             } 
             

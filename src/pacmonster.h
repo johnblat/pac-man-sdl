@@ -6,6 +6,7 @@
 #include "jb_types.h"
 #include "tiles.h"
 
+#define PAC_ANIMATION_FRAMES 4 
 
 typedef enum Direction {
     DIR_LEFT,
@@ -15,7 +16,6 @@ typedef enum Direction {
     DIR_NONE
 } Direction;
 
-const int PAC_ANIMATION_FRAMES = 4;
 
 int pac_size = 64; // pacmonster will be inside of a 48x48 tile, but his sprite overflows the tile
 
@@ -25,6 +25,7 @@ typedef struct Pacmonster {
     SDL_Texture *texture_atlas;
     SDL_Rect pac_sprite_clips[ PAC_ANIMATION_FRAMES ];
     SDL_Rect collision_rect;
+    SDL_Point current_tile;
     int current_animation_frame;
 
 } Pacmonster;
@@ -234,12 +235,16 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
 
 void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COLS ], float delta_time ) {
     
-    int pac_speed = 275;
+    int pac_speed = 250;
+    int pac_radius = 32;
+
     switch( pacmonster->direction ){
 
         case DIR_UP:
             pacmonster->position.y -= pac_speed * delta_time;
             pacmonster->collision_rect.y = pacmonster->position.y;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
 
             // top screen bound
             if( pacmonster->collision_rect.y < 0 ) {
@@ -258,6 +263,8 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
                         {
                             pacmonster->position.y = current_tile_rect.y + current_tile_rect.h;
                             pacmonster->collision_rect.y = pacmonster->position.y;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
             
                             break;
                         }
@@ -275,10 +282,14 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
         case DIR_DOWN:
             pacmonster->position.y += pac_speed * delta_time;
             pacmonster->collision_rect.y = pacmonster->position.y;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
             // bottom screen bound
             if( pacmonster->collision_rect.y + pacmonster->collision_rect.h > SCREEN_HEIGHT ) {
                 pacmonster->position.y = SCREEN_HEIGHT - pacmonster->collision_rect.h;
                 pacmonster->collision_rect.y = pacmonster->position.y;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
             }
 
             // tile_map bound
@@ -292,6 +303,8 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
                         {
                             pacmonster->position.y = current_tile_rect.y - pacmonster->collision_rect.h;
                             pacmonster->collision_rect.y = pacmonster->position.y;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
             
                             break;
                         }
@@ -309,10 +322,14 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
         case DIR_LEFT:
             pacmonster->position.x -= pac_speed * delta_time;
             pacmonster->collision_rect.x = pacmonster->position.x;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE );
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE );
             // left screen bound
             if( pacmonster->collision_rect.x < 0 ) {
                 pacmonster->position.x = 0;
                 pacmonster->collision_rect.x = pacmonster->position.x;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
             }
 
             // tile_map bound
@@ -326,6 +343,8 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
                         {
                             pacmonster->position.x = current_tile_rect.x + current_tile_rect.w;
                             pacmonster->collision_rect.x = pacmonster->position.x;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
             
                             break;
                         }
@@ -343,12 +362,15 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
         case DIR_RIGHT:
             pacmonster->position.x += pac_speed * delta_time;
             pacmonster->collision_rect.x = pacmonster->position.x;
+            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE );
+            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE );
             // right screen bound
             if( pacmonster->collision_rect.x + pacmonster->collision_rect.w > SCREEN_WIDTH  ) {
                 pacmonster->position.x = SCREEN_WIDTH - pacmonster->collision_rect.w;
                 pacmonster->collision_rect.x = pacmonster->position.x;
+                pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+                pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE );
             }
-
             // tile_map bound
             for ( int row = 0; row < TILE_ROWS; ++row ) {
                 for ( int col = 0; col < TILE_COLS; ++col ) {
@@ -360,6 +382,8 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
                         {
                             pacmonster->position.x = current_tile_rect.x - pacmonster->collision_rect.w;
                             pacmonster->collision_rect.x = pacmonster->position.x;
+                            pacmonster->current_tile.x = ( ( pacmonster->position.x + 24 ) / TILE_SIZE ) ;
+                            pacmonster->current_tile.y = ( ( pacmonster->position.y + 24 ) / TILE_SIZE ) ;
 
                             break;
                         }
@@ -378,7 +402,7 @@ void pac_try_move( Pacmonster *pacmonster,  char tile_map[ TILE_ROWS ][ TILE_COL
             break;
     }
 
-
+    
 }
 
 void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
@@ -415,8 +439,12 @@ void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
 
     // DEBUG
     
-    SDL_SetRenderDrawColor( renderer, 255,255,0,200 );
+    SDL_SetRenderDrawColor( renderer, 255,255,0,150 );
     SDL_RenderFillRect( renderer, &pacmonster->collision_rect);
+
+    SDL_SetRenderDrawColor( renderer, 255, 0, 255,120);
+    SDL_Rect tile_rect = { pacmonster->current_tile.x * 48, pacmonster->current_tile.y * 48, 48,48};
+    SDL_RenderFillRect( renderer, &tile_rect);
 
 }
 
