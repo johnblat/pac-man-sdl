@@ -2,7 +2,7 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: clang-10 build active file",
+            "label": "PacGame Build",
             "command": "/usr/bin/clang-10",
             "args": [
                 "-g",
@@ -26,13 +26,37 @@
         },
         {
             "type": "cppbuild",
-            "label": "Tilemap C/C++: clang-10 build active file",
+            "label": "Tile Editor Build",
             "command": "/usr/bin/clang-10",
             "args": [
                 "-g",
                 "${workspaceFolder}/src/tilemap_editor.c",
                 "-o",
                 "${workspaceFolder}/bin/tilemap_editor",
+                "-I/usr/include/SDL2",
+                "-lSDL2", "-lSDL2main", "-lm", "-lSDL2_image"
+            ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Generated task by Debugger"
+        },
+        {
+            "type": "cppbuild",
+            "label": "Hell Build",
+            "command": "/usr/bin/clang-10",
+            "args": [
+                "-g",
+                "${workspaceFolder}/hell/hell.c",
+                "-o",
+                "${workspaceFolder}/hell/hell",
                 "-I/usr/include/SDL2",
                 "-lSDL2", "-lSDL2main", "-lm", "-lSDL2_image"
             ],

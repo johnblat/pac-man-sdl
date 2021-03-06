@@ -6,7 +6,7 @@
     "configurations": [
         
         {
-            "name": "clang-10 - Build and debug active file",
+            "name": "PacGame Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/pac_game",
@@ -23,11 +23,11 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "C/C++: clang-10 build active file",
+            "preLaunchTask": "PacGame Build",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
-            "name": "Tilemap editor clang-10 - Build and debug tilemap editor file",
+            "name": "Tile Editor Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/tilemap_editor",
@@ -44,7 +44,28 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Tilemap C/C++: clang-10 build active file",
+            "preLaunchTask": "Tile Editor Build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Hell Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/hell/hell",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Hell Build",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]

@@ -9,8 +9,8 @@
 #include "jb_types.h"
 
 const int TILE_SIZE = 48;
-const int TILE_COLS = SCREEN_WIDTH * ( TILE_SIZE * 0.001 );
-const int TILE_ROWS = SCREEN_HEIGHT * ( TILE_SIZE * 0.001 );
+const int TILE_COLS = SCREEN_WIDTH / (TILE_SIZE );
+const int TILE_ROWS = SCREEN_HEIGHT / ( TILE_SIZE );
 const int TOTAL_NUMBER_OF_TILES = TILE_ROWS * TILE_COLS;
 
 const int MAX_TILEMAP_CHARS_IN_FILE = TOTAL_NUMBER_OF_TILES + TILE_ROWS; // ROWS for newline

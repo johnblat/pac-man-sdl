@@ -148,11 +148,7 @@ Tile
     Position
 
 
-    
-    
-88KeysonaPiano!
 
-Put pacmonster stuff on flash drive.
-Can use my laptop and MSC laptop.
-can use cyla's monitor. Take table and chair into her bedroom to work.
-Trackball. 
+
+
+hell_pac_tiles.c
