@@ -94,13 +94,13 @@ int main( int argc, char *argv[] ) {
 
 
         // DEBUG
-        SDL_SetRenderDrawColor( renderer, 255,100,100,255);
-        for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
-            SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
-        }
-        for ( int x = 0; x < SCREEN_WIDTH; x+= TILE_SIZE) {
-            SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
-        }
+        // SDL_SetRenderDrawColor( renderer, 255,100,100,255);
+        // for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
+        //     SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
+        // }
+        // for ( int x = 0; x < SCREEN_WIDTH; x+= TILE_SIZE) {
+        //     SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
+        // }
         SDL_RenderPresent( renderer );
     }
 
