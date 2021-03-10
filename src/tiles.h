@@ -1,114 +1,172 @@
 #ifndef TILES_H
 #define TILES_H
 
-/**
- *  TODOs
- *  [x] 2021-02-22 : Need to  make this portable, so use SDL IO functions instead of unix based file access
- */
+
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "jb_types.h"
 
-const int TILE_SIZE = 40;
+/** 
+ * TILE VALUES, DIMENSIONS, ETC
+ */
+const int TILE_SIZE = 48; // change to different size if necessary
 const int TILE_COLS = SCREEN_WIDTH / (TILE_SIZE );
 const int TILE_ROWS = SCREEN_HEIGHT / ( TILE_SIZE );
 const int TOTAL_NUMBER_OF_TILES = TILE_ROWS * TILE_COLS;
 
-const int MAX_TILEMAP_CHARS_IN_FILE = TOTAL_NUMBER_OF_TILES + TILE_ROWS; // ROWS for newline
 
+/**
+ * STRUCTS
+ */
+typedef struct TwoDimensionalArrayIndex {
+    int r, c;
+} TwoDimensionalArrayIndex;
 
+const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX = { -1, -1 };
 
-// typedef struct Tile {
-//     SDL_Point tile_grid_position; // will be a point where x is (0..tile_cols) and y is (0..tile_rows)
-//     SDL_Rect texture_sheet_clip;
-//     SDL_Rect collision_rect; // x & y would be tile_grid_position * 64. Width and height would be 64 x 64
-// } Tile;
+typedef struct TileMap {
+    /** The screen position where the tilemap begins
+     * This can be used for offset calculations
+     */
+    SDL_Point tm_screen_position;
+    /**
+     * The entire Texture atlas to be used for the tilemap.
+     * Should be 2 x 18 tiles in size
+     * To be indexed in row/col fashion
+     */
+    SDL_Texture *tm_texture_atlas;
+    /**
+     * This ultimately represents the state of each tile in the tilemap
+     * It will either pull from a tile in the texture atlas, or it won't ( it will be (-1, -1 ) )
+     */
+    TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ];
 
-// typedef struct TileMap{
-//     int tile_size;
-//     int tile_rows;
-//     int tile_cols;
-//     SDL_Texture *tile_texture_sheet;
-//     Tile **tiles;
-// }TileMap;
+    /**
+     * Members I might want
+     * SDL_Rect tm_tile_collision_rects[ TILE_ROWS ][ TILE_COLS ];
+     * SDL_Point tm_tile_screen_positions[ TILE_ROWS ][ TILE_COLS ];
+     */
 
-//SDL_Rect *TileMap[TILE_ROWS][TILE_COLS];
+} TileMap;
 
-void tile_map_init( SDL_Rect tile_map[TILE_ROWS][TILE_COLS] ) {
-    for( int row = 0; row < TILE_ROWS; ++row ) {
-        for( int col = 0; col < TILE_COLS; ++col ) {
-            tile_map[ row ][ col ].x = col * TILE_SIZE;
-            tile_map[ row ][ col ].y = row * TILE_SIZE;
-            tile_map[ row ][ col ].w = TILE_SIZE;
-            tile_map[ row ][ col ].h = TILE_SIZE;
-        }
+/**
+ * FILE I/O FOR SAVING/LOADING
+ */
+
+void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
+    char *filename = "level02";
+    char *write_binary_mode = "wb";
+
+    SDL_RWops *write_context = SDL_RWFromFile( filename , write_binary_mode );
+    SDL_RWwrite( write_context, tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+    SDL_RWclose( write_context );
+}
+
+// TODO: take in a filename as well
+void load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
+    char *filename = "level02";
+    char *read_binary_mode = "rb";
+
+    SDL_RWops *read_context = SDL_RWFromFile( filename, read_binary_mode );
+    SDL_RWread( read_context, tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+
+} 
+
+/**
+ * INITIALIZATION for tm ( tilemap )
+ * 
+ * @level_filename: 
+ *  - NULL: will initialize an empty tilemap 
+ *  - NOT NULL: will load the tilemap for the level of the filename passed
+ */
+void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_filename ) {
+    // LOAD the texture
+    SDL_Surface *surface;
+    surface = IMG_Load("pacmonster_tileset.png");
+    tm->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
+    SDL_FreeSurface( surface );
+
+    // load the texture indexes to use for each tile in the tilemap
+    if( level_filename != NULL) {
+        load_tilemap_texture_atlas_indexes_from_file( tm->tm_texture_atlas_indexes );
     }
-}
-
-void tiles_render( SDL_Renderer *renderer, char tile_map[ TILE_ROWS ][ TILE_COLS ] ) {
-    //int padding_top_ui_height = TILE_SIZE * 2;
-    
-    SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-    for ( int row = 0; row < TILE_ROWS; ++row ) {
-        for( int col = 0; col < TILE_COLS; ++col ) {
-            if ( tile_map[ row ][ col ] == 'x') {
-                SDL_Rect rect = {col * TILE_SIZE, row * TILE_SIZE , TILE_SIZE, TILE_SIZE};
-                SDL_RenderFillRect( renderer, &rect);
-            } 
-            
-        }
-    } 
-}
-
-void create_empty_file(  ) {
-
-}
-
-void load_tile_map_from_file( char tile_map_to_load[ TILE_ROWS ][ TILE_COLS ] ) {
-    char *filename = "level";
-    char *contents = ( char * ) malloc( sizeof( char ) * MAX_TILEMAP_CHARS_IN_FILE );
-
-    SDL_RWops *file = SDL_RWFromFile( filename, "r");
-    if ( file == NULL ) {
-        // file = SDL_RWFromFile( filename, "W+");
-        // char spaces[ MAX_TILEMAP_CHARS_IN_FILE ];
-        int i = 0;
-        for ( int row = 0; row < TILE_ROWS; ++row ) {
+    else {
+        for( int row = 0; row < TILE_ROWS; ++row ) {
             for ( int col = 0; col < TILE_COLS; ++col ) {
-                tile_map_to_load[ row ][ col ] = ' ';
+                TwoDimensionalArrayIndex index = {-1, -1};
+                tm->tm_texture_atlas_indexes[ row ][ col ] = index;
             }
         }
-
-        return;
-        
     }
-
-    size_t num_bytes_read = SDL_RWread( file, contents, sizeof( char ), MAX_TILEMAP_CHARS_IN_FILE );
-    SDL_RWclose( file );
-
-    // read in file to 2D tilemap
-    int row = 0;
-    int col = 0;
-    for( int i = 0; i < MAX_TILEMAP_CHARS_IN_FILE; ++i ) {
-        if ( contents[ i ] == 'x' ) {
-            tile_map_to_load[ row ][ col ] = 'x';
-            ++col;
-        }
-        else if ( contents[ i ] == ' ') {
-            tile_map_to_load[ row ][ col ] = '\0';
-            ++col;
-        }
-        else if ( contents[ i ] == '\n') {
-            ++row;
-            col = 0;
-        }
-        else {
-            break;
-        }
-        printf("%c", contents[ i ]);
-        
-    } 
-
     
-} 
+    // Space for any UI elements at the top of the screen
+    tm->tm_screen_position.x = 0;
+    tm->tm_screen_position.y = TILE_SIZE * 2; 
+}
+
+/**
+ * CONVERTING TILE MAP GRID COORDINATES AND SCREEN COORDINATES
+ */
+
+SDL_Point tile_grid_point_to_screen_point( SDL_Point tile_grid_point, SDL_Point tile_map_screen_position ) {
+    // Thoughts. might want to just store an array of all the screen positions rather than calculate it with this value every iteration.
+    // Alternatively, maybe store a bunch of SDL_Rects of the collisions for each tile
+    SDL_Point screen_point;
+    screen_point.y = tile_grid_point.y * TILE_SIZE + tile_map_screen_position.y;
+    screen_point.x = tile_grid_point.x * TILE_SIZE + tile_map_screen_position.x;
+
+    return screen_point;
+}
+
+SDL_Point screen_point_to_tile_grid_point( SDL_Point screen_point, SDL_Point tile_map_screen_position ) {
+
+    SDL_Point grid_point;
+    grid_point.y = ( screen_point.y - tile_map_screen_position.y ) / TILE_SIZE;
+    grid_point.x = ( screen_point.x - tile_map_screen_position.x ) / TILE_SIZE;
+
+    return grid_point; 
+}
+
+/**
+ * RENDERING
+ */
+void tm_render_with_screen_position_offset( SDL_Renderer *renderer, TileMap *tm ) {
+    for(int row = 0; row < TILE_ROWS; ++row ) {
+        for( int col = 0; col < TILE_COLS; ++col ) {
+            if( tm->tm_texture_atlas_indexes[ row ][ col ].r != -1 
+                || tm->tm_texture_atlas_indexes[ row ][ col ].c != -1 ){
+                
+                SDL_Point render_position = { 
+                    tm->tm_screen_position.x + ( TILE_SIZE * col ), 
+                    tm->tm_screen_position.y + ( TILE_SIZE * row ) 
+                };
+                
+                SDL_Point texture_position_in_atlas = { 
+                    tm->tm_texture_atlas_indexes[ row ][ col ].c * TILE_SIZE, 
+                    tm->tm_texture_atlas_indexes[ row ][ col ].r * TILE_SIZE  
+                };
+                
+                SDL_Rect texture_atlas_src_rect = { 
+                    texture_position_in_atlas.x, 
+                    texture_position_in_atlas.y, 
+                    TILE_SIZE, 
+                    TILE_SIZE 
+                };
+
+                SDL_Rect render_dst_rect = {
+                    render_position.x , 
+                    render_position.y, 
+                    TILE_SIZE, 
+                    TILE_SIZE 
+                };
+
+                // Want to probably organize the structure better so that the texture atlas is closer to each 64 byte in the array
+                SDL_RenderCopy( renderer, tm->tm_texture_atlas, &texture_atlas_src_rect, &render_dst_rect );
+            }
+        }
+    }
+}
+
+
 
 #endif

@@ -5,14 +5,13 @@
 #include "pacmonster.h"
 #include "tiles.h"
 
-
+SDL_bool g_show_debug_info = SDL_FALSE;
 
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Pacmonster *pacmonster;
-    char tile_map[ TILE_ROWS ][ TILE_COLS ];
-    //SDL_Rect rect_test = { SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5, 192, 192}; // to test collisions
+    TileMap tilemap;
 
     // Initializing stuff
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -45,7 +44,7 @@ int main( int argc, char *argv[] ) {
     pacmonster = init_pacmonster( renderer );
 
     // INIT TILEMAP
-    load_tile_map_from_file( tile_map );
+    tm_init_and_load_texture( renderer, &tilemap, "level02" );
 
     // PREPARE VARIABLES FOR LOOP
     SDL_Event event;
@@ -70,6 +69,11 @@ int main( int argc, char *argv[] ) {
             if( event.type == SDL_QUIT ) {
                 quit = 1;
             }
+            if ( event.type == SDL_KEYDOWN ) {
+                if ( event.key.keysym.sym == SDLK_b ) {
+                    g_show_debug_info = !g_show_debug_info;
+                }
+            }
         }
 
         // KEYBOARD STATE
@@ -77,14 +81,14 @@ int main( int argc, char *argv[] ) {
         const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
 
         // UPDATE PACMONSTER
-        pac_try_set_direction( pacmonster, current_key_states, tile_map);
-        pac_try_move( pacmonster, tile_map, delta_time );
+        pac_try_set_direction( pacmonster, current_key_states, &tilemap);
+        pac_try_move( pacmonster, &tilemap, delta_time );
 
         // RENDER
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );    
 
-        tiles_render( renderer, tile_map );
+        tm_render_with_screen_position_offset( renderer, &tilemap );
 
         pac_render( renderer, pacmonster );
 
@@ -94,13 +98,24 @@ int main( int argc, char *argv[] ) {
 
 
         // DEBUG
-        // SDL_SetRenderDrawColor( renderer, 255,100,100,255);
-        // for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
-        //     SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
-        // }
-        // for ( int x = 0; x < SCREEN_WIDTH; x+= TILE_SIZE) {
-        //     SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
-        // }
+        if ( g_show_debug_info ) {
+            SDL_SetRenderDrawColor( renderer, 255,100,100,255);
+            for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
+                SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
+            }
+            for ( int x = 0; x < SCREEN_WIDTH; x+= TILE_SIZE) {
+                SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
+            }
+
+            SDL_SetRenderDrawColor( renderer, 255,255,0,150 );
+            SDL_RenderFillRect( renderer, &pacmonster->collision_rect);
+
+            SDL_SetRenderDrawColor( renderer, 255, 0, 255,120);
+            SDL_Rect tile_rect = { pacmonster->current_tile.x * TILE_SIZE, pacmonster->current_tile.y * TILE_SIZE, TILE_SIZE,TILE_SIZE};
+            SDL_RenderFillRect( renderer, &tile_rect);
+        }
+    
+    
         SDL_RenderPresent( renderer );
     }
 
