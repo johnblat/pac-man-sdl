@@ -71,6 +71,30 @@
                 "isDefault": true
             },
             "detail": "Generated task by Debugger"
+        },
+        {
+            "type": "cppbuild",
+            "label": "SuperHell Build",
+            "command": "/usr/bin/clang-10",
+            "args": [
+                "-g",
+                "${workspaceFolder}/hell/superhell.c",
+                "-o",
+                "${workspaceFolder}/hell/superhell",
+                "-I/usr/include/SDL2",
+                "-lSDL2", "-lSDL2main"
+            ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Generated task by Debugger"
         }
     ],
     "version": "2.0.0"
