@@ -7,7 +7,8 @@
 #include "constants.h"
 #include "tiles.h"
 
-#define PAC_ANIMATION_FRAMES 4 
+#define NUM_PAC_ANIMATION_FRAMES 4 
+
 
 typedef enum Direction {
     DIR_LEFT,
@@ -18,16 +19,24 @@ typedef enum Direction {
 } Direction;
 
 
-int pac_size = 64; // pacmonster will be inside of a 48x48 tile, but his sprite overflows the tile
+typedef struct AnimationTimer {
+    float frame_interval;
+    float accumulator;
+} AnimationTimer;
+
+
+
+int pac_src_sprite_size = 64; // pacmonster will be inside of a 48x48 tile, but his sprite overflows the tile
+
 
 typedef struct Pacmonster {
     Position_f position;
-    Direction direction;
-    SDL_Texture *texture_atlas;
-    SDL_Rect pac_sprite_clips[ PAC_ANIMATION_FRAMES ];
     SDL_Rect collision_rect;
     SDL_Point current_tile;
-    int current_animation_frame;
+    Direction direction;
+    SDL_Texture *texture_atlas;
+    SDL_Rect pac_src_sprite_frames[ NUM_PAC_ANIMATION_FRAMES ];
+    int current_animation_frame_index;
 
 } Pacmonster;
 
@@ -42,7 +51,7 @@ Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
     pacmonster->collision_rect.y = pacmonster->position.y;
     pacmonster->collision_rect.w = TILE_SIZE;
     pacmonster->collision_rect.h = TILE_SIZE;
-    pacmonster->current_animation_frame = 0;
+    pacmonster->current_animation_frame_index = 0;
 
     SDL_Surface *pacmonster_surface = IMG_Load("pac_monster.png");
     if( pacmonster_surface == NULL ) {
@@ -58,43 +67,41 @@ Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
 
     SDL_FreeSurface( pacmonster_surface );
 
-    pacmonster->pac_sprite_clips[ 0 ].x = 0;
-    pacmonster->pac_sprite_clips[ 0 ].y = 0;
-    pacmonster->pac_sprite_clips[ 0 ].w = 64;
-    pacmonster->pac_sprite_clips[ 0 ].h = 64;
+    pacmonster->pac_src_sprite_frames[ 0 ].x = 0;
+    pacmonster->pac_src_sprite_frames[ 0 ].y = 0;
+    pacmonster->pac_src_sprite_frames[ 0 ].w = 64;
+    pacmonster->pac_src_sprite_frames[ 0 ].h = 64;
 
-    pacmonster->pac_sprite_clips[ 1 ].x = 64;
-    pacmonster->pac_sprite_clips[ 1 ].y = 0;
-    pacmonster->pac_sprite_clips[ 1 ].w = 64;
-    pacmonster->pac_sprite_clips[ 1 ].h = 64;
+    pacmonster->pac_src_sprite_frames[ 1 ].x = 64;
+    pacmonster->pac_src_sprite_frames[ 1 ].y = 0;
+    pacmonster->pac_src_sprite_frames[ 1 ].w = 64;
+    pacmonster->pac_src_sprite_frames[ 1 ].h = 64;
 
-    pacmonster->pac_sprite_clips[ 2 ].x = 128;
-    pacmonster->pac_sprite_clips[ 2 ].y = 0;
-    pacmonster->pac_sprite_clips[ 2 ].w = 64;
-    pacmonster->pac_sprite_clips[ 2 ].h = 64;
+    pacmonster->pac_src_sprite_frames[ 2 ].x = 128;
+    pacmonster->pac_src_sprite_frames[ 2 ].y = 0;
+    pacmonster->pac_src_sprite_frames[ 2 ].w = 64;
+    pacmonster->pac_src_sprite_frames[ 2 ].h = 64;
 
-    pacmonster->pac_sprite_clips[ 3 ].x = 192;
-    pacmonster->pac_sprite_clips[ 3 ].y = 0;
-    pacmonster->pac_sprite_clips[ 3 ].w = 64;
-    pacmonster->pac_sprite_clips[ 3 ].h = 64;
+    pacmonster->pac_src_sprite_frames[ 3 ].x = 192;
+    pacmonster->pac_src_sprite_frames[ 3 ].y = 0;
+    pacmonster->pac_src_sprite_frames[ 3 ].w = 64;
+    pacmonster->pac_src_sprite_frames[ 3 ].h = 64;
 
 
     return pacmonster;
     
 }
 
-// TODO - put these variables somewhere else
-float frame_interval_seconds = 0.08;
-float accumulator_ms = 0;
 
-void pac_inc_animation_frame( Pacmonster *pacmonster, float delta_time ) {
-    accumulator_ms += delta_time ;//* 1000;
-    if ( accumulator_ms > frame_interval_seconds ) {
-        accumulator_ms = 0;
-        pacmonster->current_animation_frame++;
+
+void pac_inc_animation_frame( Pacmonster *pacmonster, AnimationTimer *animation_timer, float delta_time ) {
+    animation_timer->accumulator += delta_time ;//* 1000;
+    if ( animation_timer->accumulator > animation_timer->frame_interval ) {
+        animation_timer->accumulator = 0;
+        pacmonster->current_animation_frame_index++;
     }
-    if ( pacmonster->current_animation_frame >= PAC_ANIMATION_FRAMES ) {
-        pacmonster->current_animation_frame = 0;
+    if ( pacmonster->current_animation_frame_index >= NUM_PAC_ANIMATION_FRAMES ) {
+        pacmonster->current_animation_frame_index = 0;
     }
     
 }
@@ -470,7 +477,7 @@ void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
     
     SDL_Rect pac_rect = {pacmonster->position.x - 4, pacmonster->position.y - 4, TILE_SIZE + 6, TILE_SIZE+6 };
     
-    SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_sprite_clips[ pacmonster->current_animation_frame ], &pac_rect, pac_rotation, NULL, pac_flip );
+    SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_src_sprite_frames[ pacmonster->current_animation_frame_index ], &pac_rect, pac_rotation, NULL, pac_flip );
 
 
     

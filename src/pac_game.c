@@ -43,7 +43,10 @@ int main( int argc, char *argv[] ) {
 
     // INIT PACMONSTER
     pacmonster = init_pacmonster( renderer );
-
+    AnimationTimer animation_timer;
+    animation_timer.frame_interval = 0.08f;
+    animation_timer.accumulator = 0.0f;
+    
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
 
@@ -95,7 +98,7 @@ int main( int argc, char *argv[] ) {
 
         SDL_SetRenderDrawColor( renderer, 255,255,255,255);
 
-        pac_inc_animation_frame( pacmonster, delta_time);
+        pac_inc_animation_frame( pacmonster, &animation_timer, delta_time);
 
 
         // DEBUG
