@@ -2,6 +2,7 @@
 #include <SDL2/SDL_image.h>
 #include <stdio.h>
 #include "jb_types.h"
+#include "constants.h"
 #include "pacmonster.h"
 #include "tiles.h"
 
@@ -44,7 +45,7 @@ int main( int argc, char *argv[] ) {
     pacmonster = init_pacmonster( renderer );
 
     // INIT TILEMAP
-    tm_init_and_load_texture( renderer, &tilemap, "level02" );
+    tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
 
     // PREPARE VARIABLES FOR LOOP
     SDL_Event event;

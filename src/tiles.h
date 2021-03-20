@@ -5,11 +5,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "jb_types.h"
+#include "constants.h"
 
 /** 
  * TILE VALUES, DIMENSIONS, ETC
  */
-const int TILE_SIZE = 48; // change to different size if necessary
+const int TILE_SIZE = 40; // change to different size if necessary
 const int TILE_COLS = SCREEN_WIDTH / (TILE_SIZE );
 const int TILE_ROWS = SCREEN_HEIGHT / ( TILE_SIZE );
 const int TOTAL_NUMBER_OF_TILES = TILE_ROWS * TILE_COLS;
@@ -54,22 +55,31 @@ typedef struct TileMap {
  */
 
 void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
-    char *filename = "level02";
+    char *filename = "maze_file";
     char *write_binary_mode = "wb";
 
     SDL_RWops *write_context = SDL_RWFromFile( filename , write_binary_mode );
+    if( write_context == NULL ) {
+        fprintf(stderr, "%s\n", SDL_GetError() );
+        exit( EXIT_FAILURE );
+    }
     SDL_RWwrite( write_context, tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
     SDL_RWclose( write_context );
 }
 
 // TODO: take in a filename as well
-void load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
-    char *filename = "level02";
+void try_load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
+    char *filename = "maze_file";
     char *read_binary_mode = "rb";
 
     SDL_RWops *read_context = SDL_RWFromFile( filename, read_binary_mode );
+    // File does not exist
+    if( read_context == NULL ) {
+        fprintf(stderr, "%s\n", SDL_GetError() );
+        return; // we'll just not do anything
+    }
     SDL_RWread( read_context, tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
-
+    SDL_RWclose( read_context );
 } 
 
 /**
@@ -82,21 +92,19 @@ void load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_t
 void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_filename ) {
     // LOAD the texture
     SDL_Surface *surface;
-    surface = IMG_Load("pacmonster_tileset.png");
+    surface = IMG_Load("tileset_40x40.png");
     tm->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
     SDL_FreeSurface( surface );
 
+    for( int row = 0; row < TILE_ROWS; ++row ) {
+        for ( int col = 0; col < TILE_COLS; ++col ) {
+            tm->tm_texture_atlas_indexes[ row ][ col ] = EMPTY_TILE_TEXTURE_ATLAS_INDEX;
+        }
+    }
+        
     // load the texture indexes to use for each tile in the tilemap
     if( level_filename != NULL) {
-        load_tilemap_texture_atlas_indexes_from_file( tm->tm_texture_atlas_indexes );
-    }
-    else {
-        for( int row = 0; row < TILE_ROWS; ++row ) {
-            for ( int col = 0; col < TILE_COLS; ++col ) {
-                TwoDimensionalArrayIndex index = {-1, -1};
-                tm->tm_texture_atlas_indexes[ row ][ col ] = index;
-            }
-        }
+        try_load_tilemap_texture_atlas_indexes_from_file( tm->tm_texture_atlas_indexes );
     }
     
     // Space for any UI elements at the top of the screen

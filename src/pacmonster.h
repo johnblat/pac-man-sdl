@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "jb_types.h"
+#include "constants.h"
 #include "tiles.h"
 
 #define PAC_ANIMATION_FRAMES 4 
@@ -34,8 +35,8 @@ Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
     Pacmonster *pacmonster;
     pacmonster = ( Pacmonster *) malloc( sizeof( Pacmonster ) );
 
-    pacmonster->position.x = 0;
-    pacmonster->position.y = TILE_SIZE * 2;
+    pacmonster->position.x =  TILE_SIZE ;
+    pacmonster->position.y = TILE_SIZE * 3;
     pacmonster->direction = DIR_NONE;
     pacmonster->collision_rect.x = pacmonster->position.x;
     pacmonster->collision_rect.y = pacmonster->position.y;
