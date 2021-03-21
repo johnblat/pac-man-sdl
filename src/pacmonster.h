@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <math.h>
 #include "jb_types.h"
 #include "constants.h"
 #include "tiles.h"
@@ -30,27 +31,41 @@ int pac_src_sprite_size = 64; // pacmonster will be inside of a 48x48 tile, but 
 
 
 typedef struct Pacmonster {
-    Position_f position;
-    SDL_Rect collision_rect;
-    SDL_Point current_tile;
-    Direction direction;
+    Position_f  position;
+    SDL_Point   center_point;
+    SDL_Rect    collision_rect;
+    SDL_Point   current_tile;
+    SDL_Point   target_tile;
+    SDL_Point   top_sensor;
+    SDL_Point   bottom_sensor;
+    SDL_Point   left_sensor;
+    SDL_Point   right_sensor;
+    Direction   direction;
     SDL_Texture *texture_atlas;
-    SDL_Rect pac_src_sprite_frames[ NUM_PAC_ANIMATION_FRAMES ];
-    int current_animation_frame_index;
+    SDL_Rect    pac_src_sprite_frames[ NUM_PAC_ANIMATION_FRAMES ];
+    int         current_animation_frame_index;
 
 } Pacmonster;
+
+void pac_set_current_tile( Pacmonster *pacmonster ) {
+    pacmonster->current_tile.x = ( ( pacmonster->position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
+    pacmonster->current_tile.y = ( ( ( pacmonster->position.y + TILE_SIZE / 2 ) - (TILE_SIZE * 2 ) ) / TILE_SIZE ) ;
+}
 
 Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
     Pacmonster *pacmonster;
     pacmonster = ( Pacmonster *) malloc( sizeof( Pacmonster ) );
 
     pacmonster->position.x =  TILE_SIZE ;
-    pacmonster->position.y = TILE_SIZE * 3;
+    pacmonster->position.y = TILE_SIZE * 17;
+    pacmonster->center_point.x = ( int ) pacmonster->position.x + ( TILE_SIZE / 2 );
+    pacmonster->center_point.y = ( int ) pacmonster->position.y + ( TILE_SIZE / 2 );
     pacmonster->direction = DIR_NONE;
     pacmonster->collision_rect.x = pacmonster->position.x;
     pacmonster->collision_rect.y = pacmonster->position.y;
-    pacmonster->collision_rect.w = TILE_SIZE;
-    pacmonster->collision_rect.h = TILE_SIZE;
+    pac_set_current_tile( pacmonster );
+    pacmonster->collision_rect.w = TILE_SIZE ;
+    pacmonster->collision_rect.h = TILE_SIZE ;
     pacmonster->current_animation_frame_index = 0;
 
     SDL_Surface *pacmonster_surface = IMG_Load("pac_monster.png");
@@ -131,156 +146,89 @@ SDL_bool pac_has_collided_with_any_tile( SDL_Rect pac_collision_check_extension_
 
 void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, TileMap *tm ) {
 
-    // set quad here. Try to break up the world into chunks and only check the chunk that pacmonster is in
-
-
+    //test
     if( current_key_states[ SDL_SCANCODE_UP ] ) {
-        SDL_Rect pac_collision_check_extension_rect = { pacmonster->collision_rect.x, pacmonster->collision_rect.y - 1, pacmonster->collision_rect.w, 1 };
-
-        // COLLISIONS IN TILEMAP
-        SDL_bool collided = SDL_FALSE;
-        
-        for ( int row = 0; row < TILE_ROWS; ++row ) 
+        SDL_Point tile_above = { pacmonster->current_tile.x, pacmonster->current_tile.y - 1 };
+        if(tm->tm_texture_atlas_indexes[ tile_above.y ][ tile_above.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
+            && tm->tm_texture_atlas_indexes[ tile_above.y ][ tile_above.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
         {
-            for ( int col = 0; col < TILE_COLS; ++col ) 
-            {
-                if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
-                {
-                    SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-
-                    if ( SDL_HasIntersection( &pac_collision_check_extension_rect, &current_tile_rect ) ) 
-                    {
-                        collided = SDL_TRUE;
-                        break;
-                    }
-                }
-                
-            }
-            if (collided) break;
-        }
-        if ( !collided ) {
             pacmonster->direction = DIR_UP;
+        }
+        else {
             return;
         }
-        // END COLLISIONS IN TILEMAP
-
     }
-    else if( current_key_states[ SDL_SCANCODE_DOWN ] ) {
-        SDL_Rect pac_extension_rect = { pacmonster->collision_rect.x, pacmonster->collision_rect.y + pacmonster->collision_rect.h, pacmonster->collision_rect.w, 1 };
 
-        // COLLISIONS IN TILEMAP
-        SDL_bool collided = SDL_FALSE;
-        
-        for ( int row = 0; row < TILE_ROWS; ++row ) {
-            for ( int col = 0; col < TILE_COLS; ++col ) {
-                if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c) 
-                {
-                    SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-                    
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-
-                    if ( SDL_HasIntersection( &pac_extension_rect, &current_tile_rect ) ) 
-                    {
-                        collided = SDL_TRUE;
-                        break;
-                    }
-                }
-            }
-        }
-        if ( !collided ) {
+    if( current_key_states[ SDL_SCANCODE_DOWN ] ) {
+        SDL_Point tile_below = { pacmonster->current_tile.x, pacmonster->current_tile.y + 1 };
+        if(tm->tm_texture_atlas_indexes[ tile_below.y ][ tile_below.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
+            && tm->tm_texture_atlas_indexes[ tile_below.y ][ tile_below.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
+        {
             pacmonster->direction = DIR_DOWN;
+        }
+        else {
             return;
         }
-        // END COLLISIONS IN TILEMAP
-
-
     }
-    else if( current_key_states[ SDL_SCANCODE_LEFT ] ) {
-        SDL_Rect pac_extension_rect = { pacmonster->collision_rect.x - 1, pacmonster->collision_rect.y, 1, pacmonster->collision_rect.h };
 
-        // COLLISIONS IN TILEMAP
-        SDL_bool collided = SDL_FALSE;
-        
-        for ( int row = 0; row < TILE_ROWS; ++row ) {
-            for ( int col = 0; col < TILE_COLS; ++col ) {
-                if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c) 
-                {
-                    SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-                    
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-
-                    if ( SDL_HasIntersection( &pac_extension_rect, &current_tile_rect ) ) 
-                    {
-                        collided = SDL_TRUE;
-                        break;
-                    }
-                }
-            }
-        }
-        if ( !collided ) {
+    if( current_key_states[ SDL_SCANCODE_LEFT ] ) {
+        SDL_Point tile_to_left = { pacmonster->current_tile.x - 1, pacmonster->current_tile.y  };
+        if(tm->tm_texture_atlas_indexes[ tile_to_left.y ][ tile_to_left.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
+            && tm->tm_texture_atlas_indexes[ tile_to_left.y ][ tile_to_left.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
+        {
             pacmonster->direction = DIR_LEFT;
+        }
+        else {
             return;
         }
-
     }
-    else if( current_key_states[ SDL_SCANCODE_RIGHT ] ) {
-        SDL_Rect pac_extension_rect = { pacmonster->collision_rect.x + pacmonster->collision_rect.w, pacmonster->collision_rect.y, 1, pacmonster->collision_rect.h };
 
-        // COLLISIONS IN TILEMAP
-        SDL_bool collided = SDL_FALSE;
-        
-        for ( int row = 0; row < TILE_ROWS; ++row ) {
-            for ( int col = 0; col < TILE_COLS; ++col ) {
-                if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c) 
-                {
-                    SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-                    
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-
-                    if ( SDL_HasIntersection( &pac_extension_rect, &current_tile_rect ) ) 
-                    {
-                        collided = SDL_TRUE;
-                        break;
-                    }
-                }
-            }
-        }
-        if ( !collided ) {
+    if( current_key_states[ SDL_SCANCODE_RIGHT ] ) {
+        SDL_Point tile_to_right = { pacmonster->current_tile.x + 1, pacmonster->current_tile.y };
+        if(tm->tm_texture_atlas_indexes[ tile_to_right.y ][ tile_to_right.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
+            && tm->tm_texture_atlas_indexes[ tile_to_right.y ][ tile_to_right.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
+        {
             pacmonster->direction = DIR_RIGHT;
+        }
+        else {
             return;
         }
-        // END COLLISIONS IN TILEMAP
+    }
 
-    }
-    else if (current_key_states[ SDL_SCANCODE_SPACE ] ){
-        pacmonster->direction = DIR_NONE;
-    }
+    
+
 }
 
-void pac_set_current_tile( Pacmonster *pacmonster ) {
+
+
+void pac_move( Pacmonster *pacmonster, Vector_f velocity ) {
+    pacmonster->position.x += velocity.x;
+    pacmonster->position.y += velocity.y;
+
+    pacmonster->center_point.x = ( int ) pacmonster->position.x + ( TILE_SIZE / 2 );
+    pacmonster->center_point.y = ( int ) pacmonster->position.y + ( TILE_SIZE / 2 );
+
+    pacmonster->collision_rect.x = pacmonster->position.x;
+    pacmonster->collision_rect.y = pacmonster->position.y;
+
     pacmonster->current_tile.x = ( ( pacmonster->position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
-    pacmonster->current_tile.y = ( ( pacmonster->position.y + TILE_SIZE / 2 ) / TILE_SIZE ) ;
-}
+    pacmonster->current_tile.y = ( ( ( pacmonster->position.y + TILE_SIZE / 2 ) - (TILE_SIZE * 2 ) ) / TILE_SIZE ) ;
 
-void pac_move( Position_f *position, SDL_Rect *collision_rect, Vector_f velocity ) {
-    position->x += velocity.x;
-    position->y += velocity.y;
-    collision_rect->x = position->x;
-    collision_rect->y = position->y;
+    pacmonster->top_sensor.x = pacmonster->position.x + ( TILE_SIZE / 2 );
+    pacmonster->top_sensor.y = pacmonster->position.y;
+
+    pacmonster->bottom_sensor.x = pacmonster->position.x + ( TILE_SIZE / 2 );
+    pacmonster->bottom_sensor.y = pacmonster->position.y + TILE_SIZE;
+
+    pacmonster->left_sensor.x = pacmonster->position.x;
+    pacmonster->left_sensor.y = pacmonster->position.y + ( TILE_SIZE / 2 );
+
+    pacmonster->right_sensor.x = pacmonster->position.x + TILE_SIZE;
+    pacmonster->right_sensor.y = pacmonster->position.y + ( TILE_SIZE / 2 );
+
+
+
+
 }
 
 
@@ -288,164 +236,191 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
     
     int pac_speed = 260;
     Vector_f velocity = { 0, 0 };
-    switch( pacmonster->direction ) {
-        
-        case DIR_UP:
-            velocity.y = -pac_speed * delta_time;
-            pac_move( &pacmonster->position, &pacmonster->collision_rect, velocity );
-            pac_set_current_tile( pacmonster );
 
-            // top screen bound
-            if( pacmonster->collision_rect.y < 0 ) {
-                pacmonster->position.y = 0;
-                pacmonster->collision_rect.y = pacmonster->position.y;
+    if( pacmonster->direction == DIR_UP ) {
+        pacmonster->target_tile.x = pacmonster->current_tile.x;
+        pacmonster->target_tile.y = pacmonster->current_tile.y - 1;
+
+        // set velocity
+        if ( pacmonster->center_point.x == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = 0;
+            velocity.y = -1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        } 
+        else if( pacmonster->center_point.x < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = 1;
+            velocity.y = -1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+        else if( pacmonster->center_point.x >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
+            velocity.x = -1;
+            velocity.y = -1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+
+        // move
+        pac_move(pacmonster, velocity );
+
+        // collision
+        //SDL_Point pac_top_sensor = { pacmonster->position.x + ( TILE_SIZE / 2 ), pacmonster->position.y };
+
+        SDL_Point target_tile_screen_position = tile_grid_point_to_screen_point( pacmonster->target_tile, tm->tm_screen_position );
+        SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
+
+        // top sensor is inside target tile
+        if( pacmonster->top_sensor.y < target_tile_rect.y + TILE_SIZE 
+        && pacmonster->top_sensor.x > target_tile_rect.x 
+        && pacmonster->top_sensor.x < target_tile_rect.x + TILE_SIZE ) {
+            // target tile is a wall
+            if ( tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
+            && tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                pac_move(pacmonster, reversed_velocity );
             }
-
-            // tile_map bound
-            for ( int row = 0; row < TILE_ROWS; ++row ) {
-                for ( int col = 0; col < TILE_COLS; ++col ) {
-                    if(tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c) 
-                    {
-                        SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-                    
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-
-                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
-                        {
-                            pacmonster->position.y = current_tile_rect.y + current_tile_rect.h;
-                            pacmonster->collision_rect.y = pacmonster->position.y;
-                            pac_set_current_tile( pacmonster );
-            
-                            break;
-                        }
-                    }
-                }
-            }
-
-
-            break;
-
-        case DIR_DOWN:
-            velocity.y = pac_speed * delta_time;
-            pac_move( &pacmonster->position, &pacmonster->collision_rect, velocity );
-            pac_set_current_tile( pacmonster );
-
-            // bottom screen bound
-            if( pacmonster->collision_rect.y + pacmonster->collision_rect.h > SCREEN_HEIGHT ) {
-                pacmonster->position.y = SCREEN_HEIGHT - pacmonster->collision_rect.h;
-                pacmonster->collision_rect.y = pacmonster->position.y;
-                pac_set_current_tile( pacmonster );            
-            }
-
-            // tile_map bound
-            for ( int row = 0; row < TILE_ROWS; ++row ) {
-                for ( int col = 0; col < TILE_COLS; ++col ) {
-                    if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c) 
-                    {
-SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-                    
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
-                        {
-                            pacmonster->position.y = current_tile_rect.y - pacmonster->collision_rect.h;
-                            pacmonster->collision_rect.y = pacmonster->position.y;
-                            pac_set_current_tile( pacmonster );            
-                            break;
-                        }
-                    }
-                }
-            }
-
-     
-            break;
-
-        case DIR_LEFT:
-            velocity.x = -pac_speed * delta_time;
-            pac_move( &pacmonster->position, &pacmonster->collision_rect, velocity );
-            pac_set_current_tile( pacmonster );
-
-            // left screen bound
-            if( pacmonster->collision_rect.x < 0 ) {
-                pacmonster->position.x = 0;
-                pacmonster->collision_rect.x = pacmonster->position.x;
-                pac_set_current_tile( pacmonster );
-            }
-
-            // tile_map bound
-            for ( int row = 0; row < TILE_ROWS; ++row ) {
-                for ( int col = 0; col < TILE_COLS; ++col ) {
-                    if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c) 
-                    {
-SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-                    
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
-                        {
-                            pacmonster->position.x = current_tile_rect.x + current_tile_rect.w;
-                            pacmonster->collision_rect.x = pacmonster->position.x;
-                            pac_set_current_tile( pacmonster );            
-                            break;
-                        }
-                    }
-                }
-            }
-
-
-            break;
-
-        case DIR_RIGHT:
-            velocity.x = pac_speed * delta_time;
-            pac_move( &pacmonster->position, &pacmonster->collision_rect, velocity );
-            pac_set_current_tile( pacmonster );
-
-            // right screen bound
-            if( pacmonster->collision_rect.x + pacmonster->collision_rect.w > SCREEN_WIDTH  ) {
-                pacmonster->position.x = SCREEN_WIDTH - pacmonster->collision_rect.w;
-                pacmonster->collision_rect.x = pacmonster->position.x;
-                pac_set_current_tile( pacmonster );
-            }
-            // tile_map bound
-            for ( int row = 0; row < TILE_ROWS; ++row ) {
-                for ( int col = 0; col < TILE_COLS; ++col ) {
-                    if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                    && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c) 
-                    {
-SDL_Point tile_grid_point = { col, row };
-
-                    SDL_Point current_tile_screen_position = tile_grid_point_to_screen_point( tile_grid_point, tm->tm_screen_position );
-                    
-                    SDL_Rect current_tile_rect = {current_tile_screen_position.x, current_tile_screen_position.y, TILE_SIZE, TILE_SIZE};
-                        if ( SDL_HasIntersection( &pacmonster->collision_rect, &current_tile_rect ) ) 
-                        {
-                            pacmonster->position.x = current_tile_rect.x - pacmonster->collision_rect.w;
-                            pacmonster->collision_rect.x = pacmonster->position.x;
-                            pac_set_current_tile( pacmonster );
-
-                            break;
-                        }
-                    }
-                }
-            }
-
-   
-            break;
-
-        case DIR_NONE:
-            break;
+        }
     }
+
+    if( pacmonster->direction == DIR_DOWN ) {
+        pacmonster->target_tile.x = pacmonster->current_tile.x;
+        pacmonster->target_tile.y = pacmonster->current_tile.y + 1;
+
+        // set velocity
+        if ( pacmonster->center_point.x == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = 0;
+            velocity.y = 1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        } 
+        else if( pacmonster->center_point.x < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = 1;
+            velocity.y = 1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+        else if( pacmonster->center_point.x >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
+            velocity.x = -1;
+            velocity.y = 1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+
+        // move
+        pac_move(pacmonster, velocity );
+
+        // collision
+
+        SDL_Point target_tile_screen_position = tile_grid_point_to_screen_point( pacmonster->target_tile, tm->tm_screen_position );
+        SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
+
+        // sensor is inside target tile
+        if( pacmonster->bottom_sensor.y > target_tile_rect.y 
+        && pacmonster->bottom_sensor.x > target_tile_rect.x 
+        && pacmonster->bottom_sensor.x < target_tile_rect.x + TILE_SIZE ) {
+            // target tile is a wall
+            if ( tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
+            && tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                pac_move(pacmonster, reversed_velocity );
+            }
+        }
+    }
+
+    if( pacmonster->direction == DIR_LEFT ) {
+        pacmonster->target_tile.x = pacmonster->current_tile.x - 1;
+        pacmonster->target_tile.y = pacmonster->current_tile.y;
+
+        // set velocity
+        if ( pacmonster->center_point.y == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = -1;
+            velocity.y = 0;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        } 
+        else if( pacmonster->center_point.y < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = -1;
+            velocity.y = 1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+        else if( pacmonster->center_point.y >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
+            velocity.x = -1;
+            velocity.y = -1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+
+        // move
+        pac_move(pacmonster, velocity );
+
+        // collision
+
+        SDL_Point target_tile_screen_position = tile_grid_point_to_screen_point( pacmonster->target_tile, tm->tm_screen_position );
+        SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
+
+        // sensor is inside target tile
+        if( pacmonster->left_sensor.x < target_tile_rect.x + TILE_SIZE
+        && pacmonster->left_sensor.y > target_tile_rect.y 
+        && pacmonster->left_sensor.y < target_tile_rect.y + TILE_SIZE ) {
+            // target tile is a wall
+            if ( tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
+            && tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                pac_move(pacmonster, reversed_velocity );
+            }
+        }
+    }
+
+    if( pacmonster->direction == DIR_RIGHT ) {
+        pacmonster->target_tile.x = pacmonster->current_tile.x + 1;
+        pacmonster->target_tile.y = pacmonster->current_tile.y;
+
+        // set velocity
+        if ( pacmonster->center_point.y == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = 1;
+            velocity.y = 0;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        } 
+        else if( pacmonster->center_point.y < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
+            velocity.x = 1;
+            velocity.y = 1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+        else if( pacmonster->center_point.y >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
+            velocity.x = 1;
+            velocity.y = -1;
+            velocity.x *= pac_speed * delta_time;
+            velocity.y *= pac_speed * delta_time;
+        }
+
+        // move
+        pac_move(pacmonster, velocity );
+
+        // collision
+
+        SDL_Point target_tile_screen_position = tile_grid_point_to_screen_point( pacmonster->target_tile, tm->tm_screen_position );
+        SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
+
+        // sensor is inside target tile
+        if( pacmonster->right_sensor.x > target_tile_rect.x 
+        && pacmonster->right_sensor.y > target_tile_rect.y 
+        && pacmonster->right_sensor.y < target_tile_rect.y + TILE_SIZE ) {
+            // target tile is a wall
+            if ( tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
+            && tm->tm_texture_atlas_indexes[ pacmonster->target_tile.y ][ pacmonster->target_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                pac_move(pacmonster, reversed_velocity );
+            }
+        }
+    }
+
 }
 
     
-
 
 void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
     // I set this in the move function

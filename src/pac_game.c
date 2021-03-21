@@ -6,7 +6,7 @@
 #include "pacmonster.h"
 #include "tiles.h"
 
-SDL_bool g_show_debug_info = SDL_FALSE;
+SDL_bool g_show_debug_info = SDL_TRUE;
 
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
@@ -110,13 +110,114 @@ int main( int argc, char *argv[] ) {
             for ( int x = 0; x < SCREEN_WIDTH; x+= TILE_SIZE) {
                 SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
             }
-
+            
+            // pacman rect
             SDL_SetRenderDrawColor( renderer, 255,255,0,150 );
             SDL_RenderFillRect( renderer, &pacmonster->collision_rect);
 
+            
+
+            // current_tile
             SDL_SetRenderDrawColor( renderer, 255, 0, 255,120);
-            SDL_Rect tile_rect = { pacmonster->current_tile.x * TILE_SIZE, pacmonster->current_tile.y * TILE_SIZE, TILE_SIZE,TILE_SIZE};
+            SDL_Rect tile_rect = { pacmonster->current_tile.x * TILE_SIZE, pacmonster->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
             SDL_RenderFillRect( renderer, &tile_rect);
+
+            // target tile 
+            SDL_SetRenderDrawColor( renderer, 255, 0, 0, 255 );
+            SDL_Rect target_rect = { pacmonster->target_tile.x * TILE_SIZE, pacmonster->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderFillRect( renderer, &target_rect );
+            
+            // pacman center point
+            SDL_SetRenderDrawColor( renderer, 255,255,255,255);
+            SDL_Point points_to_draw[ 25 ];
+            
+            //CENTER
+            points_to_draw[ 0 ].x = pacmonster->center_point.x;
+            points_to_draw[ 0 ].y = pacmonster->center_point.y;
+            //above
+            points_to_draw[ 1 ].x = pacmonster->center_point.x;
+            points_to_draw[ 1 ].y = pacmonster->center_point.y - 1;
+            //below
+            points_to_draw[ 2 ].x = pacmonster->center_point.x;
+            points_to_draw[ 2 ].y = pacmonster->center_point.y + 1;
+            //left
+            points_to_draw[ 3 ].x = pacmonster->center_point.x - 1;
+            points_to_draw[ 3 ].y = pacmonster->center_point.y;
+            //right
+            points_to_draw[ 4 ].x = pacmonster->center_point.x + 1;
+            points_to_draw[ 4 ].y = pacmonster->center_point.y;
+            
+            // SENSORS
+
+            // TOP SENSOR
+            points_to_draw[ 5 ].x = pacmonster->top_sensor.x;
+            points_to_draw[ 5 ].y = pacmonster->top_sensor.y;
+            //above
+            points_to_draw[ 6 ].x = pacmonster->top_sensor.x;
+            points_to_draw[ 6 ].y = pacmonster->top_sensor.y - 1;
+            //below
+            points_to_draw[ 7 ].x = pacmonster->top_sensor.x;
+            points_to_draw[ 7 ].y = pacmonster->top_sensor.y + 1;
+            //left
+            points_to_draw[ 8 ].x = pacmonster->top_sensor.x - 1;
+            points_to_draw[ 8 ].y = pacmonster->top_sensor.y;
+            //right
+            points_to_draw[ 9 ].x = pacmonster->top_sensor.x + 1;
+            points_to_draw[ 9 ].y = pacmonster->top_sensor.y;
+
+            // BOTTOM SENSOR
+            points_to_draw[ 10 ].x = pacmonster->bottom_sensor.x;
+            points_to_draw[ 10 ].y = pacmonster->bottom_sensor.y;
+            //above
+            points_to_draw[ 11 ].x = pacmonster->bottom_sensor.x;
+            points_to_draw[ 11 ].y = pacmonster->bottom_sensor.y - 1;
+            //below
+            points_to_draw[ 12 ].x = pacmonster->bottom_sensor.x;
+            points_to_draw[ 12 ].y = pacmonster->bottom_sensor.y + 1;
+            //left
+            points_to_draw[ 13 ].x = pacmonster->bottom_sensor.x - 1;
+            points_to_draw[ 13 ].y = pacmonster->bottom_sensor.y;
+            //right
+            points_to_draw[ 14 ].x = pacmonster->bottom_sensor.x + 1;
+            points_to_draw[ 14 ].y = pacmonster->bottom_sensor.y;
+
+            // LEFT SENSOR
+            points_to_draw[ 15 ].x = pacmonster->left_sensor.x;
+            points_to_draw[ 15 ].y = pacmonster->left_sensor.y;
+            //above
+            points_to_draw[ 16 ].x = pacmonster->left_sensor.x;
+            points_to_draw[ 16 ].y = pacmonster->left_sensor.y - 1;
+            //below
+            points_to_draw[ 17 ].x = pacmonster->left_sensor.x;
+            points_to_draw[ 17 ].y = pacmonster->left_sensor.y + 1;
+            //left
+            points_to_draw[ 18 ].x = pacmonster->left_sensor.x - 1;
+            points_to_draw[ 18 ].y = pacmonster->left_sensor.y;
+            //right
+            points_to_draw[ 19 ].x = pacmonster->left_sensor.x + 1;
+            points_to_draw[ 19 ].y = pacmonster->left_sensor.y;
+
+            // RIGHT SENSOR
+            points_to_draw[ 20 ].x = pacmonster->right_sensor.x;
+            points_to_draw[ 20 ].y = pacmonster->right_sensor.y;
+            //above
+            points_to_draw[ 21 ].x = pacmonster->right_sensor.x;
+            points_to_draw[ 21 ].y = pacmonster->right_sensor.y - 1;
+            //below
+            points_to_draw[ 22 ].x = pacmonster->right_sensor.x;
+            points_to_draw[ 22 ].y = pacmonster->right_sensor.y + 1;
+            //left
+            points_to_draw[ 23 ].x = pacmonster->right_sensor.x - 1;
+            points_to_draw[ 23 ].y = pacmonster->right_sensor.y;
+            //right
+            points_to_draw[ 24 ].x = pacmonster->right_sensor.x + 1;
+            points_to_draw[ 24 ].y = pacmonster->right_sensor.y;
+
+
+
+            SDL_RenderDrawPoints( renderer, points_to_draw, 25 );
+
+
         }
     
     
