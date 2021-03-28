@@ -43,6 +43,17 @@ typedef struct TileMap {
     TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ];
 
     /**
+     * If there is an 'x' in the position, then that means there's a dot in the tile.
+     * This ought to change in the future once that fuck stephen gets me a dot sprite
+     * Or , who knows, maybe i can go with this
+     */
+    char tm_dots[ TILE_ROWS ][ TILE_COLS ];
+
+    /**
+     * If the dots animate or move, this will update
+     */
+    Position_f tm_dots_normalized_positions_in_tile[ TILE_ROWS ][ TILE_COLS ];
+    /**
      * Members I might want
      * SDL_Rect tm_tile_collision_rects[ TILE_ROWS ][ TILE_COLS ];
      * SDL_Point tm_tile_screen_positions[ TILE_ROWS ][ TILE_COLS ];
@@ -82,6 +93,34 @@ void try_load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex 
     SDL_RWclose( read_context );
 } 
 
+
+void save_dots_to_file( char dots[ TILE_ROWS ][ TILE_COLS ] ) {
+    char *filename = "dots";
+    char *write_binary_mode = "wb";
+
+    SDL_RWops *write_context = SDL_RWFromFile( filename, write_binary_mode );
+    if( write_context == NULL ) {
+        fprintf(stderr, "%s\n", SDL_GetError() );
+        exit( EXIT_FAILURE );
+    }
+    SDL_RWwrite( write_context, dots, sizeof( char ), TOTAL_NUMBER_OF_TILES );
+    SDL_RWclose( write_context );
+}
+
+void try_load_dots_from_file( char dots[ TILE_ROWS ][ TILE_COLS ] ) {
+    char *filename = "dots";
+    char *read_binary_mode = "rb";
+
+    SDL_RWops *read_context = SDL_RWFromFile( filename, read_binary_mode );
+    // File does not exist
+    if( read_context == NULL ) {
+        fprintf(stderr, "%s\n", SDL_GetError() );
+        return; // we'll just not do anything
+    }
+    SDL_RWread( read_context, dots, sizeof( char ), TOTAL_NUMBER_OF_TILES );
+    SDL_RWclose( read_context );
+}
+
 /**
  * INITIALIZATION for tm ( tilemap )
  * 
@@ -96,20 +135,39 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
     tm->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
     SDL_FreeSurface( surface );
 
+    // initialize textured tiles
     for( int row = 0; row < TILE_ROWS; ++row ) {
         for ( int col = 0; col < TILE_COLS; ++col ) {
             tm->tm_texture_atlas_indexes[ row ][ col ] = EMPTY_TILE_TEXTURE_ATLAS_INDEX;
+        }
+    }
+
+    // initialize dots
+    for( int row = 0; row < TILE_ROWS; row++ ){
+        for( int col = 0; col < TILE_COLS; col++ ) {
+            tm->tm_dots[ row ][ col ] = ' ';
+        }
+    }
+
+    // initialize dots normalized positions
+    for( int row = 0; row < TILE_ROWS; row++ ) {
+        for( int col = 0; col < TILE_COLS; col++ ) {
+            tm->tm_dots_normalized_positions_in_tile[ row ][ col ].x = 0;
+            tm->tm_dots_normalized_positions_in_tile[ row ][ col ].y = 0;
         }
     }
         
     // load the texture indexes to use for each tile in the tilemap
     if( level_filename != NULL) {
         try_load_tilemap_texture_atlas_indexes_from_file( tm->tm_texture_atlas_indexes );
+        try_load_dots_from_file( tm->tm_dots );
     }
     
     // Space for any UI elements at the top of the screen
     tm->tm_screen_position.x = 0;
     tm->tm_screen_position.y = TILE_SIZE * 2; 
+
+    
 }
 
 /**
@@ -139,6 +197,7 @@ SDL_Point screen_point_to_tile_grid_point( SDL_Point screen_point, SDL_Point til
  * RENDERING
  */
 void tm_render_with_screen_position_offset( SDL_Renderer *renderer, TileMap *tm ) {
+    // tiles
     for(int row = 0; row < TILE_ROWS; ++row ) {
         for( int col = 0; col < TILE_COLS; ++col ) {
             if( tm->tm_texture_atlas_indexes[ row ][ col ].r != -1 
@@ -173,8 +232,24 @@ void tm_render_with_screen_position_offset( SDL_Renderer *renderer, TileMap *tm 
             }
         }
     }
+
+    // dots
+    for( int row = 0; row < TILE_ROWS; ++row ) {
+        for( int col = 0; col < TILE_COLS; ++col ) {
+            if( tm->tm_dots[ row ][ col ] == 'x' ) {
+                int dot_size = 6;
+                SDL_Rect dot_rect = {
+                    tm->tm_screen_position.x + ( TILE_SIZE * col ) + ( TILE_SIZE / 2 ) - ( dot_size / 2),
+                    tm->tm_screen_position.y + ( TILE_SIZE * row ) + ( TILE_SIZE/ 2 ) - ( dot_size / 2 ),
+                    dot_size,
+                    dot_size
+                };
+                
+                SDL_SetRenderDrawColor(renderer, 255,200,0,255);
+                SDL_RenderFillRect( renderer, &dot_rect );
+            }
+        }
+    } 
 }
-
-
 
 #endif

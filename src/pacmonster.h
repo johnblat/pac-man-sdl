@@ -27,7 +27,7 @@ typedef struct AnimationTimer {
 
 
 
-int pac_src_sprite_size = 64; // pacmonster will be inside of a 48x48 tile, but his sprite overflows the tile
+int pac_src_sprite_size = 64; 
 
 
 typedef struct Pacmonster {
@@ -58,14 +58,20 @@ Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
 
     pacmonster->position.x =  TILE_SIZE ;
     pacmonster->position.y = TILE_SIZE * 17;
+
     pacmonster->center_point.x = ( int ) pacmonster->position.x + ( TILE_SIZE / 2 );
     pacmonster->center_point.y = ( int ) pacmonster->position.y + ( TILE_SIZE / 2 );
+
     pacmonster->direction = DIR_NONE;
+
     pacmonster->collision_rect.x = pacmonster->position.x;
     pacmonster->collision_rect.y = pacmonster->position.y;
+
     pac_set_current_tile( pacmonster );
+
     pacmonster->collision_rect.w = TILE_SIZE ;
     pacmonster->collision_rect.h = TILE_SIZE ;
+    
     pacmonster->current_animation_frame_index = 0;
 
     SDL_Surface *pacmonster_surface = IMG_Load("pac_monster.png");
@@ -102,11 +108,8 @@ Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
     pacmonster->pac_src_sprite_frames[ 3 ].w = 64;
     pacmonster->pac_src_sprite_frames[ 3 ].h = 64;
 
-
     return pacmonster;
-    
 }
-
 
 
 void pac_inc_animation_frame( Pacmonster *pacmonster, AnimationTimer *animation_timer, float delta_time ) {
@@ -118,37 +121,34 @@ void pac_inc_animation_frame( Pacmonster *pacmonster, AnimationTimer *animation_
     if ( pacmonster->current_animation_frame_index >= NUM_PAC_ANIMATION_FRAMES ) {
         pacmonster->current_animation_frame_index = 0;
     }
-    
 }
 
-SDL_bool pac_has_collided_with_any_tile( SDL_Rect pac_collision_check_extension_rect, TileMap *tm ) {
-    for ( int row = 0; row < TILE_ROWS; ++row ) 
-    {
-        for ( int col = 0; col < TILE_COLS; ++col ) 
-        {
-            if( tm->tm_texture_atlas_indexes[ row ][ col ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-                && tm->tm_texture_atlas_indexes[ row ][ col ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
-            {
-                SDL_Rect current_tile_rect = {col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE};
 
-                if ( SDL_HasIntersection( &pac_collision_check_extension_rect, &current_tile_rect ) ) 
-                {
-                    return SDL_TRUE;
-                }
-            }
-            
-        }
-        
+void pac_collect_dot( Pacmonster *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *score ) {
+    if( dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] == 'x') {
+        dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] = ' ';
+        *score = *score + 10;
+        printf("Score: %d\n", *score);
     }
-    return SDL_FALSE;
+
 }
 
 
 void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, TileMap *tm ) {
 
-    //test
+    // don't allow changing direciton if pacman is more than half of the tile
     if( current_key_states[ SDL_SCANCODE_UP ] ) {
         SDL_Point tile_above = { pacmonster->current_tile.x, pacmonster->current_tile.y - 1 };
+        SDL_Rect tile_above_rect = {tile_grid_point_to_screen_point( tile_above, tm->tm_screen_position ).x, tile_grid_point_to_screen_point( tile_above, tm->tm_screen_position ).y, TILE_SIZE, TILE_SIZE };
+
+        if( pacmonster->center_point.x > tile_above_rect.x + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_RIGHT ) {
+            return;
+        }
+
+        if( pacmonster->center_point.x < tile_above_rect.x + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_LEFT ) {
+            return;
+        }
+
         if(tm->tm_texture_atlas_indexes[ tile_above.y ][ tile_above.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
             && tm->tm_texture_atlas_indexes[ tile_above.y ][ tile_above.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
         {
@@ -161,6 +161,15 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
 
     if( current_key_states[ SDL_SCANCODE_DOWN ] ) {
         SDL_Point tile_below = { pacmonster->current_tile.x, pacmonster->current_tile.y + 1 };
+        SDL_Rect tile_below_rect = {tile_grid_point_to_screen_point( tile_below, tm->tm_screen_position ).x, tile_grid_point_to_screen_point( tile_below, tm->tm_screen_position ).y, TILE_SIZE, TILE_SIZE };
+
+        if( pacmonster->center_point.x > tile_below_rect.x + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_RIGHT ) {
+            return;
+        }
+        if( pacmonster->center_point.x < tile_below_rect.x + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_LEFT ) {
+            return;
+        }
+
         if(tm->tm_texture_atlas_indexes[ tile_below.y ][ tile_below.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
             && tm->tm_texture_atlas_indexes[ tile_below.y ][ tile_below.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
         {
@@ -173,6 +182,15 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
 
     if( current_key_states[ SDL_SCANCODE_LEFT ] ) {
         SDL_Point tile_to_left = { pacmonster->current_tile.x - 1, pacmonster->current_tile.y  };
+        SDL_Rect tile_to_left_rect = {tile_grid_point_to_screen_point( tile_to_left, tm->tm_screen_position ).x, tile_grid_point_to_screen_point( tile_to_left, tm->tm_screen_position ).y, TILE_SIZE, TILE_SIZE };
+
+        if( pacmonster->center_point.y > tile_to_left_rect.y + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_DOWN ) {
+            return;
+        }
+        if( pacmonster->center_point.y < tile_to_left_rect.y + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_UP ) {
+            return;
+        }
+
         if(tm->tm_texture_atlas_indexes[ tile_to_left.y ][ tile_to_left.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
             && tm->tm_texture_atlas_indexes[ tile_to_left.y ][ tile_to_left.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
         {
@@ -185,6 +203,15 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
 
     if( current_key_states[ SDL_SCANCODE_RIGHT ] ) {
         SDL_Point tile_to_right = { pacmonster->current_tile.x + 1, pacmonster->current_tile.y };
+        SDL_Rect tile_to_right_rect = {tile_grid_point_to_screen_point( tile_to_right, tm->tm_screen_position ).x, tile_grid_point_to_screen_point( tile_to_right, tm->tm_screen_position ).y, TILE_SIZE, TILE_SIZE };
+
+        if( pacmonster->center_point.y > tile_to_right_rect.y + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_DOWN ) {
+            return;
+        }
+        if( pacmonster->center_point.y < tile_to_right_rect.y + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_UP ) {
+            return;
+        }
+
         if(tm->tm_texture_atlas_indexes[ tile_to_right.y ][ tile_to_right.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
             && tm->tm_texture_atlas_indexes[ tile_to_right.y ][ tile_to_right.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
         {
@@ -194,11 +221,7 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
             return;
         }
     }
-
-    
-
 }
-
 
 
 void pac_move( Pacmonster *pacmonster, Vector_f velocity ) {
@@ -225,16 +248,12 @@ void pac_move( Pacmonster *pacmonster, Vector_f velocity ) {
 
     pacmonster->right_sensor.x = pacmonster->position.x + TILE_SIZE;
     pacmonster->right_sensor.y = pacmonster->position.y + ( TILE_SIZE / 2 );
-
-
-
-
 }
 
 
 void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
     
-    int pac_speed = 260;
+    int pac_speed = 220;
     Vector_f velocity = { 0, 0 };
 
     if( pacmonster->direction == DIR_UP ) {
@@ -249,14 +268,14 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
             velocity.y *= pac_speed * delta_time;
         } 
         else if( pacmonster->center_point.x < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 1;
-            velocity.y = -1;
+            velocity.x = 0.7071068;
+            velocity.y = -0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
         else if( pacmonster->center_point.x >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
-            velocity.x = -1;
-            velocity.y = -1;
+            velocity.x = -0.7071068;
+            velocity.y = -0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
@@ -265,7 +284,6 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
         pac_move(pacmonster, velocity );
 
         // collision
-        //SDL_Point pac_top_sensor = { pacmonster->position.x + ( TILE_SIZE / 2 ), pacmonster->position.y };
 
         SDL_Point target_tile_screen_position = tile_grid_point_to_screen_point( pacmonster->target_tile, tm->tm_screen_position );
         SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
@@ -295,14 +313,14 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
             velocity.y *= pac_speed * delta_time;
         } 
         else if( pacmonster->center_point.x < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 1;
-            velocity.y = 1;
+            velocity.x = 0.7071068;
+            velocity.y = 0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
         else if( pacmonster->center_point.x >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
-            velocity.x = -1;
-            velocity.y = 1;
+            velocity.x = -0.7071068;
+            velocity.y = 0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
@@ -340,14 +358,14 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
             velocity.y *= pac_speed * delta_time;
         } 
         else if( pacmonster->center_point.y < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = -1;
-            velocity.y = 1;
+            velocity.x = -0.7071068;
+            velocity.y = 0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
         else if( pacmonster->center_point.y >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
-            velocity.x = -1;
-            velocity.y = -1;
+            velocity.x = -0.7071068;
+            velocity.y = -0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
@@ -385,14 +403,14 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
             velocity.y *= pac_speed * delta_time;
         } 
         else if( pacmonster->center_point.y < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 1;
-            velocity.y = 1;
+            velocity.x = 0.7071068;
+            velocity.y = 0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
         else if( pacmonster->center_point.y >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
-            velocity.x = 1;
-            velocity.y = -1;
+            velocity.x = 0.7071068;
+            velocity.y = -0.7071068;
             velocity.x *= pac_speed * delta_time;
             velocity.y *= pac_speed * delta_time;
         }
@@ -417,17 +435,11 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
             }
         }
     }
-
 }
 
     
-
 void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
-    // I set this in the move function
-    //pacmonster->collision_rect.x = pacmonster->position.x;
-    //pacmonster->collision_rect.y = pacmonster->position.y;
-    
-    // TODO: Rotation needs to remain whatever it used to be if stopping
+
     double pac_rotation = 0.f;
     SDL_RendererFlip pac_flip = SDL_FLIP_NONE;
     switch( pacmonster->direction ){
@@ -453,10 +465,6 @@ void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
     SDL_Rect pac_rect = {pacmonster->position.x - 4, pacmonster->position.y - 4, TILE_SIZE + 6, TILE_SIZE+6 };
     
     SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_src_sprite_frames[ pacmonster->current_animation_frame_index ], &pac_rect, pac_rotation, NULL, pac_flip );
-
-
-    
-
 }
 
 #endif

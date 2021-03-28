@@ -12,7 +12,12 @@ typedef struct TileSelectionPanel {
     SDL_Texture *texture_atlas;
 } TileSelectionPanel;
 
+typedef enum Mode {
+    TILE_MODE,
+    DOT_MODE
+} Mode;
 
+Mode current_mode = TILE_MODE;
 /**
  * Returns the values in the num_rows and num_cols pointer parameters
  * It'll be something like 2x18 or something like that because an atlas 
@@ -49,6 +54,26 @@ void remove_tile_from_position( SDL_Point mouse_position, TwoDimensionalArrayInd
 }
 
 
+void add_dot_to_position( SDL_Point mouse_position, SDL_Point tile_map_screen_position, char dots[ TILE_ROWS ][ TILE_COLS ] ) {
+    if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
+        return;
+    }
+
+    SDL_Point grid_point = screen_point_to_tile_grid_point( mouse_position,  tile_map_screen_position );
+
+    dots[ grid_point.y ][ grid_point.x ] = 'x';
+}
+
+void remove_dot_from_position( SDL_Point mouse_position, SDL_Point tile_map_screen_position, char dots[ TILE_ROWS ][ TILE_COLS ] ) {
+    if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
+        return;
+    }
+
+    SDL_Point grid_point = screen_point_to_tile_grid_point( mouse_position,  tile_map_screen_position );
+
+    dots[ grid_point.y ][ grid_point.x ] = ' ';
+}
+
 /**
  * renders a grid in whatever the current draw color is
  */
@@ -65,31 +90,41 @@ void render_grid( SDL_Renderer *renderer, int spacing, int x, int y, int w, int 
 
 
 void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *panel, TwoDimensionalArrayIndex selected_texture_atlas_index ) {
+    // texture atlas
     SDL_Rect render_dst_rect = {0, 0, panel->num_cols * panel->tile_size, panel->num_rows * panel->tile_size };
-
     SDL_RenderCopy( renderer, panel->texture_atlas, NULL, &render_dst_rect );
+ 
 
-    SDL_SetRenderDrawColor( renderer, 255,255,120,165);
-    SDL_Rect rect_selected_texture_clip = { selected_texture_atlas_index.c * TILE_SIZE, selected_texture_atlas_index.r * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-    SDL_RenderFillRect( renderer, &rect_selected_texture_clip );
-
+    // highlight selected
+    if( current_mode == TILE_MODE ) {
+        SDL_SetRenderDrawColor( renderer, 255,255,120,165);
+        SDL_Rect rect_selected_texture_clip = { selected_texture_atlas_index.c * TILE_SIZE, selected_texture_atlas_index.r * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+        SDL_RenderFillRect( renderer, &rect_selected_texture_clip );
+    }
+    else if ( current_mode == DOT_MODE ) {
+        SDL_SetRenderDrawColor( renderer, 255,200,0,255);
+        int dot_size = 6;
+        SDL_Rect dot_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - dot_size/2, TILE_SIZE/2 - dot_size/2, dot_size,dot_size};
+        SDL_RenderFillRect( renderer, &dot_rect );
+    }
+    // tile grid
     SDL_SetRenderDrawColor( renderer, 250,50,80,255);
     render_grid( renderer, panel->tile_size, 0, 0, render_dst_rect.w, render_dst_rect.h );
 
 }
 
-void save_tile_map_atlas_indexes_to_file( TileMap *tile_map ) {
-    SDL_RWops *write_context = SDL_RWFromFile("maze_file", "wb" );
-    SDL_RWwrite( write_context, tile_map->tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TILE_ROWS * TILE_COLS );
-    SDL_RWclose( write_context );
-}
+// void save_tile_map_atlas_indexes_to_file( TileMap *tile_map ) {
+//     SDL_RWops *write_context = SDL_RWFromFile("maze_file", "wb" );
+//     SDL_RWwrite( write_context, tile_map->tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TILE_ROWS * TILE_COLS );
+//     SDL_RWclose( write_context );
+// }
 
-void load_tile_map_atlas_indexes_from_file( TileMap *tile_map ){
-    SDL_RWops *read_context = SDL_RWFromFile( "maze_file", "rb" );
-    size_t file_size_bytes = SDL_RWsize( read_context );
-    size_t num_bytes_read = SDL_RWread( read_context, tile_map->tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TILE_ROWS * TILE_COLS );
+// void load_tile_map_atlas_indexes_from_file( TileMap *tile_map ){
+//     SDL_RWops *read_context = SDL_RWFromFile( "maze_file", "rb" );
+//     size_t file_size_bytes = SDL_RWsize( read_context );
+//     size_t num_bytes_read = SDL_RWread( read_context, tile_map->tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TILE_ROWS * TILE_COLS );
 
-}
+// }
 
 
 void update_selected_texture_index_from_screen_based_position( SDL_Point mouse_position, TileSelectionPanel *panel, TwoDimensionalArrayIndex *selection_index ) {
@@ -181,7 +216,8 @@ int main( int argc, char *argv[] ) {
                     quit = SDL_TRUE;
                 }
                 else if ( event.key.keysym.sym == SDLK_s ) {
-                    save_tile_map_atlas_indexes_to_file( &tilemap );
+                    save_tilemap_texture_atlas_indexes_to_file( tilemap.tm_texture_atlas_indexes );
+                    save_dots_to_file( tilemap.tm_dots );
                     SDL_SetRenderDrawColor(renderer, 0,100,0,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
                     SDL_RenderFillRect( renderer, &screen_rect);
@@ -190,12 +226,16 @@ int main( int argc, char *argv[] ) {
                     
                 }
                 else if ( event.key.keysym.sym == SDLK_l ) {
-                    load_tile_map_atlas_indexes_from_file( &tilemap );
+                    try_load_tilemap_texture_atlas_indexes_from_file( tilemap.tm_texture_atlas_indexes );
+                    try_load_dots_from_file( tilemap.tm_dots );
                     SDL_SetRenderDrawColor(renderer, 255,100,100,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
                     SDL_RenderFillRect( renderer, &screen_rect);
                     SDL_RenderPresent( renderer );
                     SDL_Delay( 200 );
+                }
+                else if( event.key.keysym.sym == SDLK_d ) {
+                    current_mode = current_mode == DOT_MODE ? TILE_MODE : DOT_MODE;
                 }
             }
         }
@@ -214,7 +254,12 @@ int main( int argc, char *argv[] ) {
             
             //TODO: add selected tile to position
             update_selected_texture_index_from_screen_based_position( mouse_point, &tile_selection_panel, &selected_texture_atlas_index );
-            add_selected_tile_to_position( mouse_point, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
+            if( current_mode == TILE_MODE ) {
+                add_selected_tile_to_position( mouse_point, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
+            }
+            else if (current_mode == DOT_MODE ) {
+                add_dot_to_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_dots );
+            }
             
             //tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
         }
@@ -231,7 +276,12 @@ int main( int argc, char *argv[] ) {
             }
             //TODO Add selected tile to position
             //tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
-            remove_tile_from_position( mouse_point, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
+            if( current_mode == TILE_MODE ) {
+                remove_tile_from_position( mouse_point, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
+            }
+            else if( current_mode == DOT_MODE ) {
+                remove_dot_from_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_dots );
+            }
         }
 
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);

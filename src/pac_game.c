@@ -13,6 +13,7 @@ int main( int argc, char *argv[] ) {
     SDL_Renderer *renderer;
     Pacmonster *pacmonster;
     TileMap tilemap;
+    unsigned int score = 0;
 
     // Initializing stuff
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -100,10 +101,10 @@ int main( int argc, char *argv[] ) {
 
         pac_inc_animation_frame( pacmonster, &animation_timer, delta_time);
 
-
+        pac_collect_dot( pacmonster, tilemap.tm_dots, &score );
         // DEBUG
         if ( g_show_debug_info ) {
-            SDL_SetRenderDrawColor( renderer, 255,100,100,255);
+            SDL_SetRenderDrawColor( renderer, 150,50,50,255);
             for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
                 SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
             }
@@ -112,8 +113,8 @@ int main( int argc, char *argv[] ) {
             }
             
             // pacman rect
-            SDL_SetRenderDrawColor( renderer, 255,255,0,150 );
-            SDL_RenderFillRect( renderer, &pacmonster->collision_rect);
+            // SDL_SetRenderDrawColor( renderer, 255,255,0,150 );
+            // SDL_RenderFillRect( renderer, &pacmonster->collision_rect);
 
             
 
