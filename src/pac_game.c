@@ -60,6 +60,9 @@ int main( int argc, char *argv[] ) {
     float max_delta_time = 1 / 60.0;
     float previous_frame_ticks = SDL_GetTicks() / 1000.0;
 
+    // dot increment
+    float dot_speed = 0.1f;
+
     while (!quit) {
 
         // semi-fixed timestep
@@ -88,6 +91,25 @@ int main( int argc, char *argv[] ) {
         // UPDATE PACMONSTER
         pac_try_set_direction( pacmonster, current_key_states, &tilemap);
         pac_try_move( pacmonster, &tilemap, delta_time );
+
+        // UPDATE DOTS ANIMATION
+
+        for( int r = 0; r < TILE_ROWS; ++r ) {
+            for( int c = 0; c < TILE_COLS; ++c ) {
+                
+                tilemap.tm_dot_stuff[ r ][ c ].position.y += tilemap.tm_dot_stuff[ r ][ c ].velocity.y ;
+
+                if ( tilemap.tm_dot_stuff[ r ][ c ].position.y < DOT_PADDING ) {
+                    tilemap.tm_dot_stuff[ r ][ c ].position.y = DOT_PADDING;
+                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = 0.08f;
+                }
+                if ( tilemap.tm_dot_stuff[ r ][ c ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING) {
+                    tilemap.tm_dot_stuff[ r ][ c ].position.y = TILE_SIZE - DOT_SIZE - DOT_PADDING;
+                    
+                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = -0.08f;
+                }
+            }
+        }
 
         // RENDER
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
