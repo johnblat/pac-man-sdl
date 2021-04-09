@@ -14,11 +14,16 @@ const int TILE_SIZE = 40; // change to different size if necessary
 const int TILE_COLS = SCREEN_WIDTH / (TILE_SIZE );
 const int TILE_ROWS = SCREEN_HEIGHT / ( TILE_SIZE );
 const int TOTAL_NUMBER_OF_TILES = TILE_ROWS * TILE_COLS;
-const int DOT_SIZE = 6;
-const int DOT_RADIUS = 6 / 2;
-const int DOT_PADDING = 10;
+const int DOT_SIZE = 5;
+const int DOT_RADIUS = DOT_SIZE / 2;
+const int DOT_PADDING = 15;
+const float DOT_SPEED = 12;
 
-
+/**
+ * This is used even for dots that are not on the screen
+ * because dots can appear at anytime and they must remain in sync 
+ * with the other dots
+ */
 typedef struct DotStuff {
     Position_f position;
     Vector_f velocity;
@@ -59,6 +64,8 @@ typedef struct TileMap {
 
     /**
      * If the dots animate or move, this will update
+     * Think of making this a pointer array for DotStuff, then use NULL to represent no dot at the position
+     * However, then i would lose the velocity
      */
     DotStuff tm_dot_stuff[ TILE_ROWS ][ TILE_COLS ];
     /**
@@ -68,6 +75,8 @@ typedef struct TileMap {
      */
 
 } TileMap;
+
+
 
 /**
  * FILE I/O FOR SAVING/LOADING
@@ -86,7 +95,6 @@ void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_tex
     SDL_RWclose( write_context );
 }
 
-// TODO: take in a filename as well
 void try_load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
     char *filename = "maze_file";
     char *read_binary_mode = "rb";
@@ -160,14 +168,14 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
     // initialize dots normalized positions
     for( int row = 0; row < TILE_ROWS; row++ ) {
         for( int col = 0; col < TILE_COLS; col++ ) {
-            tm->tm_dot_stuff[ row ][ col ].position.x = 20;
-            tm->tm_dot_stuff[ row ][ col ].position.y = (  (  col  ) * 7 ) % ( ( TILE_SIZE - DOT_SIZE - DOT_PADDING - DOT_PADDING  ) * 2 ) + DOT_PADDING;//* 2 ) ;
+            tm->tm_dot_stuff[ row ][ col ].position.x = ( TILE_SIZE / 2) - DOT_RADIUS;
+            tm->tm_dot_stuff[ row ][ col ].position.y = (  (  col + row ) ) % ( ( TILE_SIZE - DOT_SIZE - DOT_PADDING - DOT_PADDING  ) * 2 ) + DOT_PADDING;//* 2 ) ;
             if ( tm->tm_dot_stuff[ row ][ col ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING ) {
                 int a  = tm->tm_dot_stuff[ row ][ col ].position.y - ( TILE_SIZE - DOT_SIZE - DOT_PADDING );
-                tm->tm_dot_stuff[ row ][ col ].position.y = ( TILE_SIZE - DOT_SIZE - DOT_PADDING )- a;
+                tm->tm_dot_stuff[ row ][ col ].position.y = ( TILE_SIZE - DOT_SIZE - DOT_PADDING ) - a;
             }
             tm->tm_dot_stuff[ row ][ col ].velocity.x = 0.0f;
-            tm->tm_dot_stuff[ row ][ col ].velocity.y = 0.08f;
+            tm->tm_dot_stuff[ row ][ col ].velocity.y = DOT_SPEED;
         }
     }
         
@@ -247,35 +255,20 @@ void tm_render_with_screen_position_offset( SDL_Renderer *renderer, TileMap *tm 
         }
     }
 
-    /**
-     * 
-     * 0 = 0
-     * 0.1 = 4
-     * 0.2 = 8
-     * 0.3 = 12
-     * ... 
-     * 1 = 40
-     * 
-     * normalize_dot_position -1 to 1
-     * relative_dot_position 0 to 40 ( 0 to TILE_SIZE )
-     * relative = normalized * ( TILE_SIZE  / 2)
-     * 
-     */
     // dots
     for( int row = 0; row < TILE_ROWS; ++row ) {
         for( int col = 0; col < TILE_COLS; ++col ) {
             if( tm->tm_dots[ row ][ col ] == 'x' ) {
 
                 int dot_relative_to_tile_y_position = tm->tm_dot_stuff[ row ][ col ].position.y * (TILE_SIZE);
-                int dot_size = 6;
                 SDL_Rect dot_rect = {
-                    tm->tm_screen_position.x + ( TILE_SIZE * col ) + tm->tm_dot_stuff[ row ][ col ].position.x - DOT_RADIUS,
+                    tm->tm_screen_position.x + ( TILE_SIZE * col ) + tm->tm_dot_stuff[ row ][ col ].position.x,
                     tm->tm_screen_position.y + ( TILE_SIZE * row ) + tm->tm_dot_stuff[ row ][ col ].position.y, //dot_relative_to_tile_y_position,
-                    dot_size,
-                    dot_size
+                    DOT_SIZE,
+                    DOT_SIZE
                 };
                 
-                SDL_SetRenderDrawColor(renderer, 255,200,0,200);
+                SDL_SetRenderDrawColor(renderer, 200,150,0,255);
                 SDL_RenderFillRect( renderer, &dot_rect );
             }
         }

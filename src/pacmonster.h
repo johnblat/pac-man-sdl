@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <math.h>
 #include "jb_types.h"
 #include "constants.h"
@@ -25,12 +26,29 @@ typedef struct AnimationTimer {
     float accumulator;
 } AnimationTimer;
 
-
+// typedef struct Animation {
+//     uint8_t actor_id;
+//     SDL_bool playing;
+//     float frame_interval;
+//     float accumulator;
+//     uint8_t current_frame;
+//     uint8_t num_frames;
+// } Animation;
 
 int pac_src_sprite_size = 64; 
 
 
-typedef struct Pacmonster {
+// typedef struct RenderTexture {
+//     SDL_Texture *texture_atlas;
+//     SDL_Rect *sprite_clips;
+//     uint8_t num_sprite_clips;
+//     uint8_t clip_w;
+//     uint8_t clip_h;
+//     float rotation;
+//     SDL_RendererFlip flip;
+// } RenderTexture;
+
+typedef struct Actor {
     Position_f  position;
     SDL_Point   center_point;
     SDL_Rect    collision_rect;
@@ -124,11 +142,25 @@ void pac_inc_animation_frame( Pacmonster *pacmonster, AnimationTimer *animation_
 }
 
 
-void pac_collect_dot( Pacmonster *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *score ) {
+void pac_collect_dot( Pacmonster *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer ) {
     if( dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] == 'x') {
+        // get rid of dot marker
         dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] = ' ';
-        *score = *score + 10;
-        printf("Score: %d\n", *score);
+        
+        score->score_number += 10;
+        
+        snprintf( score->score_text, 32, "Score : %d", score->score_number );
+        SDL_Surface *score_surface = TTF_RenderText_Solid( score->font, score->score_text, score->score_color );
+
+        SDL_DestroyTexture( score->score_texture );
+        score->score_texture = SDL_CreateTextureFromSurface( renderer, score_surface );
+        score->score_render_dst_rect.x = 10;
+        score->score_render_dst_rect.y = 10;
+        score->score_render_dst_rect.w = score_surface->w;
+        score->score_render_dst_rect.h = score_surface->h;
+
+        SDL_FreeSurface( score_surface );
+
     }
 
 }
@@ -466,5 +498,7 @@ void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
     
     SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_src_sprite_frames[ pacmonster->current_animation_frame_index ], &pac_rect, pac_rotation, NULL, pac_flip );
 }
+
+
 
 #endif

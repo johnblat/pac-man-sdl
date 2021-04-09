@@ -1,23 +1,32 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include "jb_types.h"
 #include "constants.h"
 #include "pacmonster.h"
 #include "tiles.h"
 
+
 SDL_bool g_show_debug_info = SDL_TRUE;
+
+SDL_Color pac_color = {200,150,0};
 
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Pacmonster *pacmonster;
+    TTF_Font *gasted_font; 
     TileMap tilemap;
-    unsigned int score = 0;
 
     // Initializing stuff
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         fprintf( stderr, "Error %s\n", SDL_GetError() );
+        exit( EXIT_FAILURE );
+    }
+
+    if( TTF_Init() < 0 ) {
+        fprintf( stderr, "%s\n", SDL_GetError() );
         exit( EXIT_FAILURE );
     }
 
@@ -40,7 +49,11 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
     
-    
+    gasted_font = TTF_OpenFont("gomarice_no_continue.ttf", 30 );
+    if ( gasted_font == NULL ) {
+        fprintf(stderr, "%s\n", TTF_GetError());
+        exit( EXIT_FAILURE );
+    }
 
     // INIT PACMONSTER
     pacmonster = init_pacmonster( renderer );
@@ -51,6 +64,21 @@ int main( int argc, char *argv[] ) {
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
 
+    // INIT SCORE
+    Score score;
+    score.font = gasted_font;
+    score.score_color = pac_color;
+    score.score_number = 0;
+    SDL_Surface *score_surface = TTF_RenderText_Solid( score.font, "Score : 0", score.score_color);
+    score.score_texture = SDL_CreateTextureFromSurface( renderer, score_surface );
+    score.score_render_dst_rect.x = 10;
+    score.score_render_dst_rect.y = 10;
+    score.score_render_dst_rect.w = score_surface->w;
+    score.score_render_dst_rect.h = score_surface->h;
+
+    SDL_FreeSurface( score_surface );
+
+
     // PREPARE VARIABLES FOR LOOP
     SDL_Event event;
     int quit = 0;
@@ -60,8 +88,6 @@ int main( int argc, char *argv[] ) {
     float max_delta_time = 1 / 60.0;
     float previous_frame_ticks = SDL_GetTicks() / 1000.0;
 
-    // dot increment
-    float dot_speed = 0.1f;
 
     while (!quit) {
 
@@ -90,26 +116,32 @@ int main( int argc, char *argv[] ) {
 
         // UPDATE PACMONSTER
         pac_try_set_direction( pacmonster, current_key_states, &tilemap);
+       
         pac_try_move( pacmonster, &tilemap, delta_time );
+       
+        pac_inc_animation_frame( pacmonster, &animation_timer, delta_time);
+        
+        pac_collect_dot( pacmonster, tilemap.tm_dots, &score, renderer );
 
         // UPDATE DOTS ANIMATION
 
         for( int r = 0; r < TILE_ROWS; ++r ) {
             for( int c = 0; c < TILE_COLS; ++c ) {
                 
-                tilemap.tm_dot_stuff[ r ][ c ].position.y += tilemap.tm_dot_stuff[ r ][ c ].velocity.y ;
+                tilemap.tm_dot_stuff[ r ][ c ].position.y += tilemap.tm_dot_stuff[ r ][ c ].velocity.y * delta_time ;
 
                 if ( tilemap.tm_dot_stuff[ r ][ c ].position.y < DOT_PADDING ) {
                     tilemap.tm_dot_stuff[ r ][ c ].position.y = DOT_PADDING;
-                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = 0.08f;
+                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = DOT_SPEED;
                 }
                 if ( tilemap.tm_dot_stuff[ r ][ c ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING) {
                     tilemap.tm_dot_stuff[ r ][ c ].position.y = TILE_SIZE - DOT_SIZE - DOT_PADDING;
                     
-                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = -0.08f;
+                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = -DOT_SPEED;
                 }
             }
         }
+
 
         // RENDER
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
@@ -119,11 +151,8 @@ int main( int argc, char *argv[] ) {
 
         pac_render( renderer, pacmonster );
 
-        SDL_SetRenderDrawColor( renderer, 255,255,255,255);
+        SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
 
-        pac_inc_animation_frame( pacmonster, &animation_timer, delta_time);
-
-        pac_collect_dot( pacmonster, tilemap.tm_dots, &score );
         // DEBUG
         if ( g_show_debug_info ) {
             SDL_SetRenderDrawColor( renderer, 150,50,50,255);
@@ -134,19 +163,14 @@ int main( int argc, char *argv[] ) {
                 SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
             }
             
-            // pacman rect
-            // SDL_SetRenderDrawColor( renderer, 255,255,0,150 );
-            // SDL_RenderFillRect( renderer, &pacmonster->collision_rect);
-
-            
 
             // current_tile
-            SDL_SetRenderDrawColor( renderer, 255, 0, 255,120);
+            SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
             SDL_Rect tile_rect = { pacmonster->current_tile.x * TILE_SIZE, pacmonster->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
             SDL_RenderFillRect( renderer, &tile_rect);
 
             // target tile 
-            SDL_SetRenderDrawColor( renderer, 255, 0, 0, 255 );
+            SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
             SDL_Rect target_rect = { pacmonster->target_tile.x * TILE_SIZE, pacmonster->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderFillRect( renderer, &target_rect );
             
@@ -242,12 +266,8 @@ int main( int argc, char *argv[] ) {
 
 
         }
-    
-    
         SDL_RenderPresent( renderer );
     }
-
-
 
     // CLOSE DOWN
     SDL_DestroyRenderer( renderer );
