@@ -7,7 +7,7 @@ COMPILER_FLAGS = -w
 
 SDL_INC = -I/usr/include/SDL2
 
-SDL_LIBS = -lSDL2 -lSDL2main -lm  -lSDL2_image
+SDL_LIBS = -lSDL2 -lSDL2main -lm  -lSDL2_image -lSDL2_ttf
 
 
 EXE = ./bin/pac_game

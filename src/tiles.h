@@ -169,7 +169,7 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
     for( int row = 0; row < TILE_ROWS; row++ ) {
         for( int col = 0; col < TILE_COLS; col++ ) {
             tm->tm_dot_stuff[ row ][ col ].position.x = ( TILE_SIZE / 2) - DOT_RADIUS;
-            tm->tm_dot_stuff[ row ][ col ].position.y = (  (  col + row ) ) % ( ( TILE_SIZE - DOT_SIZE - DOT_PADDING - DOT_PADDING  ) * 2 ) + DOT_PADDING;//* 2 ) ;
+            tm->tm_dot_stuff[ row ][ col ].position.y = (  (  col + row ) ) % ( ( TILE_SIZE - DOT_SIZE - DOT_PADDING - DOT_PADDING  ) * 2 ) + DOT_PADDING;
             if ( tm->tm_dot_stuff[ row ][ col ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING ) {
                 int a  = tm->tm_dot_stuff[ row ][ col ].position.y - ( TILE_SIZE - DOT_SIZE - DOT_PADDING );
                 tm->tm_dot_stuff[ row ][ col ].position.y = ( TILE_SIZE - DOT_SIZE - DOT_PADDING ) - a;

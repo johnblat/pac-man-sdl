@@ -5,12 +5,16 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <math.h>
+#include "animation.h"
 #include "jb_types.h"
 #include "constants.h"
 #include "tiles.h"
 
-#define NUM_PAC_ANIMATION_FRAMES 4 
+/**
+ * Actor is responsible for interacting with other actors, objects, and the world itself via simulation
+ */
 
+const int ACTOR_SIZE = TILE_SIZE;
 
 typedef enum Direction {
     DIR_LEFT,
@@ -21,37 +25,14 @@ typedef enum Direction {
 } Direction;
 
 
-typedef struct AnimationTimer {
-    float frame_interval;
-    float accumulator;
-} AnimationTimer;
-
-// typedef struct Animation {
-//     uint8_t actor_id;
-//     SDL_bool playing;
-//     float frame_interval;
-//     float accumulator;
-//     uint8_t current_frame;
-//     uint8_t num_frames;
-// } Animation;
 
 int pac_src_sprite_size = 64; 
 
 
-// typedef struct RenderTexture {
-//     SDL_Texture *texture_atlas;
-//     SDL_Rect *sprite_clips;
-//     uint8_t num_sprite_clips;
-//     uint8_t clip_w;
-//     uint8_t clip_h;
-//     float rotation;
-//     SDL_RendererFlip flip;
-// } RenderTexture;
 
 typedef struct Actor {
     Position_f  position;
     SDL_Point   center_point;
-    SDL_Rect    collision_rect;
     SDL_Point   current_tile;
     SDL_Point   target_tile;
     SDL_Point   top_sensor;
@@ -59,90 +40,84 @@ typedef struct Actor {
     SDL_Point   left_sensor;
     SDL_Point   right_sensor;
     Direction   direction;
-    SDL_Texture *texture_atlas;
-    SDL_Rect    pac_src_sprite_frames[ NUM_PAC_ANIMATION_FRAMES ];
-    int         current_animation_frame_index;
+} Actor;
 
-} Pacmonster;
-
-void pac_set_current_tile( Pacmonster *pacmonster ) {
-    pacmonster->current_tile.x = ( ( pacmonster->position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
-    pacmonster->current_tile.y = ( ( ( pacmonster->position.y + TILE_SIZE / 2 ) - (TILE_SIZE * 2 ) ) / TILE_SIZE ) ;
+void actor_set_current_tile( Actor *actor ) {
+    actor->current_tile.x = ( ( actor->position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
+    actor->current_tile.y = ( ( ( actor->position.y + TILE_SIZE / 2 ) - (TILE_SIZE * 2 ) ) / TILE_SIZE ) ;
 }
 
-Pacmonster *init_pacmonster( SDL_Renderer *renderer ) {
-    Pacmonster *pacmonster;
-    pacmonster = ( Pacmonster *) malloc( sizeof( Pacmonster ) );
+Actor *init_actor( Position_f initial_position ) {
+    Actor *actor;
+    actor = ( Actor *) malloc( sizeof( Actor ) );
 
-    pacmonster->position.x =  TILE_SIZE ;
-    pacmonster->position.y = TILE_SIZE * 17;
+    // actor->position.x =  TILE_SIZE ;
+    // actor->position.y = TILE_SIZE * 17;
+    actor->position.x = initial_position.x;
+    actor->position.y = initial_position.y;
 
-    pacmonster->center_point.x = ( int ) pacmonster->position.x + ( TILE_SIZE / 2 );
-    pacmonster->center_point.y = ( int ) pacmonster->position.y + ( TILE_SIZE / 2 );
+    actor->center_point.x = ( int ) actor->position.x + ( ACTOR_SIZE / 2 );
+    actor->center_point.y = ( int ) actor->position.y + ( ACTOR_SIZE / 2 );
 
-    pacmonster->direction = DIR_NONE;
+    actor->top_sensor.x = actor->position.x + ( ACTOR_SIZE / 2 );
+    actor->top_sensor.y = actor->position.y;
 
-    pacmonster->collision_rect.x = pacmonster->position.x;
-    pacmonster->collision_rect.y = pacmonster->position.y;
+    actor->bottom_sensor.x = actor->position.x + ( ACTOR_SIZE / 2 );
+    actor->bottom_sensor.y = actor->position.y + ACTOR_SIZE;
 
-    pac_set_current_tile( pacmonster );
+    actor->left_sensor.x = actor->position.x;
+    actor->left_sensor.y = actor->position.y + ( ACTOR_SIZE / 2 );
 
-    pacmonster->collision_rect.w = TILE_SIZE ;
-    pacmonster->collision_rect.h = TILE_SIZE ;
+    actor->right_sensor.x = actor->position.x + ACTOR_SIZE;
+    actor->right_sensor.y = actor->position.y + ( ACTOR_SIZE / 2 );    
+
+    actor->direction = DIR_NONE;
+
+    actor_set_current_tile( actor );
+    actor->target_tile = actor->current_tile;
+
     
-    pacmonster->current_animation_frame_index = 0;
+    // actor->current_animation_frame_index = 0;
 
-    SDL_Surface *pacmonster_surface = IMG_Load("pac_monster.png");
-    if( pacmonster_surface == NULL ) {
-        fprintf( stderr, "Error %s\n ", IMG_GetError() );
-        exit( EXIT_FAILURE );
-    }
+    // SDL_Surface *pacmonster_surface = IMG_Load("pac_monster.png");
+    // if( pacmonster_surface == NULL ) {
+    //     fprintf( stderr, "Error %s\n ", IMG_GetError() );
+    //     exit( EXIT_FAILURE );
+    // }
 
-    pacmonster->texture_atlas = SDL_CreateTextureFromSurface( renderer, pacmonster_surface );
-    if( pacmonster->texture_atlas == NULL ) {
-        fprintf( stderr, "Error %s\n ", SDL_GetError() );
-        exit( EXIT_FAILURE );
-    }
+    // actor->texture_atlas = SDL_CreateTextureFromSurface( renderer, pacmonster_surface );
+    // if( actor->texture_atlas == NULL ) {
+    //     fprintf( stderr, "Error %s\n ", SDL_GetError() );
+    //     exit( EXIT_FAILURE );
+    // }
 
-    SDL_FreeSurface( pacmonster_surface );
+    // SDL_FreeSurface( pacmonster_surface );
 
-    pacmonster->pac_src_sprite_frames[ 0 ].x = 0;
-    pacmonster->pac_src_sprite_frames[ 0 ].y = 0;
-    pacmonster->pac_src_sprite_frames[ 0 ].w = 64;
-    pacmonster->pac_src_sprite_frames[ 0 ].h = 64;
+    // actor->pac_src_sprite_frames[ 0 ].x = 0;
+    // actor->pac_src_sprite_frames[ 0 ].y = 0;
+    // actor->pac_src_sprite_frames[ 0 ].w = 64;
+    // actor->pac_src_sprite_frames[ 0 ].h = 64;
 
-    pacmonster->pac_src_sprite_frames[ 1 ].x = 64;
-    pacmonster->pac_src_sprite_frames[ 1 ].y = 0;
-    pacmonster->pac_src_sprite_frames[ 1 ].w = 64;
-    pacmonster->pac_src_sprite_frames[ 1 ].h = 64;
+    // actor->pac_src_sprite_frames[ 1 ].x = 64;
+    // actor->pac_src_sprite_frames[ 1 ].y = 0;
+    // actor->pac_src_sprite_frames[ 1 ].w = 64;
+    // actor->pac_src_sprite_frames[ 1 ].h = 64;
 
-    pacmonster->pac_src_sprite_frames[ 2 ].x = 128;
-    pacmonster->pac_src_sprite_frames[ 2 ].y = 0;
-    pacmonster->pac_src_sprite_frames[ 2 ].w = 64;
-    pacmonster->pac_src_sprite_frames[ 2 ].h = 64;
+    // actor->pac_src_sprite_frames[ 2 ].x = 128;
+    // actor->pac_src_sprite_frames[ 2 ].y = 0;
+    // actor->pac_src_sprite_frames[ 2 ].w = 64;
+    // actor->pac_src_sprite_frames[ 2 ].h = 64;
 
-    pacmonster->pac_src_sprite_frames[ 3 ].x = 192;
-    pacmonster->pac_src_sprite_frames[ 3 ].y = 0;
-    pacmonster->pac_src_sprite_frames[ 3 ].w = 64;
-    pacmonster->pac_src_sprite_frames[ 3 ].h = 64;
+    // actor->pac_src_sprite_frames[ 3 ].x = 192;
+    // actor->pac_src_sprite_frames[ 3 ].y = 0;
+    // actor->pac_src_sprite_frames[ 3 ].w = 64;
+    // actor->pac_src_sprite_frames[ 3 ].h = 64;
 
-    return pacmonster;
+    return actor;
 }
 
 
-void pac_inc_animation_frame( Pacmonster *pacmonster, AnimationTimer *animation_timer, float delta_time ) {
-    animation_timer->accumulator += delta_time ;//* 1000;
-    if ( animation_timer->accumulator > animation_timer->frame_interval ) {
-        animation_timer->accumulator = 0;
-        pacmonster->current_animation_frame_index++;
-    }
-    if ( pacmonster->current_animation_frame_index >= NUM_PAC_ANIMATION_FRAMES ) {
-        pacmonster->current_animation_frame_index = 0;
-    }
-}
-
-
-void pac_collect_dot( Pacmonster *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer ) {
+void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer ) {
     if( dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] == 'x') {
         // get rid of dot marker
         dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] = ' ';
@@ -166,7 +141,7 @@ void pac_collect_dot( Pacmonster *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS 
 }
 
 
-void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_states, TileMap *tm ) {
+void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, TileMap *tm ) {
 
     // don't allow changing direciton if pacman is more than half of the tile
     if( current_key_states[ SDL_SCANCODE_UP ] ) {
@@ -256,15 +231,12 @@ void pac_try_set_direction( Pacmonster *pacmonster, const Uint8 *current_key_sta
 }
 
 
-void pac_move( Pacmonster *pacmonster, Vector_f velocity ) {
+void pac_move( Actor *pacmonster, Vector_f velocity ) {
     pacmonster->position.x += velocity.x;
     pacmonster->position.y += velocity.y;
 
     pacmonster->center_point.x = ( int ) pacmonster->position.x + ( TILE_SIZE / 2 );
     pacmonster->center_point.y = ( int ) pacmonster->position.y + ( TILE_SIZE / 2 );
-
-    pacmonster->collision_rect.x = pacmonster->position.x;
-    pacmonster->collision_rect.y = pacmonster->position.y;
 
     pacmonster->current_tile.x = ( ( pacmonster->position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
     pacmonster->current_tile.y = ( ( ( pacmonster->position.y + TILE_SIZE / 2 ) - (TILE_SIZE * 2 ) ) / TILE_SIZE ) ;
@@ -283,7 +255,7 @@ void pac_move( Pacmonster *pacmonster, Vector_f velocity ) {
 }
 
 
-void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
+void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
     
     int pac_speed = 220;
     Vector_f velocity = { 0, 0 };
@@ -469,35 +441,23 @@ void pac_try_move( Pacmonster *pacmonster,  TileMap *tm, float delta_time ) {
     }
 }
 
-    
-void pac_render( SDL_Renderer *renderer, Pacmonster *pacmonster ){
+ 
+//         case DIR_UP:
+//             pac_rotation = 270.f;
+//             break;
+//         case DIR_DOWN:
+//             pac_rotation = 90.f;
+//             break;
+//         case DIR_LEFT:
+//             pac_flip = SDL_FLIP_HORIZONTAL;
+//             break;
+//         case DIR_RIGHT:
+//             pac_rotation = 0.f;
+//             break;
+//         case DIR_NONE:
+//             break;
 
-    double pac_rotation = 0.f;
-    SDL_RendererFlip pac_flip = SDL_FLIP_NONE;
-    switch( pacmonster->direction ){
-        case DIR_UP:
-            pac_rotation = 270.f;
-            break;
-        case DIR_DOWN:
-            pac_rotation = 90.f;
-            break;
-        case DIR_LEFT:
-            pac_flip = SDL_FLIP_HORIZONTAL;
-            break;
-        case DIR_RIGHT:
-            pac_rotation = 0.f;
-            break;
-        case DIR_NONE:
-            break;
-    }
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-    
-    SDL_Rect pac_rect = {pacmonster->position.x - 4, pacmonster->position.y - 4, TILE_SIZE + 6, TILE_SIZE+6 };
-    
-    SDL_RenderCopyEx(renderer, pacmonster->texture_atlas, &pacmonster->pac_src_sprite_frames[ pacmonster->current_animation_frame_index ], &pac_rect, pac_rotation, NULL, pac_flip );
-}
 
 
 
