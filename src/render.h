@@ -38,23 +38,29 @@ RenderTexture *init_render_texture(SDL_Renderer *renderer, const char *filename,
 
     int stride = surface->w / num_sprites;
 
-    render_texture->sprite_clips = (SDL_Rect *) malloc(sizeof(SDL_Rect) * 4);
-    render_texture->sprite_clips[ 0 ].x = 0;
-    render_texture->sprite_clips[ 0 ].y = 0;
-    render_texture->sprite_clips[ 0 ].w = stride;
-    render_texture->sprite_clips[ 0 ].h = stride;
-    render_texture->sprite_clips[ 1 ].x = stride;
-    render_texture->sprite_clips[ 1 ].y = 0;
-    render_texture->sprite_clips[ 1 ].w = stride;
-    render_texture->sprite_clips[ 1 ].h = stride;
-    render_texture->sprite_clips[ 2 ].x = stride * 2;
-    render_texture->sprite_clips[ 2 ].y = 0;
-    render_texture->sprite_clips[ 2 ].w = stride;
-    render_texture->sprite_clips[ 2 ].h = stride;
-    render_texture->sprite_clips[ 3 ].x = stride * 3;
-    render_texture->sprite_clips[ 3 ].y = 0;
-    render_texture->sprite_clips[ 3 ].w = stride;
-    render_texture->sprite_clips[ 3 ].h = stride;
+    render_texture->sprite_clips = (SDL_Rect *) malloc(sizeof(SDL_Rect) * num_sprites);
+    for( int i = 0; i < num_sprites; ++i ) {
+        render_texture->sprite_clips[ i ].x = i * stride;
+        render_texture->sprite_clips[ i ].y = 0;
+        render_texture->sprite_clips[ i ].w = stride;
+        render_texture->sprite_clips[ i ].h = stride;
+    }
+    // render_texture->sprite_clips[ 0 ].x = 0;
+    // render_texture->sprite_clips[ 0 ].y = 0;
+    // render_texture->sprite_clips[ 0 ].w = stride;
+    // render_texture->sprite_clips[ 0 ].h = stride;
+    // render_texture->sprite_clips[ 1 ].x = stride;
+    // render_texture->sprite_clips[ 1 ].y = 0;
+    // render_texture->sprite_clips[ 1 ].w = stride;
+    // render_texture->sprite_clips[ 1 ].h = stride;
+    // render_texture->sprite_clips[ 2 ].x = stride * 2;
+    // render_texture->sprite_clips[ 2 ].y = 0;
+    // render_texture->sprite_clips[ 2 ].w = stride;
+    // render_texture->sprite_clips[ 2 ].h = stride;
+    // render_texture->sprite_clips[ 3 ].x = stride * 3;
+    // render_texture->sprite_clips[ 3 ].y = 0;
+    // render_texture->sprite_clips[ 3 ].w = stride;
+    // render_texture->sprite_clips[ 3 ].h = stride;
 
     render_texture->dest_rect.x = 0;
     render_texture->dest_rect.y = 0;
@@ -64,6 +70,7 @@ RenderTexture *init_render_texture(SDL_Renderer *renderer, const char *filename,
     render_texture->rotation = 0.0f;
 
     render_texture->num_sprite_clips = num_sprites;
+    render_texture->current_sprite_clip = 0;
 
     render_texture->flip = SDL_FLIP_NONE;
 
@@ -72,29 +79,29 @@ RenderTexture *init_render_texture(SDL_Renderer *renderer, const char *filename,
     return render_texture;
 }
 
-void render_render_textures( SDL_Renderer *renderer, RenderTexture *render_textures, int number_render_textures ) {
+void render_render_textures( SDL_Renderer *renderer, RenderTexture **render_textures, int number_render_textures ) {
     for( int i = 0; i < number_render_textures; ++i ) {
-        SDL_Rect src_rect = render_textures[ i ].sprite_clips[ render_textures->current_sprite_clip ];
-        SDL_RenderCopyEx( renderer, render_textures[ i ].texture_atlas, &src_rect, &render_textures[ i ].dest_rect, render_textures[ i ].rotation, NULL, render_textures[ i ].flip);
+        SDL_Rect src_rect = render_textures[ i ]->sprite_clips[ render_textures[ i ]->current_sprite_clip ];
+        SDL_RenderCopyEx( renderer, render_textures[ i ]->texture_atlas, &src_rect, &render_textures[ i ]->dest_rect, render_textures[ i ]->rotation, NULL, render_textures[ i ]->flip);
     }
 }
 
 
-void set_render_texture_values_based_on_animation( Animation *animations, RenderTexture *render_textures, int num ) {
+void set_render_texture_values_based_on_animation( Animation **animations, RenderTexture **render_textures, int num ) {
     for( int i = 0; i < num; ++i ){
-        render_textures[ i ].current_sprite_clip = animations[ i ].current_frame;
+        render_textures[ i ]->current_sprite_clip = animations[ i ]->current_frame;
     }
 }
 
-void set_render_texture_values_based_on_actor( Actor *actors, RenderTexture *render_textures, int num ) {
+void set_render_texture_values_based_on_actor( Actor **actors, RenderTexture **render_textures, int num ) {
     for( int i = 0; i < num; ++i ) {
         // center the sprite around the actor size
-        render_textures[ i ].dest_rect.x = actors[ i ].position.x - ( render_textures[ i ].sprite_clips[ render_textures->current_sprite_clip ].w - ACTOR_SIZE ) / 2;
-        render_textures[ i ].dest_rect.y = actors[ i ].position.y - ( render_textures[ i ].sprite_clips[ render_textures->current_sprite_clip ].h  - ACTOR_SIZE ) / 2;
-        render_textures[ i ].dest_rect.w = render_textures[ i ].sprite_clips[ render_textures->current_sprite_clip ].w;
-        render_textures[ i ].dest_rect.h = render_textures[ i ].sprite_clips[ render_textures->current_sprite_clip ].h;
+        render_textures[ i ]->dest_rect.x = actors[ i ]->position.x - ( render_textures[ i ]->sprite_clips[ render_textures[ i ]->current_sprite_clip ].w - ACTOR_SIZE ) / 2;
+        render_textures[ i ]->dest_rect.y = actors[ i ]->position.y - ( render_textures[ i ]->sprite_clips[ render_textures[ i ]->current_sprite_clip ].h  - ACTOR_SIZE ) / 2;
+        render_textures[ i ]->dest_rect.w = render_textures[ i ]->sprite_clips[ render_textures[ i ]->current_sprite_clip ].w;
+        render_textures[ i ]->dest_rect.h = render_textures[ i ]->sprite_clips[ render_textures[ i ]->current_sprite_clip ].h;
 
-        render_textures[ i ].flip = actors[ i ].direction == DIR_LEFT ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+        render_textures[ i ]->flip = actors[ i ]->direction == DIR_LEFT ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
     }
 }
 

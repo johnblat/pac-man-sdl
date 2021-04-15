@@ -17,9 +17,9 @@ SDL_Color pac_color = {200,150,0};
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    Actor **actors = (Actor **) malloc(sizeof(Actor *) * 5);
-    Animation *pac_animation;
-    RenderTexture **render_textures = ( RenderTexture **) malloc(sizeof( RenderTexture *) * 5);
+    Actor *actors[ 2 ]; //= (Actor **) malloc(sizeof(Actor *) * 5);
+    Animation *animations[ 2 ];// ( Animation **) malloc(sizeof(Animation *) * 5);
+    RenderTexture *render_textures[ 2 ];// = ( RenderTexture **) malloc(sizeof( RenderTexture *) * 5);
     TTF_Font *gasted_font; 
     TileMap tilemap;
 
@@ -63,7 +63,13 @@ int main( int argc, char *argv[] ) {
     Position_f initial_pos = { TILE_SIZE, TILE_SIZE * 17 };
     actors[ 0 ] = init_actor( initial_pos );
     render_textures[ 0 ] = init_render_texture( renderer, "pac_monster.png", 4);
-    pac_animation = init_animation( 0, 0.08f, render_textures[ 0 ]->num_sprite_clips );
+    animations[ 0 ] = init_animation( 0, 0.08f, render_textures[ 0 ]->num_sprite_clips );
+
+    // INIT GHOST
+    Position_f ghost_pos = { TILE_SIZE, TILE_SIZE * 19};
+    actors[ 1 ] = init_actor( ghost_pos );
+    render_textures[ 1 ] = init_render_texture( renderer, "blinky.png", 1);
+    animations[ 1 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
 
 
     // INIT TILEMAP
@@ -125,9 +131,15 @@ int main( int argc, char *argv[] ) {
        
         pac_try_move( actors[ 0 ], &tilemap, delta_time );
        
-        inc_animation_frame( pac_animation, 1, delta_time);
+        inc_animation_frame( animations[ 0 ], 1, delta_time);
         
         pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &score, renderer );
+
+
+        // ghost
+        pac_try_set_direction( actors[ 1 ], current_key_states, &tilemap);
+       
+        pac_try_move( actors[ 1 ], &tilemap, delta_time );
 
         // UPDATE DOTS ANIMATION
 
@@ -151,15 +163,15 @@ int main( int argc, char *argv[] ) {
 
         // RENDER
 
-        set_render_texture_values_based_on_actor( actors[ 0 ], render_textures[ 0 ], 1 );
-        set_render_texture_values_based_on_animation( pac_animation, render_textures[ 0 ], 1 );
+        set_render_texture_values_based_on_actor( actors, render_textures, 2 );
+        set_render_texture_values_based_on_animation( animations, render_textures, 2 );
 
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );    
 
         tm_render_with_screen_position_offset( renderer, &tilemap );
 
-        render_render_textures( renderer, render_textures[ 0 ], 1 );
+        render_render_textures( renderer, render_textures, 2 );
 
         SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
 
@@ -175,14 +187,20 @@ int main( int argc, char *argv[] ) {
             
 
             // current_tile
-            SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
-            SDL_Rect tile_rect = { actors[ 0 ]->current_tile.x * TILE_SIZE, actors[ 0 ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
-            SDL_RenderFillRect( renderer, &tile_rect);
+            for(int i = 0; i < 2; ++i) {
+                SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
+                SDL_Rect tile_rect = { actors[ i ]->current_tile.x * TILE_SIZE, actors[ i ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
+                SDL_RenderFillRect( renderer, &tile_rect);
+            }
+            
 
             // target tile 
-            SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
-            SDL_Rect target_rect = { actors[ 0 ]->target_tile.x * TILE_SIZE, actors[ 0 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-            SDL_RenderFillRect( renderer, &target_rect );
+            for( int i = 0; i < 2; ++i ) {
+                SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
+                SDL_Rect target_rect = { actors[ i ]->target_tile.x * TILE_SIZE, actors[ i ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                SDL_RenderFillRect( renderer, &target_rect );
+
+            }
             
             // pacman center point
             SDL_SetRenderDrawColor( renderer, 255,255,255,255);

@@ -25,10 +25,7 @@ typedef enum Direction {
 } Direction;
 
 
-
-int pac_src_sprite_size = 64; 
-
-
+//int pac_src_sprite_size = 64; 
 
 typedef struct Actor {
     Position_f  position;
