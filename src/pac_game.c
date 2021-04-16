@@ -14,6 +14,74 @@ SDL_bool g_show_debug_info = SDL_TRUE;
 
 SDL_Color pac_color = {200,150,0};
 
+void set_blinky_target_tile( Actor **actors, TileMap *tm ) {
+    SDL_Point blinky_tile_above, blinky_tile_below, blinky_tile_left, blinky_tile_right;
+
+    SDL_Point blinky_current_tile = actors[ 1 ]->current_tile;
+    SDL_Point pac_current_tile = actors[ 0 ]->current_tile;
+
+    blinky_tile_above.x = blinky_current_tile.x;
+    blinky_tile_above.y = blinky_current_tile.y - 1;
+    blinky_tile_below.x = blinky_current_tile.x;
+    blinky_tile_below.y = blinky_current_tile.y + 1;
+    blinky_tile_left.x = blinky_current_tile.x - 1;
+    blinky_tile_left.y = blinky_current_tile.y;
+    blinky_tile_right.x = blinky_current_tile.x + 1;
+    blinky_tile_right.y = blinky_current_tile.y;
+
+    float above_to_pac_dist = ( blinky_tile_above.x - pac_current_tile.x ) * ( blinky_tile_above.x - pac_current_tile.x )  
+        + ( blinky_tile_above.y - pac_current_tile.y ) * ( blinky_tile_above.y - pac_current_tile.y );
+    float below_to_pac_dist = ( blinky_tile_below.x - pac_current_tile.x ) * ( blinky_tile_below.x - pac_current_tile.x ) 
+        + ( blinky_tile_below.y - pac_current_tile.y ) * ( blinky_tile_below.y - pac_current_tile.y );
+    float left_to_pac_dist = ( blinky_tile_left.x - pac_current_tile.x ) * ( blinky_tile_left.x - pac_current_tile.x )  
+        + ( blinky_tile_left.y - pac_current_tile.y ) * ( blinky_tile_left.y - pac_current_tile.y );
+    float right_to_pac_dist = ( blinky_tile_right.x - pac_current_tile.x ) * ( blinky_tile_right.x - pac_current_tile.x ) 
+        + ( blinky_tile_right.y - pac_current_tile.y ) * ( blinky_tile_right.y - pac_current_tile.y );
+
+    Uint8 num_possible_tiles = 0;
+    SDL_Point possible_tiles[ 3 ];
+    float lengths_to_pac[ 3 ];
+    //SDL_bool chosen_tile = { SDL_FALSE, SDL_FALSE, SDL_FALSE };
+
+    if( actors[ 0 ]->direction == DIR_UP ) {
+        // 
+        if( tm->tm_texture_atlas_indexes[ blinky_tile_above.y ][ blinky_tile_above.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r ) {
+            possible_tiles[ num_possible_tiles ] = blinky_tile_above;
+            ++num_possible_tiles;
+        }
+        if(  tm->tm_texture_atlas_indexes[ blinky_tile_left.y ][ blinky_tile_left.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r ) {
+            possible_tiles[ num_possible_tiles ] = blinky_tile_left;
+            ++num_possible_tiles;
+        }
+        if( tm->tm_texture_atlas_indexes[ blinky_tile_right.y ][ blinky_tile_right.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r ) {
+            possible_tiles[ num_possible_tiles ] = blinky_tile_right;
+            ++num_possible_tiles;
+        }
+
+        // only one way to go
+        if(num_possible_tiles == 1 ) {
+            actors[ 1 ]->target_tile = possible_tiles[ 0 ];
+        }
+
+        // multiple choices - pick shortest one
+        Uint8 index_of_largest = 0; // used for access at the end
+        float length_of_largest = 0; // used for checking during iterations
+        for( int i = 1; i < num_possible_tiles; ++i ) {
+            lengths_to_pac[ i ] = ( possible_tiles[ i ].x - pac_current_tile.x ) * ( possible_tiles[ i ].x - pac_current_tile.x ) + ( possible_tiles[ i ].y - pac_current_tile.y ) * ( possible_tiles[ i ].y - pac_current_tile.y );
+            
+            if( lengths_to_pac[ i ] > length_of_largest) { 
+                index_of_largest = i;
+                length_of_largest = lengths_to_pac[ i ];
+            }
+        }
+
+        SDL_assert( index_of_largest <= 3 );
+        actors[ 1 ]->target_tile = possible_tiles[ index_of_largest ];
+    }
+
+    
+}
+
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
