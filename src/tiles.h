@@ -12,7 +12,7 @@
  */
 const int TILE_SIZE = 40; // change to different size if necessary
 const int TILE_COLS = SCREEN_WIDTH / (TILE_SIZE );
-const int TILE_ROWS = SCREEN_HEIGHT / ( TILE_SIZE );
+const int TILE_ROWS = SCREEN_HEIGHT / ( TILE_SIZE ) - 2;
 const int TOTAL_NUMBER_OF_TILES = TILE_ROWS * TILE_COLS;
 const int DOT_SIZE = 5;
 const int DOT_RADIUS = DOT_SIZE / 2;

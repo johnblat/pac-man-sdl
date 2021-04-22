@@ -12,6 +12,10 @@ typedef struct Vector_f {
     float x, y;
 } Vector_f;
 
+typedef struct Line_Points {
+    SDL_Point a, b;
+} Line_Points; 
+
 typedef struct Score {
     unsigned int score_number;
     char score_text[32];

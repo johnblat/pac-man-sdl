@@ -14,80 +14,14 @@ SDL_bool g_show_debug_info = SDL_TRUE;
 
 SDL_Color pac_color = {200,150,0};
 
-void set_blinky_target_tile( Actor **actors, TileMap *tm ) {
-    SDL_Point blinky_tile_above, blinky_tile_below, blinky_tile_left, blinky_tile_right;
 
-    SDL_Point blinky_current_tile = actors[ 1 ]->current_tile;
-    SDL_Point pac_current_tile = actors[ 0 ]->current_tile;
-
-    blinky_tile_above.x = blinky_current_tile.x;
-    blinky_tile_above.y = blinky_current_tile.y - 1;
-    blinky_tile_below.x = blinky_current_tile.x;
-    blinky_tile_below.y = blinky_current_tile.y + 1;
-    blinky_tile_left.x = blinky_current_tile.x - 1;
-    blinky_tile_left.y = blinky_current_tile.y;
-    blinky_tile_right.x = blinky_current_tile.x + 1;
-    blinky_tile_right.y = blinky_current_tile.y;
-
-    float above_to_pac_dist = ( blinky_tile_above.x - pac_current_tile.x ) * ( blinky_tile_above.x - pac_current_tile.x )  
-        + ( blinky_tile_above.y - pac_current_tile.y ) * ( blinky_tile_above.y - pac_current_tile.y );
-    float below_to_pac_dist = ( blinky_tile_below.x - pac_current_tile.x ) * ( blinky_tile_below.x - pac_current_tile.x ) 
-        + ( blinky_tile_below.y - pac_current_tile.y ) * ( blinky_tile_below.y - pac_current_tile.y );
-    float left_to_pac_dist = ( blinky_tile_left.x - pac_current_tile.x ) * ( blinky_tile_left.x - pac_current_tile.x )  
-        + ( blinky_tile_left.y - pac_current_tile.y ) * ( blinky_tile_left.y - pac_current_tile.y );
-    float right_to_pac_dist = ( blinky_tile_right.x - pac_current_tile.x ) * ( blinky_tile_right.x - pac_current_tile.x ) 
-        + ( blinky_tile_right.y - pac_current_tile.y ) * ( blinky_tile_right.y - pac_current_tile.y );
-
-    Uint8 num_possible_tiles = 0;
-    SDL_Point possible_tiles[ 3 ];
-    float lengths_to_pac[ 3 ];
-    //SDL_bool chosen_tile = { SDL_FALSE, SDL_FALSE, SDL_FALSE };
-
-    if( actors[ 0 ]->direction == DIR_UP ) {
-        // 
-        if( tm->tm_texture_atlas_indexes[ blinky_tile_above.y ][ blinky_tile_above.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r ) {
-            possible_tiles[ num_possible_tiles ] = blinky_tile_above;
-            ++num_possible_tiles;
-        }
-        if(  tm->tm_texture_atlas_indexes[ blinky_tile_left.y ][ blinky_tile_left.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r ) {
-            possible_tiles[ num_possible_tiles ] = blinky_tile_left;
-            ++num_possible_tiles;
-        }
-        if( tm->tm_texture_atlas_indexes[ blinky_tile_right.y ][ blinky_tile_right.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r ) {
-            possible_tiles[ num_possible_tiles ] = blinky_tile_right;
-            ++num_possible_tiles;
-        }
-
-        // only one way to go
-        if(num_possible_tiles == 1 ) {
-            actors[ 1 ]->target_tile = possible_tiles[ 0 ];
-        }
-
-        // multiple choices - pick shortest one
-        Uint8 index_of_largest = 0; // used for access at the end
-        float length_of_largest = 0; // used for checking during iterations
-        for( int i = 1; i < num_possible_tiles; ++i ) {
-            lengths_to_pac[ i ] = ( possible_tiles[ i ].x - pac_current_tile.x ) * ( possible_tiles[ i ].x - pac_current_tile.x ) + ( possible_tiles[ i ].y - pac_current_tile.y ) * ( possible_tiles[ i ].y - pac_current_tile.y );
-            
-            if( lengths_to_pac[ i ] > length_of_largest) { 
-                index_of_largest = i;
-                length_of_largest = lengths_to_pac[ i ];
-            }
-        }
-
-        SDL_assert( index_of_largest <= 3 );
-        actors[ 1 ]->target_tile = possible_tiles[ index_of_largest ];
-    }
-
-    
-}
 
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    Actor *actors[ 2 ]; //= (Actor **) malloc(sizeof(Actor *) * 5);
-    Animation *animations[ 2 ];// ( Animation **) malloc(sizeof(Animation *) * 5);
-    RenderTexture *render_textures[ 2 ];// = ( RenderTexture **) malloc(sizeof( RenderTexture *) * 5);
+    Actor *actors[ 5 ]; //= (Actor **) malloc(sizeof(Actor *) * 5);
+    Animation *animations[ 5 ];// ( Animation **) malloc(sizeof(Animation *) * 5);
+    RenderTexture *render_textures[ 5 ];// = ( RenderTexture **) malloc(sizeof( RenderTexture *) * 5);
     TTF_Font *gasted_font; 
     TileMap tilemap;
 
@@ -139,6 +73,20 @@ int main( int argc, char *argv[] ) {
     render_textures[ 1 ] = init_render_texture( renderer, "blinky.png", 1);
     animations[ 1 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
 
+    Position_f pinky_position = { TILE_SIZE * 19, TILE_SIZE * 17};
+    actors[ 2 ]= init_actor( pinky_position );
+    render_textures[ 2 ]= init_render_texture( renderer, "pinky.png", 1 );
+    animations[ 2 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
+
+    Position_f inky_position = { TILE_SIZE * 19, TILE_SIZE * 17};
+    actors[ 3 ]= init_actor( pinky_position );
+    render_textures[ 3 ]= init_render_texture( renderer, "inky.png", 1 );
+    animations[ 3 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
+
+    Position_f clyde_position = { TILE_SIZE * 19, TILE_SIZE * 17};
+    actors[ 4 ]= init_actor( pinky_position );
+    render_textures[ 4 ]= init_render_texture( renderer, "clyde.png", 1 );
+    animations[ 4 ] = init_animation( 0, 0.08f, render_textures[ 4 ]->num_sprite_clips );
 
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
@@ -205,9 +153,10 @@ int main( int argc, char *argv[] ) {
 
 
         // ghost
-        pac_try_set_direction( actors[ 1 ], current_key_states, &tilemap);
+        // pac_try_set_direction( actors[ 1 ], current_key_states, &tilemap);
        
-        pac_try_move( actors[ 1 ], &tilemap, delta_time );
+        // pac_try_move( actors[ 1 ], &tilemap, delta_time );
+        ghost_move( actors, &tilemap, delta_time );
 
         // UPDATE DOTS ANIMATION
 
@@ -231,21 +180,22 @@ int main( int argc, char *argv[] ) {
 
         // RENDER
 
-        set_render_texture_values_based_on_actor( actors, render_textures, 2 );
-        set_render_texture_values_based_on_animation( animations, render_textures, 2 );
+        set_render_texture_values_based_on_actor( actors, render_textures, 5 );
+        set_render_texture_values_based_on_animation( animations, render_textures, 5 );
 
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );    
 
         tm_render_with_screen_position_offset( renderer, &tilemap );
 
-        render_render_textures( renderer, render_textures, 2 );
+        render_render_textures( renderer, render_textures, 5 );
 
         SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
 
         // DEBUG
         if ( g_show_debug_info ) {
-            SDL_SetRenderDrawColor( renderer, 150,50,50,255);
+            //grid
+            SDL_SetRenderDrawColor( renderer, 50,50,50,255);
             for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
                 SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
             }
@@ -255,20 +205,36 @@ int main( int argc, char *argv[] ) {
             
 
             // current_tile
-            for(int i = 0; i < 2; ++i) {
+            for(int i = 0; i < 4; ++i) {
                 SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
                 SDL_Rect tile_rect = { actors[ i ]->current_tile.x * TILE_SIZE, actors[ i ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
                 SDL_RenderFillRect( renderer, &tile_rect);
             }
             
 
-            // target tile 
-            for( int i = 0; i < 2; ++i ) {
+            // next tile 
+            for( int i = 0; i < 5; ++i ) {
                 SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
-                SDL_Rect target_rect = { actors[ i ]->target_tile.x * TILE_SIZE, actors[ i ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-                SDL_RenderFillRect( renderer, &target_rect );
+                SDL_Rect next_rect = { actors[ i ]->next_tile.x * TILE_SIZE, actors[ i ]->next_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                SDL_RenderFillRect( renderer, &next_rect );
 
             }
+
+            SDL_SetRenderDrawColor( renderer, 255,0,0,255);
+            SDL_Rect b_target_rect = { actors[ 1 ]->target_tile.x * TILE_SIZE, actors[ 1 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderDrawRect( renderer, &b_target_rect );
+
+            SDL_SetRenderDrawColor( renderer, 255,150,255,255);
+            SDL_Rect p_target_rect = { actors[ 2 ]->target_tile.x * TILE_SIZE, actors[ 2 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderDrawRect( renderer, &p_target_rect );
+
+            SDL_SetRenderDrawColor( renderer, 3,252,248,255);
+            SDL_Rect i_target_rect = { actors[ 3 ]->target_tile.x * TILE_SIZE, actors[ 3 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderDrawRect( renderer, &i_target_rect );
+
+            SDL_SetRenderDrawColor( renderer, 235, 155, 52,255);
+            SDL_Rect c_target_rect = { actors[ 4 ]->target_tile.x * TILE_SIZE, actors[ 4 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderDrawRect( renderer, &c_target_rect );
             
             // pacman center point
             SDL_SetRenderDrawColor( renderer, 255,255,255,255);
