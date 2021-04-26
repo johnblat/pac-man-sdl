@@ -17,6 +17,16 @@ SDL_Point ambush_home_tile = { TILE_COLS - 1, 0 };
 SDL_Point moody_home_tile = { 0, TILE_ROWS - 1 };
 SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
 
+
+// the length of time the ghosts should be in scatter or chase
+// starts with scatter, then alternates.
+// after last element is used, then chase is indefinite
+const uint8_t NUM_SCATTER_CHASE_PERIODS = 9;
+uint8_t g_current_scatter_chase_period = 0;
+uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 7, 20, 7, 20, 5, 20, 5, 0 };
+//uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 2, 2, 2, 2, 2, 2, 2, 0 };
+
+
 /**
  * Actor is responsible for interacting with other actors, objects, and the world itself via simulation
  */
@@ -31,19 +41,7 @@ typedef enum Direction {
     DIR_NONE
 } Direction;
 
-/**
- * More specific Ghost behavior.
- * Ghosts should get a default behavior
- * and an active behavior
- */
-typedef enum {
-    SHADOW,    // blinky and clyde
-    AMBUSH,    // pinky
-    MOODY,     // inky
-    POKEY,     // clyde. Will either make current behavior shadow or scatter.
-    SCATTER,   // all and clyde
-    VULNERABLE // all
-} GhostBehavior;
+Direction opposite_directions[ 4 ] = { DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT };
 
 /**
  * Will be global for all ghosts.
@@ -56,23 +54,8 @@ typedef enum {
     MODE_VULNERABLE // use vulnerable behavior
 } GhostMode;
 
-//int pac_src_sprite_size = 64; 
+GhostMode g_current_ghost_mode = MODE_SCATTER;
 
-typedef struct {
-    SDL_Point next_tile;
-    Direction current_direction;
-    Vector_f velocity;
-} Movement;
-
-typedef struct {
-    int default_behavior;
-    int current_behavior;
-    SDL_Point target_tile;
-} AiDecisions;
-
-typedef struct {
-
-} Sensors;
 
 typedef struct Actor {
     Position_f  position;     // screen position
@@ -86,8 +69,6 @@ typedef struct Actor {
     SDL_Point   right_sensor; // screen position
     Direction   direction;    // direction the actor wants to move
     Vector_f    velocity;     // current velocity
-    GhostBehavior chase_behavior; // the normal chase behavior 
-    GhostBehavior current_behavior; // may or may not be chase behavior depending on their chase behavior or the current mode. For instance, pokey chase behavior will alternate between a current behavior of shadow or scatter. 
 } Actor;
 
 void actor_set_current_tile( Actor *actor ) {
@@ -126,43 +107,35 @@ Actor *init_actor( Position_f initial_position ) {
     return actor;
 }
 
-void set_scatter_next_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
-    actors[ actor_id ]->target_tile = pokey_home_tile;
 
-    SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
-
-    SDL_Point b_current_tile = actors[ actor_id ]->current_tile;
-
-
-    b_tile_above.x = b_current_tile.x;
-    b_tile_above.y = b_current_tile.y - 1;
-    b_tile_below.x = b_current_tile.x;
-    b_tile_below.y = b_current_tile.y + 1;
-    b_tile_left.x = b_current_tile.x - 1;
-    b_tile_left.y = b_current_tile.y;
-    b_tile_right.x = b_current_tile.x + 1;
-    b_tile_right.y = b_current_tile.y;
+void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm ) {
+    SDL_Point tile_above, tile_below, tile_left, tile_right;
+    tile_above.x = actor->current_tile.x;
+    tile_above.y = actor->current_tile.y - 1;
+    tile_below.x = actor->current_tile.x;
+    tile_below.y = actor->current_tile.y + 1;
+    tile_left.x = actor->current_tile.x - 1;
+    tile_left.y = actor->current_tile.y;
+    tile_right.x = actor->current_tile.x + 1;
+    tile_right.y = actor->current_tile.y;
 
     SDL_Point surrounding_tiles[ 4 ];
-    surrounding_tiles[ DIR_UP ] = b_tile_above;
-    surrounding_tiles[ DIR_DOWN ] = b_tile_below;
-    surrounding_tiles[ DIR_LEFT ] = b_tile_left;
-    surrounding_tiles[ DIR_RIGHT ] = b_tile_right;
+    surrounding_tiles[ DIR_UP ] = tile_above;
+    surrounding_tiles[ DIR_DOWN ] = tile_below;
+    surrounding_tiles[ DIR_LEFT ] = tile_left;
+    surrounding_tiles[ DIR_RIGHT ] = tile_right;
 
-    float above_to_pac_dist = ( b_tile_above.x - actors[ actor_id ]->target_tile.x ) * ( b_tile_above.x - actors[ actor_id ]->target_tile.x )  
-        + ( b_tile_above.y - actors[ actor_id ]->target_tile.y ) * ( b_tile_above.y - actors[ actor_id ]->target_tile.y );
-    float below_to_pac_dist = ( b_tile_below.x - actors[ actor_id ]->target_tile.x ) * ( b_tile_below.x - actors[ actor_id ]->target_tile.x ) 
-        + ( b_tile_below.y - actors[ actor_id ]->target_tile.y ) * ( b_tile_below.y - actors[ actor_id ]->target_tile.y );
-    float left_to_pac_dist = ( b_tile_left.x - actors[ actor_id ]->target_tile.x ) * ( b_tile_left.x - actors[ actor_id ]->target_tile.x )  
-        + ( b_tile_left.y - actors[ actor_id ]->target_tile.y ) * ( b_tile_left.y - actors[ actor_id ]->target_tile.y );
-    float right_to_pac_dist = ( b_tile_right.x - actors[ actor_id ]->target_tile.x ) * ( b_tile_right.x - actors[ actor_id ]->target_tile.x ) 
-        + ( b_tile_right.y - actors[ actor_id ]->target_tile.y ) * ( b_tile_right.y - actors[ actor_id ]->target_tile.y );
+    float above_to_target_dist = distance(tile_above.x, tile_above.y,  actor->target_tile.x, actor->target_tile.y ); 
+    float below_to_target_dist = distance(tile_below.x, tile_below.y,  actor->target_tile.x, actor->target_tile.y ); 
+    float left_to_target_dist  = distance(tile_left.x, tile_left.y,  actor->target_tile.x, actor->target_tile.y ); 
+    float right_to_target_dist = distance(tile_right.x, tile_right.y,  actor->target_tile.x, actor->target_tile.y ); 
+
 
     float lengths[ 4 ];
-    lengths[ DIR_UP ] = above_to_pac_dist;
-    lengths[ DIR_DOWN ] = below_to_pac_dist;
-    lengths[ DIR_LEFT ] = left_to_pac_dist;
-    lengths[ DIR_RIGHT ] = right_to_pac_dist;
+    lengths[ DIR_UP ] = above_to_target_dist;
+    lengths[ DIR_DOWN ] = below_to_target_dist;
+    lengths[ DIR_LEFT ] = left_to_target_dist;
+    lengths[ DIR_RIGHT ] = right_to_target_dist;
 
     Direction opposite_directions[ 4 ];
     opposite_directions[ DIR_UP ] = DIR_DOWN;
@@ -179,7 +152,7 @@ void set_scatter_next_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
                 continue;
         }
 
-        if( i == opposite_directions[ actors[ actor_id  ]->direction  ] ) continue;
+        if( i == opposite_directions[ actor->direction  ] ) continue;
 
         if ( lengths[ i ] < shortest_length ) {
             shortest_direction = i;
@@ -187,175 +160,55 @@ void set_scatter_next_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
         }
     }
 
-    actors[ actor_id ]->direction = (Direction) shortest_direction;
-    actors[ actor_id ]->next_tile = surrounding_tiles[ shortest_direction ];
-
+    actor->direction = (Direction) shortest_direction;
+    actor->next_tile = surrounding_tiles[ shortest_direction ];
 }
 
-void set_shadow_next_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
-    SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
+void set_scatter_target_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
+    actors[ actor_id ]->target_tile = pokey_home_tile;
+}
 
-    SDL_Point b_current_tile = actors[ actor_id ]->current_tile;
-    SDL_Point pac_current_tile = actors[ 0 ]->current_tile;
-    SDL_Point b_target_tile = pac_current_tile;
-    actors[ actor_id ]->target_tile = b_target_tile;
+void set_all_scatter_target_tile( Actor **actors ) {
+    actors[ 1 ]->target_tile = shadow_home_tile;
+    actors[ 2 ]->target_tile = ambush_home_tile;
+    actors[ 3 ]->target_tile = moody_home_tile;
+    actors[ 4 ]->target_tile = pokey_home_tile;
+}
 
-    b_tile_above.x = b_current_tile.x;
-    b_tile_above.y = b_current_tile.y - 1;
-    b_tile_below.x = b_current_tile.x;
-    b_tile_below.y = b_current_tile.y + 1;
-    b_tile_left.x = b_current_tile.x - 1;
-    b_tile_left.y = b_current_tile.y;
-    b_tile_right.x = b_current_tile.x + 1;
-    b_tile_right.y = b_current_tile.y;
-
-    SDL_Point surrounding_tiles[ 4 ];
-    surrounding_tiles[ DIR_UP ] = b_tile_above;
-    surrounding_tiles[ DIR_DOWN ] = b_tile_below;
-    surrounding_tiles[ DIR_LEFT ] = b_tile_left;
-    surrounding_tiles[ DIR_RIGHT ] = b_tile_right;
-
-    float above_to_pac_dist = ( b_tile_above.x - b_target_tile.x ) * ( b_tile_above.x - b_target_tile.x )  
-        + ( b_tile_above.y - b_target_tile.y ) * ( b_tile_above.y - b_target_tile.y );
-    float below_to_pac_dist = ( b_tile_below.x - b_target_tile.x ) * ( b_tile_below.x - b_target_tile.x ) 
-        + ( b_tile_below.y - b_target_tile.y ) * ( b_tile_below.y - b_target_tile.y );
-    float left_to_pac_dist = ( b_tile_left.x - b_target_tile.x ) * ( b_tile_left.x - b_target_tile.x )  
-        + ( b_tile_left.y - b_target_tile.y ) * ( b_tile_left.y - b_target_tile.y );
-    float right_to_pac_dist = ( b_tile_right.x - b_target_tile.x ) * ( b_tile_right.x - b_target_tile.x ) 
-        + ( b_tile_right.y - b_target_tile.y ) * ( b_tile_right.y - b_target_tile.y );
-
-    float lengths[ 4 ];
-    lengths[ DIR_UP ] = above_to_pac_dist;
-    lengths[ DIR_DOWN ] = below_to_pac_dist;
-    lengths[ DIR_LEFT ] = left_to_pac_dist;
-    lengths[ DIR_RIGHT ] = right_to_pac_dist;
-
-    Direction opposite_directions[ 4 ];
-    opposite_directions[ DIR_UP ] = DIR_DOWN;
-    opposite_directions[ DIR_DOWN ] = DIR_UP;
-    opposite_directions[ DIR_LEFT ] = DIR_RIGHT;
-    opposite_directions[ DIR_RIGHT ] = DIR_LEFT;
-
-    int shortest_direction = 0;
-    float shortest_length = 99990.9f; // just some high number
-
-    for( int i = 0; i < 4; ++i ) {
-        if( tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
-                continue;
-        }
-
-        if( i == opposite_directions[ actors[ actor_id ]->direction  ] ) continue;
-
-        if ( lengths[ i ] < shortest_length ) {
-            shortest_direction = i;
-            shortest_length = lengths[ i ];
-        }
-    }
-
-    actors[ actor_id ]->direction = (Direction) shortest_direction;
-    actors[ actor_id ]->next_tile = surrounding_tiles[ shortest_direction ];
-
-    
+void set_shadow_target_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
+    actors[ actor_id ]->target_tile = actors[ 0 ]->current_tile;
 }
 
 
+void set_ambush_target_tile( Actor **actors, TileMap *tm ) {
 
-void set_ambush_next_tile( Actor **actors, TileMap *tm ) {
-    SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
-
-    SDL_Point b_current_tile = actors[ 2 ]->current_tile;
-    SDL_Point pac_current_tile = actors[ 0 ]->current_tile;
-    SDL_Point b_target_tile;
     switch( actors[ 0 ]->direction ) {
         case DIR_UP:
-            b_target_tile.x = pac_current_tile.x;
-            b_target_tile.y = pac_current_tile.y - 4;
+            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
+            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y - 4;
             break;
         case DIR_DOWN:
-            b_target_tile.x = pac_current_tile.x;
-            b_target_tile.y = pac_current_tile.y + 4;
+            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
+            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y + 4;
             break;
         case DIR_LEFT:
-            b_target_tile.x = pac_current_tile.x - 4;
-            b_target_tile.y = pac_current_tile.y;
+            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x - 4;
+            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
             break;
         case DIR_RIGHT:
-            b_target_tile.x = pac_current_tile.x + 4;
-            b_target_tile.y = pac_current_tile.y;
+            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x + 4;
+            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
             break;
         default :
-            b_target_tile.x = pac_current_tile.x;
-            b_target_tile.y = pac_current_tile.y;
+            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
+            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
             break;
-    }
-    actors[ 2 ]->target_tile = b_target_tile;
-
-    b_tile_above.x = b_current_tile.x;
-    b_tile_above.y = b_current_tile.y - 1;
-    b_tile_below.x = b_current_tile.x;
-    b_tile_below.y = b_current_tile.y + 1;
-    b_tile_left.x = b_current_tile.x - 1;
-    b_tile_left.y = b_current_tile.y;
-    b_tile_right.x = b_current_tile.x + 1;
-    b_tile_right.y = b_current_tile.y;
-
-    SDL_Point surrounding_tiles[ 4 ];
-    surrounding_tiles[ DIR_UP ] = b_tile_above;
-    surrounding_tiles[ DIR_DOWN ] = b_tile_below;
-    surrounding_tiles[ DIR_LEFT ] = b_tile_left;
-    surrounding_tiles[ DIR_RIGHT ] = b_tile_right;
-
-    float above_to_pac_dist = ( b_tile_above.x - b_target_tile.x ) * ( b_tile_above.x - b_target_tile.x )  
-        + ( b_tile_above.y - b_target_tile.y ) * ( b_tile_above.y - b_target_tile.y );
-    float below_to_pac_dist = ( b_tile_below.x - b_target_tile.x ) * ( b_tile_below.x - b_target_tile.x ) 
-        + ( b_tile_below.y - b_target_tile.y ) * ( b_tile_below.y - b_target_tile.y );
-    float left_to_pac_dist = ( b_tile_left.x - b_target_tile.x ) * ( b_tile_left.x - b_target_tile.x )  
-        + ( b_tile_left.y - b_target_tile.y ) * ( b_tile_left.y - b_target_tile.y );
-    float right_to_pac_dist = ( b_tile_right.x - b_target_tile.x ) * ( b_tile_right.x - b_target_tile.x ) 
-        + ( b_tile_right.y - b_target_tile.y ) * ( b_tile_right.y - b_target_tile.y );
-
-    float lengths[ 4 ];
-    lengths[ DIR_UP ] = above_to_pac_dist;
-    lengths[ DIR_DOWN ] = below_to_pac_dist;
-    lengths[ DIR_LEFT ] = left_to_pac_dist;
-    lengths[ DIR_RIGHT ] = right_to_pac_dist;
-
-    Direction opposite_directions[ 4 ];
-    opposite_directions[ DIR_UP ] = DIR_DOWN;
-    opposite_directions[ DIR_DOWN ] = DIR_UP;
-    opposite_directions[ DIR_LEFT ] = DIR_RIGHT;
-    opposite_directions[ DIR_RIGHT ] = DIR_LEFT;
-
-    int shortest_direction = 0;
-    float shortest_length = 9999.0f; // just some high number
-
-    for( int i = 0; i < 4; ++i ) {
-        if( tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
-                continue;
-        }
-
-        if( i == opposite_directions[ actors[ 2 ]->direction  ] ) continue;
-
-        if ( lengths[ i ] < shortest_length ) {
-            shortest_direction = i;
-            shortest_length = lengths[ i ];
-        }
-    }
-
-    actors[ 2 ]->direction = (Direction) shortest_direction;
-    actors[ 2 ]->next_tile = surrounding_tiles[ shortest_direction ];
-
-    
+    }   
 }
 
-void set_moody_next_tile(Actor **actors, TileMap *tm) {
-    SDL_Point tile_above, tile_below, tile_left, tile_right;
+void set_moody_target_tile(Actor **actors, TileMap *tm) {
 
-    SDL_Point pac_current_tile = actors[ 0 ]->current_tile;
     SDL_Point other_ghost_current_tile = actors[ 1 ]->current_tile;
-    SDL_Point b_target_tile;
     SDL_Point offset_tile;
     Line_Points line_from_other_ghost_to_offset;
     int tiles_x;
@@ -374,8 +227,8 @@ void set_moody_next_tile(Actor **actors, TileMap *tm) {
             tiles_x = offset_tile.x - other_ghost_current_tile.x;
             tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            b_target_tile.x = offset_tile.x + tiles_x;
-            b_target_tile.y = offset_tile.y + tiles_y;
+            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
             break;
         case DIR_DOWN:
@@ -385,8 +238,8 @@ void set_moody_next_tile(Actor **actors, TileMap *tm) {
              tiles_x = offset_tile.x - other_ghost_current_tile.x;
              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            b_target_tile.x = offset_tile.x + tiles_x;
-            b_target_tile.y = offset_tile.y + tiles_y;
+            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
             break;
         case DIR_LEFT:
@@ -396,8 +249,8 @@ void set_moody_next_tile(Actor **actors, TileMap *tm) {
              tiles_x = offset_tile.x - other_ghost_current_tile.x;
              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            b_target_tile.x = offset_tile.x + tiles_x;
-            b_target_tile.y = offset_tile.y + tiles_y;
+            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
             break;
         case DIR_RIGHT:
@@ -407,8 +260,8 @@ void set_moody_next_tile(Actor **actors, TileMap *tm) {
              tiles_x = offset_tile.x - other_ghost_current_tile.x;
              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            b_target_tile.x = offset_tile.x + tiles_x;
-            b_target_tile.y = offset_tile.y + tiles_y;
+            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
             break;
         default :
@@ -418,77 +271,20 @@ void set_moody_next_tile(Actor **actors, TileMap *tm) {
              tiles_x = offset_tile.x - other_ghost_current_tile.x;
              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            b_target_tile.x = offset_tile.x + tiles_x;
-            b_target_tile.y = offset_tile.y + tiles_y;
+            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
             break;
     }
-    actors[ 3 ]->target_tile = b_target_tile;
     if ( actors[ 3 ]->target_tile.x < 0 ) actors[ 3 ]->target_tile.x = 0;
     if ( actors[ 3 ]->target_tile.y < 0 ) actors[ 3 ]->target_tile.y = 0;
 
     if ( actors[ 3 ]->target_tile.x > TILE_COLS - 1 ) actors[ 3 ]->target_tile.x = TILE_COLS - 1;
     if ( actors[ 3 ]->target_tile.y > TILE_ROWS - 1 ) actors[ 3 ]->target_tile.y = TILE_ROWS - 1;
 
-
-    tile_above.x = actors[ 3 ]->current_tile.x;
-    tile_above.y = actors[ 3 ]->current_tile.y - 1;
-    tile_below.x = actors[ 3 ]->current_tile.x;
-    tile_below.y = actors[ 3 ]->current_tile.y + 1;
-    tile_left.x = actors[ 3 ]->current_tile.x - 1;
-    tile_left.y = actors[ 3 ]->current_tile.y;
-    tile_right.x = actors[ 3 ]->current_tile.x + 1;
-    tile_right.y = actors[ 3 ]->current_tile.y;
-
-    SDL_Point surrounding_tiles[ 4 ];
-    surrounding_tiles[ DIR_UP ] = tile_above;
-    surrounding_tiles[ DIR_DOWN ] = tile_below;
-    surrounding_tiles[ DIR_LEFT ] = tile_left;
-    surrounding_tiles[ DIR_RIGHT ] = tile_right;
-
-    float above_to_pac_dist = ( tile_above.x - b_target_tile.x ) * ( tile_above.x - b_target_tile.x )  
-        + ( tile_above.y - b_target_tile.y ) * ( tile_above.y - b_target_tile.y );
-    float below_to_pac_dist = ( tile_below.x - b_target_tile.x ) * ( tile_below.x - b_target_tile.x ) 
-        + ( tile_below.y - b_target_tile.y ) * ( tile_below.y - b_target_tile.y );
-    float left_to_pac_dist = ( tile_left.x - b_target_tile.x ) * ( tile_left.x - b_target_tile.x )  
-        + ( tile_left.y - b_target_tile.y ) * ( tile_left.y - b_target_tile.y );
-    float right_to_pac_dist = ( tile_right.x - b_target_tile.x ) * ( tile_right.x - b_target_tile.x ) 
-        + ( tile_right.y - b_target_tile.y ) * ( tile_right.y - b_target_tile.y );
-
-    float lengths[ 4 ];
-    lengths[ DIR_UP ] = above_to_pac_dist;
-    lengths[ DIR_DOWN ] = below_to_pac_dist;
-    lengths[ DIR_LEFT ] = left_to_pac_dist;
-    lengths[ DIR_RIGHT ] = right_to_pac_dist;
-
-    Direction opposite_directions[ 4 ];
-    opposite_directions[ DIR_UP ] = DIR_DOWN;
-    opposite_directions[ DIR_DOWN ] = DIR_UP;
-    opposite_directions[ DIR_LEFT ] = DIR_RIGHT;
-    opposite_directions[ DIR_RIGHT ] = DIR_LEFT;
-
-    int shortest_direction = 0;
-    float shortest_length = 9999.0f; // just some high number
-
-    for( int i = 0; i < 4; ++i ) {
-        if( tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
-                continue;
-        }
-
-        if( i == opposite_directions[ actors[ 3 ]->direction  ] ) continue;
-
-        if ( lengths[ i ] < shortest_length ) {
-            shortest_direction = i;
-            shortest_length = lengths[ i ];
-        }
-    }
-
-    actors[ 3 ]->direction = (Direction) shortest_direction;
-    actors[ 3 ]->next_tile = surrounding_tiles[ shortest_direction ];
 }
 
-void set_pokey_next_tile( Actor **actors, TileMap *tm ) {
+void set_pokey_target_tile( Actor **actors, TileMap *tm ) {
     SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
     float shadow_range = 64;
     SDL_Point b_current_tile = actors[ 4 ]->current_tile;
@@ -497,10 +293,10 @@ void set_pokey_next_tile( Actor **actors, TileMap *tm ) {
     float distance_to_pacman = distance( b_current_tile.x, b_current_tile.y, pac_current_tile.x, pac_current_tile.y );
 
     if( distance_to_pacman >= shadow_range ) {
-        set_shadow_next_tile( actors, 4, tm );
+        set_shadow_target_tile( actors, 4, tm );
     }
     else {
-        set_scatter_next_tile( actors, 4, tm );
+        set_scatter_target_tile( actors, 4, tm );
     }
 }
 
@@ -645,28 +441,59 @@ void move( Actor *actor, Vector_f velocity ) {
 void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
     int speed = 160;
     
-
-    if( actors[ 1 ]->next_tile.x == actors[ 1 ]->current_tile.x
+    if( g_current_ghost_mode == MODE_CHASE ) {
+        if( actors[ 1 ]->next_tile.x == actors[ 1 ]->current_tile.x
         && actors[ 1 ]->next_tile.y == actors[ 1 ]->current_tile.y ) {
 
-        set_shadow_next_tile( actors, 1, tm );
-    }
+            set_shadow_target_tile( actors, 1, tm );
+            set_direction_and_next_tile_shortest_to_target( actors[ 1 ], tm );
+        }
 
-     if( actors[ 2 ]->next_tile.x == actors[ 2 ]->current_tile.x
-        && actors[ 2 ]->next_tile.y == actors[ 2 ]->current_tile.y ) {
+        if( actors[ 2 ]->next_tile.x == actors[ 2 ]->current_tile.x
+            && actors[ 2 ]->next_tile.y == actors[ 2 ]->current_tile.y ) {
 
-        set_ambush_next_tile( actors, tm );
-    }
-    if( actors[ 3 ]->next_tile.x == actors[ 3 ]->current_tile.x
-        && actors[ 3 ]->next_tile.y == actors[ 3 ]->current_tile.y ) {
+            set_ambush_target_tile( actors, tm );
+            set_direction_and_next_tile_shortest_to_target( actors[ 2 ], tm );
+        }
+        if( actors[ 3 ]->next_tile.x == actors[ 3 ]->current_tile.x
+            && actors[ 3 ]->next_tile.y == actors[ 3 ]->current_tile.y ) {
 
-        set_moody_next_tile( actors, tm );
-    }
-    if( actors[ 4 ]->next_tile.x == actors[ 4 ]->current_tile.x
-        && actors[ 4 ]->next_tile.y == actors[ 4 ]->current_tile.y ) {
+            set_moody_target_tile( actors, tm );
+            set_direction_and_next_tile_shortest_to_target( actors[ 3 ], tm );
+        }
+        if( actors[ 4 ]->next_tile.x == actors[ 4 ]->current_tile.x
+            && actors[ 4 ]->next_tile.y == actors[ 4 ]->current_tile.y ) {
 
-        set_pokey_next_tile( actors, tm );
+            set_pokey_target_tile( actors, tm );
+            set_direction_and_next_tile_shortest_to_target( actors[ 4 ], tm );
+        }
     }
+    else if( g_current_ghost_mode == MODE_SCATTER ) {
+        set_all_scatter_target_tile( actors );
+        if( actors[ 1 ]->next_tile.x == actors[ 1 ]->current_tile.x
+        && actors[ 1 ]->next_tile.y == actors[ 1 ]->current_tile.y ) {
+
+            set_direction_and_next_tile_shortest_to_target( actors[ 1 ], tm );
+        }
+
+        if( actors[ 2 ]->next_tile.x == actors[ 2 ]->current_tile.x
+            && actors[ 2 ]->next_tile.y == actors[ 2 ]->current_tile.y ) {
+
+            set_direction_and_next_tile_shortest_to_target( actors[ 2 ], tm );
+        }
+        if( actors[ 3 ]->next_tile.x == actors[ 3 ]->current_tile.x
+            && actors[ 3 ]->next_tile.y == actors[ 3 ]->current_tile.y ) {
+
+            set_direction_and_next_tile_shortest_to_target( actors[ 3 ], tm );
+        }
+        if( actors[ 4 ]->next_tile.x == actors[ 4 ]->current_tile.x
+            && actors[ 4 ]->next_tile.y == actors[ 4 ]->current_tile.y ) {
+
+            set_direction_and_next_tile_shortest_to_target( actors[ 4 ], tm );
+        }
+
+    }
+    
 
     for( int i = 1; i < 5; ++i ) {
         Vector_f velocity = { 0, 0 };

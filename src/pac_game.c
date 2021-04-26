@@ -14,7 +14,22 @@ SDL_bool g_show_debug_info = SDL_TRUE;
 
 SDL_Color pac_color = {200,150,0};
 
-
+void set_cross( SDL_Point center_point, int starting_index, SDL_Point *points ) {
+    points[ starting_index ].x = center_point.x;
+    points[ starting_index ].y = center_point.y;
+    //above
+    points[ starting_index + 1 ].x = center_point.x;
+    points[ starting_index + 1 ].y = center_point.y - 1;
+    //below
+    points[ starting_index + 2 ].x = center_point.x;
+    points[ starting_index + 2 ].y = center_point.y + 1;
+    //left
+    points[ starting_index + 3 ].x = center_point.x - 1;
+    points[ starting_index + 3 ].y = center_point.y;
+    //right
+    points[ starting_index + 4 ].x = center_point.x + 1;
+    points[ starting_index + 4 ].y = center_point.y;
+}
 
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
@@ -62,31 +77,32 @@ int main( int argc, char *argv[] ) {
     }
 
     // INIT PACMONSTER
-    Position_f initial_pos = { TILE_SIZE, TILE_SIZE * 17 };
+    Position_f initial_pos = { TILE_SIZE * 22, TILE_SIZE * 15 };
     actors[ 0 ] = init_actor( initial_pos );
     render_textures[ 0 ] = init_render_texture( renderer, "pac_monster.png", 4);
     animations[ 0 ] = init_animation( 0, 0.08f, render_textures[ 0 ]->num_sprite_clips );
 
     // INIT GHOST
-    Position_f ghost_pos = { TILE_SIZE, TILE_SIZE * 19};
+    Position_f ghost_pos = { TILE_SIZE * 22, TILE_SIZE * 11 };
     actors[ 1 ] = init_actor( ghost_pos );
     render_textures[ 1 ] = init_render_texture( renderer, "blinky.png", 1);
     animations[ 1 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
 
-    Position_f pinky_position = { TILE_SIZE * 19, TILE_SIZE * 17};
+    Position_f pinky_position = { TILE_SIZE * 22, TILE_SIZE * 13};
     actors[ 2 ]= init_actor( pinky_position );
     render_textures[ 2 ]= init_render_texture( renderer, "pinky.png", 1 );
     animations[ 2 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
 
-    Position_f inky_position = { TILE_SIZE * 19, TILE_SIZE * 17};
+    Position_f inky_position = { TILE_SIZE * 22, TILE_SIZE * 13};
     actors[ 3 ]= init_actor( pinky_position );
     render_textures[ 3 ]= init_render_texture( renderer, "inky.png", 1 );
     animations[ 3 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
 
-    Position_f clyde_position = { TILE_SIZE * 19, TILE_SIZE * 17};
+    Position_f clyde_position = { TILE_SIZE * 22, TILE_SIZE * 13};
     actors[ 4 ]= init_actor( pinky_position );
     render_textures[ 4 ]= init_render_texture( renderer, "clyde.png", 1 );
     animations[ 4 ] = init_animation( 0, 0.08f, render_textures[ 4 ]->num_sprite_clips );
+
 
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
@@ -110,6 +126,10 @@ int main( int argc, char *argv[] ) {
     SDL_Event event;
     int quit = 0;
 
+    // GHOST BEHAVIOR TIMER
+    float ghost_mode_time = 0.0f;
+    float ghost_change_mode_time = g_scatter_chase_period_seconds[ g_current_scatter_chase_period ];
+    
     // delta time
     float time = 0.0;
     float max_delta_time = 1 / 60.0;
@@ -151,12 +171,59 @@ int main( int argc, char *argv[] ) {
         
         pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &score, renderer );
 
-
         // ghost
-        // pac_try_set_direction( actors[ 1 ], current_key_states, &tilemap);
-       
-        // pac_try_move( actors[ 1 ], &tilemap, delta_time );
+
         ghost_move( actors, &tilemap, delta_time );
+        ghost_mode_time += delta_time;
+      
+        // moving to next period
+        if( g_current_scatter_chase_period < NUM_SCATTER_CHASE_PERIODS && ghost_mode_time > g_scatter_chase_period_seconds[ g_current_scatter_chase_period ] ) {
+            if( g_current_ghost_mode == MODE_CHASE ) {
+                g_current_ghost_mode = MODE_SCATTER;
+                for( int i = 1; i < 5; ++i ) {
+                    actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
+                    actors[ i ]->next_tile = actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
+                }
+            }
+            else {
+                g_current_ghost_mode = MODE_CHASE;
+                for( int i = 1; i < 5; ++i ) {
+                    actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
+                    actors[ i ]->next_tile = actors[ i ]->current_tile;
+
+                }
+            }
+            ghost_mode_time = 0.0f;
+            g_current_scatter_chase_period++;
+        }
+
+        // check for die
+        for( int i = 1; i < 5; ++i ) {
+            if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
+            && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y  ) {
+                actors[ 0 ]->position = initial_pos;
+                actors[ 0 ]->center_point.x = ( int ) actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
+                actors[ 0 ]->center_point.y = ( int ) actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
+
+                actors[ 0 ]->top_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
+                actors[ 0 ]->top_sensor.y = actors[ 0 ]->position.y;
+
+                actors[ 0 ]->bottom_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
+                actors[ 0 ]->bottom_sensor.y = actors[ 0 ]->position.y + ACTOR_SIZE;
+
+                actors[ 0 ]->left_sensor.x = actors[ 0 ]->position.x;
+                actors[ 0 ]->left_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
+
+                actors[ 0 ]->right_sensor.x = actors[ 0 ]->position.x + ACTOR_SIZE;
+                actors[ 0 ]->right_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );    
+
+                actors[ 0 ]->direction = DIR_NONE;
+
+                actor_set_current_tile( actors[ 0 ] );
+                actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
+                actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;            
+            }
+        }
 
         // UPDATE DOTS ANIMATION
 
@@ -176,7 +243,6 @@ int main( int argc, char *argv[] ) {
                 }
             }
         }
-
 
         // RENDER
 
@@ -203,7 +269,6 @@ int main( int argc, char *argv[] ) {
                 SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
             }
             
-
             // current_tile
             for(int i = 0; i < 4; ++i) {
                 SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
@@ -211,7 +276,6 @@ int main( int argc, char *argv[] ) {
                 SDL_RenderFillRect( renderer, &tile_rect);
             }
             
-
             // next tile 
             for( int i = 0; i < 5; ++i ) {
                 SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
@@ -241,88 +305,13 @@ int main( int argc, char *argv[] ) {
             SDL_Point points_to_draw[ 25 ];
             
             //CENTER
-            points_to_draw[ 0 ].x = actors[ 0 ]->center_point.x;
-            points_to_draw[ 0 ].y = actors[ 0 ]->center_point.y;
-            //above
-            points_to_draw[ 1 ].x = actors[ 0 ]->center_point.x;
-            points_to_draw[ 1 ].y = actors[ 0 ]->center_point.y - 1;
-            //below
-            points_to_draw[ 2 ].x = actors[ 0 ]->center_point.x;
-            points_to_draw[ 2 ].y = actors[ 0 ]->center_point.y + 1;
-            //left
-            points_to_draw[ 3 ].x = actors[ 0 ]->center_point.x - 1;
-            points_to_draw[ 3 ].y = actors[ 0 ]->center_point.y;
-            //right
-            points_to_draw[ 4 ].x = actors[ 0 ]->center_point.x + 1;
-            points_to_draw[ 4 ].y = actors[ 0 ]->center_point.y;
+            set_cross( actors[ 0 ]->center_point, 0, points_to_draw );
             
             // SENSORS
-
-            // TOP SENSOR
-            points_to_draw[ 5 ].x = actors[ 0 ]->top_sensor.x;
-            points_to_draw[ 5 ].y = actors[ 0 ]->top_sensor.y;
-            //above
-            points_to_draw[ 6 ].x = actors[ 0 ]->top_sensor.x;
-            points_to_draw[ 6 ].y = actors[ 0 ]->top_sensor.y - 1;
-            //below
-            points_to_draw[ 7 ].x = actors[ 0 ]->top_sensor.x;
-            points_to_draw[ 7 ].y = actors[ 0 ]->top_sensor.y + 1;
-            //left
-            points_to_draw[ 8 ].x = actors[ 0 ]->top_sensor.x - 1;
-            points_to_draw[ 8 ].y = actors[ 0 ]->top_sensor.y;
-            //right
-            points_to_draw[ 9 ].x = actors[ 0 ]->top_sensor.x + 1;
-            points_to_draw[ 9 ].y = actors[ 0 ]->top_sensor.y;
-
-            // BOTTOM SENSOR
-            points_to_draw[ 10 ].x = actors[ 0 ]->bottom_sensor.x;
-            points_to_draw[ 10 ].y = actors[ 0 ]->bottom_sensor.y;
-            //above
-            points_to_draw[ 11 ].x = actors[ 0 ]->bottom_sensor.x;
-            points_to_draw[ 11 ].y = actors[ 0 ]->bottom_sensor.y - 1;
-            //below
-            points_to_draw[ 12 ].x = actors[ 0 ]->bottom_sensor.x;
-            points_to_draw[ 12 ].y = actors[ 0 ]->bottom_sensor.y + 1;
-            //left
-            points_to_draw[ 13 ].x = actors[ 0 ]->bottom_sensor.x - 1;
-            points_to_draw[ 13 ].y = actors[ 0 ]->bottom_sensor.y;
-            //right
-            points_to_draw[ 14 ].x = actors[ 0 ]->bottom_sensor.x + 1;
-            points_to_draw[ 14 ].y = actors[ 0 ]->bottom_sensor.y;
-
-            // LEFT SENSOR
-            points_to_draw[ 15 ].x = actors[ 0 ]->left_sensor.x;
-            points_to_draw[ 15 ].y = actors[ 0 ]->left_sensor.y;
-            //above
-            points_to_draw[ 16 ].x = actors[ 0 ]->left_sensor.x;
-            points_to_draw[ 16 ].y = actors[ 0 ]->left_sensor.y - 1;
-            //below
-            points_to_draw[ 17 ].x = actors[ 0 ]->left_sensor.x;
-            points_to_draw[ 17 ].y = actors[ 0 ]->left_sensor.y + 1;
-            //left
-            points_to_draw[ 18 ].x = actors[ 0 ]->left_sensor.x - 1;
-            points_to_draw[ 18 ].y = actors[ 0 ]->left_sensor.y;
-            //right
-            points_to_draw[ 19 ].x = actors[ 0 ]->left_sensor.x + 1;
-            points_to_draw[ 19 ].y = actors[ 0 ]->left_sensor.y;
-
-            // RIGHT SENSOR
-            points_to_draw[ 20 ].x = actors[ 0 ]->right_sensor.x;
-            points_to_draw[ 20 ].y = actors[ 0 ]->right_sensor.y;
-            //above
-            points_to_draw[ 21 ].x = actors[ 0 ]->right_sensor.x;
-            points_to_draw[ 21 ].y = actors[ 0 ]->right_sensor.y - 1;
-            //below
-            points_to_draw[ 22 ].x = actors[ 0 ]->right_sensor.x;
-            points_to_draw[ 22 ].y = actors[ 0 ]->right_sensor.y + 1;
-            //left
-            points_to_draw[ 23 ].x = actors[ 0 ]->right_sensor.x - 1;
-            points_to_draw[ 23 ].y = actors[ 0 ]->right_sensor.y;
-            //right
-            points_to_draw[ 24 ].x = actors[ 0 ]->right_sensor.x + 1;
-            points_to_draw[ 24 ].y = actors[ 0 ]->right_sensor.y;
-
-
+            set_cross( actors[ 0 ]->top_sensor, 5, points_to_draw );
+            set_cross( actors[ 0 ]->bottom_sensor, 10, points_to_draw );
+            set_cross( actors[ 0 ]->left_sensor, 15, points_to_draw );
+            set_cross( actors[ 0 ]->right_sensor, 20, points_to_draw );
 
             SDL_RenderDrawPoints( renderer, points_to_draw, 25 );
 
