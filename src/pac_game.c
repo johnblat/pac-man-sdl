@@ -76,32 +76,40 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
+    // INIT TEXTURE ATLASES
+    add_texture_atlas( renderer, "pac_monster.png", 4 );
+    add_texture_atlas( renderer, "blinky.png", 1 );
+    add_texture_atlas( renderer, "pinky.png", 1 );
+    add_texture_atlas( renderer, "inky.png", 1 );
+    add_texture_atlas( renderer, "clyde.png", 1 );
+    add_texture_atlas( renderer, "vulnerable.png", 1 );
+
     // INIT PACMONSTER
     Position_f initial_pos = { TILE_SIZE * 22, TILE_SIZE * 15 };
     actors[ 0 ] = init_actor( initial_pos );
-    render_textures[ 0 ] = init_render_texture( renderer, "pac_monster.png", 4);
-    animations[ 0 ] = init_animation( 0, 0.08f, render_textures[ 0 ]->num_sprite_clips );
+    render_textures[ 0 ] = init_render_texture( 0 );
+    animations[ 0 ] = init_animation( 0, 0.08f, g_texture_atlases[ 0 ].num_sprite_clips );
 
     // INIT GHOST
     Position_f ghost_pos = { TILE_SIZE * 22, TILE_SIZE * 11 };
     actors[ 1 ] = init_actor( ghost_pos );
-    render_textures[ 1 ] = init_render_texture( renderer, "blinky.png", 1);
-    animations[ 1 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
+    render_textures[ 1 ] = init_render_texture( 1 );
+    animations[ 1 ] = init_animation( 0, 0.08f, g_texture_atlases[ 1 ].num_sprite_clips );
 
     Position_f pinky_position = { TILE_SIZE * 22, TILE_SIZE * 13};
     actors[ 2 ]= init_actor( pinky_position );
-    render_textures[ 2 ]= init_render_texture( renderer, "pinky.png", 1 );
-    animations[ 2 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
+    render_textures[ 2 ]= init_render_texture( 2 );
+    animations[ 2 ] = init_animation( 0, 0.08f, g_texture_atlases[ 2 ].num_sprite_clips );
 
     Position_f inky_position = { TILE_SIZE * 22, TILE_SIZE * 13};
     actors[ 3 ]= init_actor( pinky_position );
-    render_textures[ 3 ]= init_render_texture( renderer, "inky.png", 1 );
-    animations[ 3 ] = init_animation( 0, 0.08f, render_textures[ 1 ]->num_sprite_clips );
+    render_textures[ 3 ]= init_render_texture( 3 );
+    animations[ 3 ] = init_animation( 0, 0.08f, g_texture_atlases[ 3 ].num_sprite_clips );
 
     Position_f clyde_position = { TILE_SIZE * 22, TILE_SIZE * 13};
     actors[ 4 ]= init_actor( pinky_position );
-    render_textures[ 4 ]= init_render_texture( renderer, "clyde.png", 1 );
-    animations[ 4 ] = init_animation( 0, 0.08f, render_textures[ 4 ]->num_sprite_clips );
+    render_textures[ 4 ]= init_render_texture( 4 );
+    animations[ 4 ] = init_animation( 0, 0.08f, g_texture_atlases[ 4 ].num_sprite_clips );
 
 
     // INIT TILEMAP
@@ -134,6 +142,7 @@ int main( int argc, char *argv[] ) {
     float time = 0.0;
     float max_delta_time = 1 / 60.0;
     float previous_frame_ticks = SDL_GetTicks() / 1000.0;
+
 
 
     while (!quit) {
@@ -318,12 +327,17 @@ int main( int argc, char *argv[] ) {
 
         }
         SDL_RenderPresent( renderer );
+        SDL_Delay(5);
     }
 
     // CLOSE DOWN
     SDL_DestroyRenderer( renderer );
     SDL_DestroyWindow( window );
-    SDL_DestroyTexture( render_textures[ 0 ]->texture_atlas );
+    
+    for( int i = 0; i < num_texture_atlases; ++i ) {
+        SDL_DestroyTexture( g_texture_atlases[ i ].texture );
+    }
+
     SDL_Quit();
     
 }
