@@ -17,7 +17,7 @@ typedef struct {
     uint8_t num_sprite_clips;
 } TextureAtlas;
 
-const uint8_t MAX_TEXTURE_ATLASES = 6; 
+const uint8_t MAX_TEXTURE_ATLASES = 10; 
 TextureAtlas g_texture_atlases[ MAX_TEXTURE_ATLASES ];
 uint8_t num_texture_atlases = 0;
 

@@ -12,19 +12,7 @@
 
 #define distance(x1, y1, x2, y2) ( (x2 - x1 ) * (x2 - x1) + (y2 - y1) * (y2 - y1) )
 
-SDL_Point shadow_home_tile = { 0, 0 };
-SDL_Point ambush_home_tile = { TILE_COLS - 1, 0 };
-SDL_Point moody_home_tile = { 0, TILE_ROWS - 1 };
-SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
 
-
-// the length of time the ghosts should be in scatter or chase
-// starts with scatter, then alternates.
-// after last element is used, then chase is indefinite
-const uint8_t NUM_SCATTER_CHASE_PERIODS = 9;
-uint8_t g_current_scatter_chase_period = 0;
-uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 7, 20, 7, 20, 5, 20, 5, 0 };
-//uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 2, 2, 2, 2, 2, 2, 2, 0 };
 
 
 /**
@@ -43,19 +31,6 @@ typedef enum Direction {
 
 Direction opposite_directions[ 4 ] = { DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT };
 
-/**
- * Will be global for all ghosts.
- * Will determine their more specific
- * behavior
- */
-typedef enum {
-    MODE_CHASE,     // use default behavior
-    MODE_SCATTER,   // use scatter behavior
-    MODE_VULNERABLE // use vulnerable behavior
-} GhostMode;
-
-GhostMode g_current_ghost_mode = MODE_SCATTER;
-
 
 typedef struct Actor {
     Position_f  position;     // screen position
@@ -69,7 +44,27 @@ typedef struct Actor {
     SDL_Point   right_sensor; // screen position
     Direction   direction;    // direction the actor wants to move
     Vector_f    velocity;     // current velocity
+    int         speed;        // current speed
 } Actor;
+
+// /*****************
+//  * MODES *********
+//  * *************/
+// const uint8_t NUM_SCATTER_CHASE_PERIODS = 9;
+// uint8_t g_current_scatter_chase_period = 0;
+// uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 7, 20, 7, 20, 5, 20, 5, 0 };
+// //uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 2, 2, 2, 2, 2, 2, 2, 0 };
+// typedef enum {
+//     MODE_CHASE,     // use default behavior
+//     MODE_SCATTER,   // use scatter behavior
+// } GhostMode;
+
+// GhostMode g_current_ghost_mode = MODE_SCATTER;
+
+// /******************
+//  * END MODES********
+//  * *****************/
+
 
 void actor_set_current_tile( Actor *actor ) {
     actor->current_tile.x = ( ( actor->position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
@@ -104,201 +99,205 @@ Actor *init_actor( Position_f initial_position ) {
     actor->next_tile = actor->current_tile;
     actor->next_tile = actor->current_tile;
 
+    actor->speed = 0;
+
     return actor;
 }
 
 
-void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm ) {
-    SDL_Point tile_above, tile_below, tile_left, tile_right;
-    tile_above.x = actor->current_tile.x;
-    tile_above.y = actor->current_tile.y - 1;
-    tile_below.x = actor->current_tile.x;
-    tile_below.y = actor->current_tile.y + 1;
-    tile_left.x = actor->current_tile.x - 1;
-    tile_left.y = actor->current_tile.y;
-    tile_right.x = actor->current_tile.x + 1;
-    tile_right.y = actor->current_tile.y;
+// void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm ) {
+//     SDL_Point tile_above, tile_below, tile_left, tile_right;
+//     tile_above.x = actor->current_tile.x;
+//     tile_above.y = actor->current_tile.y - 1;
+//     tile_below.x = actor->current_tile.x;
+//     tile_below.y = actor->current_tile.y + 1;
+//     tile_left.x = actor->current_tile.x - 1;
+//     tile_left.y = actor->current_tile.y;
+//     tile_right.x = actor->current_tile.x + 1;
+//     tile_right.y = actor->current_tile.y;
 
-    SDL_Point surrounding_tiles[ 4 ];
-    surrounding_tiles[ DIR_UP ] = tile_above;
-    surrounding_tiles[ DIR_DOWN ] = tile_below;
-    surrounding_tiles[ DIR_LEFT ] = tile_left;
-    surrounding_tiles[ DIR_RIGHT ] = tile_right;
+//     SDL_Point surrounding_tiles[ 4 ];
+//     surrounding_tiles[ DIR_UP ] = tile_above;
+//     surrounding_tiles[ DIR_DOWN ] = tile_below;
+//     surrounding_tiles[ DIR_LEFT ] = tile_left;
+//     surrounding_tiles[ DIR_RIGHT ] = tile_right;
 
-    float above_to_target_dist = distance(tile_above.x, tile_above.y,  actor->target_tile.x, actor->target_tile.y ); 
-    float below_to_target_dist = distance(tile_below.x, tile_below.y,  actor->target_tile.x, actor->target_tile.y ); 
-    float left_to_target_dist  = distance(tile_left.x, tile_left.y,  actor->target_tile.x, actor->target_tile.y ); 
-    float right_to_target_dist = distance(tile_right.x, tile_right.y,  actor->target_tile.x, actor->target_tile.y ); 
-
-
-    float lengths[ 4 ];
-    lengths[ DIR_UP ] = above_to_target_dist;
-    lengths[ DIR_DOWN ] = below_to_target_dist;
-    lengths[ DIR_LEFT ] = left_to_target_dist;
-    lengths[ DIR_RIGHT ] = right_to_target_dist;
-
-    Direction opposite_directions[ 4 ];
-    opposite_directions[ DIR_UP ] = DIR_DOWN;
-    opposite_directions[ DIR_DOWN ] = DIR_UP;
-    opposite_directions[ DIR_LEFT ] = DIR_RIGHT;
-    opposite_directions[ DIR_RIGHT ] = DIR_LEFT;
-
-    int shortest_direction = 0;
-    float shortest_length = 9999.0f; // just some high number
-
-    for( int i = 0; i < 4; ++i ) {
-        if( tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
-                continue;
-        }
-
-        if( i == opposite_directions[ actor->direction  ] ) continue;
-
-        if ( lengths[ i ] < shortest_length ) {
-            shortest_direction = i;
-            shortest_length = lengths[ i ];
-        }
-    }
-
-    actor->direction = (Direction) shortest_direction;
-    actor->next_tile = surrounding_tiles[ shortest_direction ];
-}
-
-void set_scatter_target_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
-    actors[ actor_id ]->target_tile = pokey_home_tile;
-}
-
-void set_all_scatter_target_tile( Actor **actors ) {
-    actors[ 1 ]->target_tile = shadow_home_tile;
-    actors[ 2 ]->target_tile = ambush_home_tile;
-    actors[ 3 ]->target_tile = moody_home_tile;
-    actors[ 4 ]->target_tile = pokey_home_tile;
-}
-
-void set_shadow_target_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
-    actors[ actor_id ]->target_tile = actors[ 0 ]->current_tile;
-}
+//     float above_to_target_dist = distance(tile_above.x, tile_above.y,  actor->target_tile.x, actor->target_tile.y ); 
+//     float below_to_target_dist = distance(tile_below.x, tile_below.y,  actor->target_tile.x, actor->target_tile.y ); 
+//     float left_to_target_dist  = distance(tile_left.x, tile_left.y,  actor->target_tile.x, actor->target_tile.y ); 
+//     float right_to_target_dist = distance(tile_right.x, tile_right.y,  actor->target_tile.x, actor->target_tile.y ); 
 
 
-void set_ambush_target_tile( Actor **actors, TileMap *tm ) {
+//     float lengths[ 4 ];
+//     lengths[ DIR_UP ] = above_to_target_dist;
+//     lengths[ DIR_DOWN ] = below_to_target_dist;
+//     lengths[ DIR_LEFT ] = left_to_target_dist;
+//     lengths[ DIR_RIGHT ] = right_to_target_dist;
 
-    switch( actors[ 0 ]->direction ) {
-        case DIR_UP:
-            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
-            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y - 4;
-            break;
-        case DIR_DOWN:
-            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
-            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y + 4;
-            break;
-        case DIR_LEFT:
-            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x - 4;
-            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
-            break;
-        case DIR_RIGHT:
-            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x + 4;
-            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
-            break;
-        default :
-            actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
-            actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
-            break;
-    }   
-}
+//     Direction opposite_directions[ 4 ];
+//     opposite_directions[ DIR_UP ] = DIR_DOWN;
+//     opposite_directions[ DIR_DOWN ] = DIR_UP;
+//     opposite_directions[ DIR_LEFT ] = DIR_RIGHT;
+//     opposite_directions[ DIR_RIGHT ] = DIR_LEFT;
 
-void set_moody_target_tile(Actor **actors, TileMap *tm) {
+//     int shortest_direction = 0;
+//     float shortest_length = 9999.0f; // just some high number
 
-    SDL_Point other_ghost_current_tile = actors[ 1 ]->current_tile;
-    SDL_Point offset_tile;
-    Line_Points line_from_other_ghost_to_offset;
-    int tiles_x;
-    int tiles_y;
+//     for( int i = 0; i < 4; ++i ) {
+//         if( tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
+//             && tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+//                 continue;
+//         }
 
-    switch( actors[ 0 ]->direction ) {
-        case DIR_UP:
-            offset_tile.x = actors[ 0 ]->current_tile.x;
-            offset_tile.y = actors[ 0 ]->current_tile.y - 2;
+//         if( i == opposite_directions[ actor->direction  ] ) continue;
+
+//         if ( lengths[ i ] < shortest_length ) {
+//             shortest_direction = i;
+//             shortest_length = lengths[ i ];
+//         }
+//     }
+
+//     actor->direction = (Direction) shortest_direction;
+//     actor->next_tile = surrounding_tiles[ shortest_direction ];
+// }
+
+
+
+// void set_scatter_target_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
+//     actors[ actor_id ]->target_tile = pokey_home_tile;
+// }
+
+// void set_all_scatter_target_tile( Actor **actors ) {
+//     actors[ 1 ]->target_tile = shadow_home_tile;
+//     actors[ 2 ]->target_tile = ambush_home_tile;
+//     actors[ 3 ]->target_tile = moody_home_tile;
+//     actors[ 4 ]->target_tile = pokey_home_tile;
+// }
+
+// void set_shadow_target_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
+//     actors[ actor_id ]->target_tile = actors[ 0 ]->current_tile;
+// }
+
+
+// void set_ambush_target_tile( Actor **actors, TileMap *tm ) {
+
+//     switch( actors[ 0 ]->direction ) {
+//         case DIR_UP:
+//             actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
+//             actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y - 4;
+//             break;
+//         case DIR_DOWN:
+//             actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
+//             actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y + 4;
+//             break;
+//         case DIR_LEFT:
+//             actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x - 4;
+//             actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
+//             break;
+//         case DIR_RIGHT:
+//             actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x + 4;
+//             actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
+//             break;
+//         default :
+//             actors[ 2 ]->target_tile.x = actors[ 0 ]->current_tile.x;
+//             actors[ 2 ]->target_tile.y = actors[ 0 ]->current_tile.y;
+//             break;
+//     }   
+// }
+
+// void set_moody_target_tile(Actor **actors, TileMap *tm) {
+
+//     SDL_Point other_ghost_current_tile = actors[ 1 ]->current_tile;
+//     SDL_Point offset_tile;
+//     Line_Points line_from_other_ghost_to_offset;
+//     int tiles_x;
+//     int tiles_y;
+
+//     switch( actors[ 0 ]->direction ) {
+//         case DIR_UP:
+//             offset_tile.x = actors[ 0 ]->current_tile.x;
+//             offset_tile.y = actors[ 0 ]->current_tile.y - 2;
             
-            line_from_other_ghost_to_offset.a.x = actors[ 1 ]->current_tile.x;
-            line_from_other_ghost_to_offset.a.y = actors[ 1 ]->current_tile.y;
-            line_from_other_ghost_to_offset.b.x = offset_tile.x;
-            line_from_other_ghost_to_offset.b.y = offset_tile.x;
+//             line_from_other_ghost_to_offset.a.x = actors[ 1 ]->current_tile.x;
+//             line_from_other_ghost_to_offset.a.y = actors[ 1 ]->current_tile.y;
+//             line_from_other_ghost_to_offset.b.x = offset_tile.x;
+//             line_from_other_ghost_to_offset.b.y = offset_tile.x;
 
-            tiles_x = offset_tile.x - other_ghost_current_tile.x;
-            tiles_y = offset_tile.y - other_ghost_current_tile.y;
+//             tiles_x = offset_tile.x - other_ghost_current_tile.x;
+//             tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
-            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
+//             actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+//             actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
-            break;
-        case DIR_DOWN:
-            offset_tile.x = actors[ 0 ]->current_tile.x;
-            offset_tile.y = actors[ 0 ]->current_tile.y + 2;
+//             break;
+//         case DIR_DOWN:
+//             offset_tile.x = actors[ 0 ]->current_tile.x;
+//             offset_tile.y = actors[ 0 ]->current_tile.y + 2;
 
-             tiles_x = offset_tile.x - other_ghost_current_tile.x;
-             tiles_y = offset_tile.y - other_ghost_current_tile.y;
+//              tiles_x = offset_tile.x - other_ghost_current_tile.x;
+//              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
-            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
+//             actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+//             actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
-            break;
-        case DIR_LEFT:
-            offset_tile.x = actors[ 0 ]->current_tile.x - 2;
-            offset_tile.y = actors[ 0 ]->current_tile.y;
+//             break;
+//         case DIR_LEFT:
+//             offset_tile.x = actors[ 0 ]->current_tile.x - 2;
+//             offset_tile.y = actors[ 0 ]->current_tile.y;
 
-             tiles_x = offset_tile.x - other_ghost_current_tile.x;
-             tiles_y = offset_tile.y - other_ghost_current_tile.y;
+//              tiles_x = offset_tile.x - other_ghost_current_tile.x;
+//              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
-            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
+//             actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+//             actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
-            break;
-        case DIR_RIGHT:
-            offset_tile.x = actors[ 0 ]->current_tile.x + 2;
-            offset_tile.y = actors[ 0 ]->current_tile.y;
+//             break;
+//         case DIR_RIGHT:
+//             offset_tile.x = actors[ 0 ]->current_tile.x + 2;
+//             offset_tile.y = actors[ 0 ]->current_tile.y;
 
-             tiles_x = offset_tile.x - other_ghost_current_tile.x;
-             tiles_y = offset_tile.y - other_ghost_current_tile.y;
+//              tiles_x = offset_tile.x - other_ghost_current_tile.x;
+//              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
-            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
+//             actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+//             actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
-            break;
-        default :
-            offset_tile.x = actors[ 0 ]->current_tile.x;
-            offset_tile.y = actors[ 0 ]->current_tile.y;
+//             break;
+//         default :
+//             offset_tile.x = actors[ 0 ]->current_tile.x;
+//             offset_tile.y = actors[ 0 ]->current_tile.y;
 
-             tiles_x = offset_tile.x - other_ghost_current_tile.x;
-             tiles_y = offset_tile.y - other_ghost_current_tile.y;
+//              tiles_x = offset_tile.x - other_ghost_current_tile.x;
+//              tiles_y = offset_tile.y - other_ghost_current_tile.y;
 
-            actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
-            actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
+//             actors[ 3 ]->target_tile.x = offset_tile.x + tiles_x;
+//             actors[ 3 ]->target_tile.y = offset_tile.y + tiles_y;
 
-            break;
-    }
-    if ( actors[ 3 ]->target_tile.x < 0 ) actors[ 3 ]->target_tile.x = 0;
-    if ( actors[ 3 ]->target_tile.y < 0 ) actors[ 3 ]->target_tile.y = 0;
+//             break;
+//     }
+//     if ( actors[ 3 ]->target_tile.x < 0 ) actors[ 3 ]->target_tile.x = 0;
+//     if ( actors[ 3 ]->target_tile.y < 0 ) actors[ 3 ]->target_tile.y = 0;
 
-    if ( actors[ 3 ]->target_tile.x > TILE_COLS - 1 ) actors[ 3 ]->target_tile.x = TILE_COLS - 1;
-    if ( actors[ 3 ]->target_tile.y > TILE_ROWS - 1 ) actors[ 3 ]->target_tile.y = TILE_ROWS - 1;
+//     if ( actors[ 3 ]->target_tile.x > TILE_COLS - 1 ) actors[ 3 ]->target_tile.x = TILE_COLS - 1;
+//     if ( actors[ 3 ]->target_tile.y > TILE_ROWS - 1 ) actors[ 3 ]->target_tile.y = TILE_ROWS - 1;
 
-}
+// }
 
-void set_pokey_target_tile( Actor **actors, TileMap *tm ) {
-    SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
-    float shadow_range = 64;
-    SDL_Point b_current_tile = actors[ 4 ]->current_tile;
-    SDL_Point pac_current_tile = actors[ 0 ]->current_tile;
+// void set_pokey_target_tile( Actor **actors, TileMap *tm ) {
+//     SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
+//     float shadow_range = 64;
+//     SDL_Point b_current_tile = actors[ 4 ]->current_tile;
+//     SDL_Point pac_current_tile = actors[ 0 ]->current_tile;
 
-    float distance_to_pacman = distance( b_current_tile.x, b_current_tile.y, pac_current_tile.x, pac_current_tile.y );
+//     float distance_to_pacman = distance( b_current_tile.x, b_current_tile.y, pac_current_tile.x, pac_current_tile.y );
 
-    if( distance_to_pacman >= shadow_range ) {
-        set_shadow_target_tile( actors, 4, tm );
-    }
-    else {
-        set_scatter_target_tile( actors, 4, tm );
-    }
-}
+//     if( distance_to_pacman >= shadow_range ) {
+//         set_shadow_target_tile( actors, 4, tm );
+//     }
+//     else {
+//         set_scatter_target_tile( actors, 4, tm );
+//     }
+// }
 
 
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer ) {
@@ -439,83 +438,86 @@ void move( Actor *actor, Vector_f velocity ) {
 }
 
 void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
-    int speed = 160;
     
-    if( g_current_ghost_mode == MODE_CHASE ) {
-        if( actors[ 1 ]->next_tile.x == actors[ 1 ]->current_tile.x
-        && actors[ 1 ]->next_tile.y == actors[ 1 ]->current_tile.y ) {
+    // if( g_current_ghost_mode == MODE_CHASE ) {
+    //     if( actors[ 1 ]->next_tile.x == actors[ 1 ]->current_tile.x
+    //     && actors[ 1 ]->next_tile.y == actors[ 1 ]->current_tile.y ) {
 
-            set_shadow_target_tile( actors, 1, tm );
-            set_direction_and_next_tile_shortest_to_target( actors[ 1 ], tm );
-        }
+    //         set_shadow_target_tile( actors, 1, tm );
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 1 ], tm );
+    //     }
 
-        if( actors[ 2 ]->next_tile.x == actors[ 2 ]->current_tile.x
-            && actors[ 2 ]->next_tile.y == actors[ 2 ]->current_tile.y ) {
+    //     if( actors[ 2 ]->next_tile.x == actors[ 2 ]->current_tile.x
+    //         && actors[ 2 ]->next_tile.y == actors[ 2 ]->current_tile.y ) {
 
-            set_ambush_target_tile( actors, tm );
-            set_direction_and_next_tile_shortest_to_target( actors[ 2 ], tm );
-        }
-        if( actors[ 3 ]->next_tile.x == actors[ 3 ]->current_tile.x
-            && actors[ 3 ]->next_tile.y == actors[ 3 ]->current_tile.y ) {
+    //         set_ambush_target_tile( actors, tm );
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 2 ], tm );
+    //     }
+    //     if( actors[ 3 ]->next_tile.x == actors[ 3 ]->current_tile.x
+    //         && actors[ 3 ]->next_tile.y == actors[ 3 ]->current_tile.y ) {
 
-            set_moody_target_tile( actors, tm );
-            set_direction_and_next_tile_shortest_to_target( actors[ 3 ], tm );
-        }
-        if( actors[ 4 ]->next_tile.x == actors[ 4 ]->current_tile.x
-            && actors[ 4 ]->next_tile.y == actors[ 4 ]->current_tile.y ) {
+    //         set_moody_target_tile( actors, tm );
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 3 ], tm );
+    //     }
+    //     if( actors[ 4 ]->next_tile.x == actors[ 4 ]->current_tile.x
+    //         && actors[ 4 ]->next_tile.y == actors[ 4 ]->current_tile.y ) {
 
-            set_pokey_target_tile( actors, tm );
-            set_direction_and_next_tile_shortest_to_target( actors[ 4 ], tm );
-        }
-    }
-    else if( g_current_ghost_mode == MODE_SCATTER ) {
-        set_all_scatter_target_tile( actors );
-        if( actors[ 1 ]->next_tile.x == actors[ 1 ]->current_tile.x
-        && actors[ 1 ]->next_tile.y == actors[ 1 ]->current_tile.y ) {
+    //         set_pokey_target_tile( actors, tm );
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 4 ], tm );
+    //     }
+    // }
+    // else if( g_current_ghost_mode == MODE_SCATTER ) {
+    //     set_all_scatter_target_tile( actors );
+    //     if( actors[ 1 ]->next_tile.x == actors[ 1 ]->current_tile.x
+    //     && actors[ 1 ]->next_tile.y == actors[ 1 ]->current_tile.y ) {
 
-            set_direction_and_next_tile_shortest_to_target( actors[ 1 ], tm );
-        }
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 1 ], tm );
+    //     }
 
-        if( actors[ 2 ]->next_tile.x == actors[ 2 ]->current_tile.x
-            && actors[ 2 ]->next_tile.y == actors[ 2 ]->current_tile.y ) {
+    //     if( actors[ 2 ]->next_tile.x == actors[ 2 ]->current_tile.x
+    //         && actors[ 2 ]->next_tile.y == actors[ 2 ]->current_tile.y ) {
 
-            set_direction_and_next_tile_shortest_to_target( actors[ 2 ], tm );
-        }
-        if( actors[ 3 ]->next_tile.x == actors[ 3 ]->current_tile.x
-            && actors[ 3 ]->next_tile.y == actors[ 3 ]->current_tile.y ) {
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 2 ], tm );
+    //     }
+    //     if( actors[ 3 ]->next_tile.x == actors[ 3 ]->current_tile.x
+    //         && actors[ 3 ]->next_tile.y == actors[ 3 ]->current_tile.y ) {
 
-            set_direction_and_next_tile_shortest_to_target( actors[ 3 ], tm );
-        }
-        if( actors[ 4 ]->next_tile.x == actors[ 4 ]->current_tile.x
-            && actors[ 4 ]->next_tile.y == actors[ 4 ]->current_tile.y ) {
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 3 ], tm );
+    //     }
+    //     if( actors[ 4 ]->next_tile.x == actors[ 4 ]->current_tile.x
+    //         && actors[ 4 ]->next_tile.y == actors[ 4 ]->current_tile.y ) {
 
-            set_direction_and_next_tile_shortest_to_target( actors[ 4 ], tm );
-        }
+    //         set_direction_and_next_tile_shortest_to_target( actors[ 4 ], tm );
+    //     }
 
-    }
+    // }
     
 
     for( int i = 1; i < 5; ++i ) {
         Vector_f velocity = { 0, 0 };
         if( actors[ i ]->direction == DIR_UP ) {
             // set velocity
+            if( actors[ i ]->center_point.x >= tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) - 2 
+            && ( actors[ i ]->center_point.x <= tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) + 2) ) {
+                actors[ i ]->center_point.x = tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 );
+            }
             if ( actors[ i ]->center_point.x == tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = -1;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             } 
             else if( actors[ i ]->center_point.x < tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
             else if( actors[ i ]->center_point.x > tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
         }
         else if( actors[ i ]->direction == DIR_DOWN ){
@@ -523,20 +525,20 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             if ( actors[ i ]->center_point.x == tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             } 
             else if( actors[ i ]->center_point.x < tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
             else if( actors[ i ]->center_point.x >tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
         } 
         else if( actors[ i ]->direction == DIR_LEFT ) {
@@ -544,20 +546,20 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             if ( actors[ i ]->center_point.y == tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = -1;
                 velocity.y = 0;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             } 
             else if( actors[ i ]->center_point.y < tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
             else if( actors[ i ]->center_point.y >tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
         }
         else if(actors[ i ]->direction == DIR_RIGHT ) {
@@ -565,20 +567,20 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             if ( actors[ i ]->center_point.y == tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             } 
             else if( actors[ i ]->center_point.y < tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
             else if( actors[ i ]->center_point.y >tile_grid_point_to_screen_point( actors[ i ]->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
-                velocity.x *= speed * delta_time;
-                velocity.y *= speed * delta_time;
+                velocity.x *= actors[ i ]->speed * delta_time;
+                velocity.y *= actors[ i ]->speed * delta_time;
             }
         }
         move(actors[ i ], velocity );
@@ -587,8 +589,6 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
 }
 
 void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
-    
-    int pac_speed = 170;
     Vector_f velocity = { 0, 0 };
 
     if( pacmonster->direction == DIR_UP ) {
@@ -599,20 +599,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->center_point.x == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0;
             velocity.y = -1;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->center_point.x < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->center_point.x >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
             velocity.x = -0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
 
         // move
@@ -644,20 +644,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->center_point.x == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0;
             velocity.y = 1;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->center_point.x < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->center_point.x >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).x  + ( TILE_SIZE / 2 )){
             velocity.x = -0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
 
         // move
@@ -689,20 +689,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->center_point.y == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = -1;
             velocity.y = 0;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->center_point.y < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = -0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->center_point.y >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
             velocity.x = -0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
 
         // move
@@ -734,20 +734,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->center_point.y == tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 1;
             velocity.y = 0;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->center_point.y < tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->center_point.y >tile_grid_point_to_screen_point( pacmonster->current_tile, tm->tm_screen_position ).y  + ( TILE_SIZE / 2 )){
             velocity.x = 0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pac_speed * delta_time;
-            velocity.y *= pac_speed * delta_time;
+            velocity.x *= pacmonster->speed * delta_time;
+            velocity.y *= pacmonster->speed * delta_time;
         }
 
         // move

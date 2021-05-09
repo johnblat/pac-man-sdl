@@ -83,7 +83,7 @@ typedef struct TileMap {
  */
 
 void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
-    char *filename = "maze_file";
+    char *filename = "res/maze_file";
     char *write_binary_mode = "wb";
 
     SDL_RWops *write_context = SDL_RWFromFile( filename , write_binary_mode );
@@ -96,7 +96,7 @@ void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_tex
 }
 
 void try_load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
-    char *filename = "maze_file";
+    char *filename = "res/maze_file";
     char *read_binary_mode = "rb";
 
     SDL_RWops *read_context = SDL_RWFromFile( filename, read_binary_mode );
@@ -124,7 +124,7 @@ void save_dots_to_file( char dots[ TILE_ROWS ][ TILE_COLS ] ) {
 }
 
 void try_load_dots_from_file( char dots[ TILE_ROWS ][ TILE_COLS ] ) {
-    char *filename = "dots";
+    char *filename = "res/dots";
     char *read_binary_mode = "rb";
 
     SDL_RWops *read_context = SDL_RWFromFile( filename, read_binary_mode );
@@ -147,7 +147,7 @@ void try_load_dots_from_file( char dots[ TILE_ROWS ][ TILE_COLS ] ) {
 void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_filename ) {
     // LOAD the texture
     SDL_Surface *surface;
-    surface = IMG_Load("tileset_40x40.png");
+    surface = IMG_Load("res/tileset_40x40.png");
     tm->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
     SDL_FreeSurface( surface );
 
