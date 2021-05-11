@@ -1,16 +1,13 @@
-#ifndef TARGETING_H
-#define TARGETING_H
-
 #include <SDL2/SDL.h>
+#include "targeting.h"
 #include "actor.h"
 #include "comparisons.h"
 #include "tiles.h"
 
-const SDL_Point shadow_home_tile = { 0, 0 };
-const SDL_Point ambush_home_tile = { TILE_COLS - 1, 0 };
-const SDL_Point moody_home_tile = { 0, TILE_ROWS - 1 };
-const SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
-
+SDL_Point shadow_home_tile = { 0, 0 };
+SDL_Point ambush_home_tile = { TILE_COLS - 1, 0 };
+SDL_Point moody_home_tile = { 0, TILE_ROWS - 1 };
+SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
 
 void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm ) {
     SDL_Point tile_above, tile_below, tile_left, tile_right;
@@ -280,4 +277,3 @@ void set_shadow_next_tile( Actor **actors, TileMap *tm ) {
 
 
 
-#endif

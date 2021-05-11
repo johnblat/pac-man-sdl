@@ -3,6 +3,7 @@
 #include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include "actor.h"
+#include "movement.h"
 #include "animation.h"
 #include "states.h"
 #include "jb_types.h"
@@ -38,7 +39,7 @@ int main( int argc, char *argv[] ) {
     SDL_Renderer *renderer;
     Actor *actors[ 5 ]; //= (Actor **) malloc(sizeof(Actor *) * 5);
     Animation *animations[ 6 ];// ( Animation **) malloc(sizeof(Animation *) * 5);
-    RenderTexture *render_textures[ 6 ];// = ( RenderTexture **) malloc(sizeof( RenderTexture *) * 5);
+    RenderClipFromTextureAtlas *render_textures[ 6 ];// = ( RenderTexture **) malloc(sizeof( RenderTexture *) * 5);
     GhostState ghost_states[ 5 ]; // 1 thru 5
     // TIMER USED FOR VULNERABILITY STATE
     float ghost_vulnerable_timer = 0.0f;
@@ -109,7 +110,7 @@ int main( int argc, char *argv[] ) {
     actors[ 0 ] = init_actor( initial_pos );
     render_textures[ 0 ] = init_render_texture( 0 );
     animations[ 0 ] = init_animation( 0, 0.08f, g_texture_atlases[ 0 ].num_sprite_clips );
-    actors[ 0 ]->speed = 160;
+    actors[ 0 ]->speed = 200;
 
     // INIT GHOST
     Position_f ghost_pos = { TILE_SIZE * 22, TILE_SIZE * 11 };
@@ -133,7 +134,7 @@ int main( int argc, char *argv[] ) {
     animations[ 4 ] = init_animation( 0, 0.08f, g_texture_atlases[ 4 ].num_sprite_clips );
 
     for( int i = 1; i < 5; ++i ) {
-        actors[ i ]->speed = 120;
+        actors[ i ]->speed = 160;
     }
 
     // power pellet
@@ -148,7 +149,7 @@ int main( int argc, char *argv[] ) {
     animations[ 5 ] = init_animation( 0, 0.1f, g_texture_atlases[ 7 ].num_sprite_clips );
 
     // INIT TILEMAP
-    tm_init_and_load_texture( renderer, &tilemap, "res/maze_file" );
+    tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
 
     SDL_Point ghost_pen_position = tile_grid_point_to_screen_point( ghost_pen_tile, tilemap.tm_screen_position ); 
     SDL_Point ghost_pen_center_point;
@@ -326,16 +327,16 @@ int main( int argc, char *argv[] ) {
         for( int r = 0; r < TILE_ROWS; ++r ) {
             for( int c = 0; c < TILE_COLS; ++c ) {
                 
-                tilemap.tm_dot_stuff[ r ][ c ].position.y += tilemap.tm_dot_stuff[ r ][ c ].velocity.y * delta_time ;
+                tilemap.tm_dot_particles[ r ][ c ].position.y += tilemap.tm_dot_particles[ r ][ c ].velocity.y * delta_time ;
 
-                if ( tilemap.tm_dot_stuff[ r ][ c ].position.y < DOT_PADDING ) {
-                    tilemap.tm_dot_stuff[ r ][ c ].position.y = DOT_PADDING;
-                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = DOT_SPEED;
+                if ( tilemap.tm_dot_particles[ r ][ c ].position.y < DOT_PADDING ) {
+                    tilemap.tm_dot_particles[ r ][ c ].position.y = DOT_PADDING;
+                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = DOT_SPEED;
                 }
-                if ( tilemap.tm_dot_stuff[ r ][ c ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING) {
-                    tilemap.tm_dot_stuff[ r ][ c ].position.y = TILE_SIZE - DOT_SIZE - DOT_PADDING;
+                if ( tilemap.tm_dot_particles[ r ][ c ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING) {
+                    tilemap.tm_dot_particles[ r ][ c ].position.y = TILE_SIZE - DOT_SIZE - DOT_PADDING;
                     
-                    tilemap.tm_dot_stuff[ r ][ c ].velocity.y = -DOT_SPEED;
+                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = -DOT_SPEED;
                 }
             }
         }

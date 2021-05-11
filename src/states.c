@@ -1,59 +1,22 @@
-#ifndef STATES_H
-#define STATES_H
-
 #include "targeting.h"
 #include "actor.h"
 #include "render.h"
+#include "targeting.h"
+#include "movement.h"
 #include "comparisons.h"
+#include "states.h"
 
-/***************************************
- * ***** STATE SHIT *********************
- * *********************************/
-
-/**
- * Will be global for all ghosts.
- * Will determine their more specific
- * behavior
- */
-
-// the length of time the ghosts should be in scatter or chase
-// starts with scatter, then alternates.
-// after last element is used, then chase is indefinite
-// even periods are scatter
-// odd periods are chase
 
 SDL_Point ghost_pen_tile = {22, 11};
 
-typedef enum {
-    STATE_NORMAL,
-    STATE_VULNERABLE,
-    STATE_GO_TO_PEN
-} GhostState;
-
-/**
- * Will be global for all ghosts.
- * Will determine their more specific
- * behavior
- */
-/*****************
- * MODES *********
- * *************/
-const uint8_t NUM_SCATTER_CHASE_PERIODS = 9;
 uint8_t g_current_scatter_chase_period = 0;
 uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 7, 20, 7, 20, 5, 20, 5, 0 };
-//uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 2, 2, 2, 2, 2, 2, 2, 0 };
-typedef enum {
-    MODE_CHASE,     // use default behavior
-    MODE_SCATTER,   // use scatter behavior
-} GhostMode;
+
 
 GhostMode g_current_ghost_mode = MODE_SCATTER;
 
-/******************
- * END MODES********
- * *****************/
 
-void vulnerable_enter_all( Actor **ghosts, RenderTexture **render_textures ) {
+void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_textures ) {
     uint8_t vulnerable_texture_atlas_id = 5;
     for( int i = 1; i < 5; ++i ) {
         render_textures[ i ]->texture_atlas_id = vulnerable_texture_atlas_id;
@@ -62,7 +25,7 @@ void vulnerable_enter_all( Actor **ghosts, RenderTexture **render_textures ) {
     } 
 }
 
-void vulnerable_enter( Actor *ghost, RenderTexture *render_texture ) {
+void vulnerable_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture ) {
     uint8_t vulnerable_texture_atlas_id = 5;
 
     render_texture->texture_atlas_id = vulnerable_texture_atlas_id;
@@ -113,11 +76,11 @@ void vulnerable_process( Actor *actor, TileMap *tm ) {
     }
 }
 
-void normal_enter( Actor *ghost, RenderTexture *render_texture, uint8_t texture_atlas_id ) {
+void normal_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) {
     // set texture atlas id to the id
     render_texture->texture_atlas_id = texture_atlas_id;
     ghost->next_tile = ghost->current_tile;
-    ghost->speed = 120;
+    ghost->speed = 160;
 
 }
 
@@ -194,13 +157,13 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
     
 }
 
-void go_to_pen_enter( Actor *actor, RenderTexture *render_texture, uint8_t id ) {
+void go_to_pen_enter( Actor *actor, RenderClipFromTextureAtlas *render_texture, uint8_t id ) {
     uint8_t texture_atlas_id = 6;
 
     render_texture->texture_atlas_id = texture_atlas_id;
     actor->next_tile = actor->current_tile;
     actor->target_tile = ghost_pen_tile;
-    actor->speed = 220;
+    actor->speed = 280;
 }
 
 
@@ -229,7 +192,3 @@ void states_machine_process( Actor **actors, GhostState *ghost_states, TileMap *
     }
 }
 
-/****************
- * END STATE SHIT *
- * ****************/
-#endif

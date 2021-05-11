@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include "tiles.h"
+#include "resources.h"
 #include "constants.h"
 #include "jb_types.h"
 

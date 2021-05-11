@@ -7,9 +7,18 @@
             "args": [
                 "-g",
                 "${workspaceFolder}/src/pac_game.c",
+                "${workspaceFolder}/src/actor.c",
+                "${workspaceFolder}/src/animation.c",
+                "${workspaceFolder}/src/movement.c",
+                "${workspaceFolder}/src/render.c",
+                "${workspaceFolder}/src/resources.c",
+                "${workspaceFolder}/src/targeting.c",
+                "${workspaceFolder}/src/tiles.c",
+                "${workspaceFolder}/src/states.c",
                 "-o",
                 "${workspaceFolder}/bin/pac_game",
                 "-I/usr/include/SDL2",
+                "-I${workspaceFolder}/include/",
                 "-lSDL2", "-lSDL2main", "-lm", "-lSDL2_image", "-lSDL2_ttf"
             ],
             "options": {
@@ -31,9 +40,14 @@
             "args": [
                 "-g",
                 "${workspaceFolder}/src/tilemap_editor.c",
+                "${workspaceFolder}/src/render.c",
+                "${workspaceFolder}/src/resources.c",
+                "${workspaceFolder}/src/tiles.c",
                 "-o",
                 "${workspaceFolder}/bin/tilemap_editor",
                 "-I/usr/include/SDL2",
+                "-I${workspaceFolder}/include/",
+
                 "-lSDL2", "-lSDL2main", "-lm", "-lSDL2_image"
             ],
             "options": {

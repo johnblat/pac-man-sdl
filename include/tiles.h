@@ -7,27 +7,29 @@
 #include "jb_types.h"
 #include "constants.h"
 
+
 /** 
  * TILE VALUES, DIMENSIONS, ETC
  */
-const int TILE_SIZE = 40; // change to different size if necessary
-const int TILE_COLS = SCREEN_WIDTH / (TILE_SIZE );
-const int TILE_ROWS = SCREEN_HEIGHT / ( TILE_SIZE ) - 2;
-const int TOTAL_NUMBER_OF_TILES = TILE_ROWS * TILE_COLS;
-const int DOT_SIZE = 5;
-const int DOT_RADIUS = DOT_SIZE / 2;
-const int DOT_PADDING = 15;
-const float DOT_SPEED = 12;
+#define TILE_SIZE 40 // change to different size if necessary
+#define TILE_COLS ( SCREEN_WIDTH / (TILE_SIZE ) )
+#define TILE_ROWS ( SCREEN_HEIGHT / ( TILE_SIZE ) - 2 )
+#define TOTAL_NUMBER_OF_TILES ( TILE_ROWS * TILE_COLS )
+
+#define DOT_SIZE  5 
+#define DOT_RADIUS  ( DOT_SIZE / 2 )
+#define DOT_PADDING  15
+#define DOT_SPEED  12
 
 /**
  * This is used even for dots that are not on the screen
  * because dots can appear at anytime and they must remain in sync 
  * with the other dots
  */
-typedef struct DotStuff {
+typedef struct {
     Position_f position;
     Vector_f velocity;
-} DotStuff;
+} DotParticle;
 
 /**
  * STRUCTS
@@ -36,7 +38,7 @@ typedef struct TwoDimensionalArrayIndex {
     int r, c;
 } TwoDimensionalArrayIndex;
 
-const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX = { -1, -1 };
+extern const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX;
 
 typedef struct TileMap {
     /** The screen position where the tilemap begins
@@ -64,10 +66,10 @@ typedef struct TileMap {
 
     /**
      * If the dots animate or move, this will update
-     * Think of making this a pointer array for DotStuff, then use NULL to represent no dot at the position
+     * Think of making this a pointer array for DotParticle, then use NULL to represent no dot at the position
      * However, then i would lose the velocity
      */
-    DotStuff tm_dot_stuff[ TILE_ROWS ][ TILE_COLS ];
+    DotParticle tm_dot_particles[ TILE_ROWS ][ TILE_COLS ];
     /**
      * Members I might want
      * SDL_Rect tm_tile_collision_rects[ TILE_ROWS ][ TILE_COLS ];
@@ -76,17 +78,7 @@ typedef struct TileMap {
 
 } TileMap;
 
-/**
- * FILE I/O FOR SAVING/LOADING
- */
 
-void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) ;
-
-void try_load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) ;
-
-void save_dots_to_file( char dots[ TILE_ROWS ][ TILE_COLS ] ) ;
-
-void try_load_dots_from_file( char dots[ TILE_ROWS ][ TILE_COLS ] );
 /**
  * INITIALIZATION for tm ( tilemap )
  * 
