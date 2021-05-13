@@ -31,7 +31,7 @@ void vulnerable_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture 
     render_texture->texture_atlas_id = vulnerable_texture_atlas_id;
     ghost->direction = opposite_directions[ ghost->direction ];
     ghost->next_tile = ghost->current_tile;
-    ghost->speed = 90;
+    ghost->speed = 60;
 
 }
 
@@ -54,6 +54,7 @@ void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm ) {
     surrounding_tiles[ DIR_RIGHT ] = tile_right;
 
     // just choosing first open tile ghost sees
+    Direction direction_to_go = opposite_directions[ ghost->direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
      for( int i = 0; i < 4; ++i ) {
         if( !two_dimensional_indexes_equal(tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ], EMPTY_TILE_TEXTURE_ATLAS_INDEX ) ) { 
             continue;
@@ -61,13 +62,14 @@ void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm ) {
 
         if( i == opposite_directions[ ghost->direction  ] ) continue;
 
-        ghost->next_tile.x = surrounding_tiles[ i ].x;
-        ghost->next_tile.y = surrounding_tiles[ i ].y;
+        direction_to_go = (Direction) i;
 
-        ghost->direction = (Direction) i;
         break;
 
     }
+    ghost->direction = direction_to_go;
+    ghost->next_tile.x = surrounding_tiles[ direction_to_go ].x;
+    ghost->next_tile.y = surrounding_tiles[ direction_to_go ].y;
 }
 
 void vulnerable_process( Actor *actor, TileMap *tm ) {
@@ -80,7 +82,7 @@ void normal_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture, uin
     // set texture atlas id to the id
     render_texture->texture_atlas_id = texture_atlas_id;
     ghost->next_tile = ghost->current_tile;
-    ghost->speed = 160;
+    ghost->speed = 80;
 
 }
 
@@ -91,8 +93,7 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
         case MODE_CHASE:
             switch (ghost_id) {
                 case 1:
-                    if(
-                         points_equal(  actors[ ghost_id ]->next_tile, actors[ ghost_id ]->current_tile )) {
+                    if(points_equal(  actors[ ghost_id ]->next_tile, actors[ ghost_id ]->current_tile )) {
                         set_shadow_target_tile( actors, ghost_id, tm );
                         set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm );
                     }

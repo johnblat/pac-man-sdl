@@ -134,7 +134,7 @@ int main( int argc, char *argv[] ) {
     animations[ 4 ] = init_animation( 0, 0.08f, g_texture_atlases[ 4 ].num_sprite_clips );
 
     for( int i = 1; i < 5; ++i ) {
-        actors[ i ]->speed = 160;
+        actors[ i ]->speed = 80;
     }
 
     // power pellet
@@ -232,12 +232,19 @@ int main( int argc, char *argv[] ) {
         // ghost
 
         // state checks
+        // increase vulnerable timer if any are vulnerable
+        for( int i = 1; i < 5; ++i ) {
+            if( ghost_states[ i ] == STATE_VULNERABLE ) {
+                ghost_vulnerable_timer += delta_time;
+                break;
+            }
+        }
+
         for(int i = 1; i < 5; ++i ) {
             switch( ghost_states[ i ] ) {
                 case STATE_VULNERABLE :
                     // return all ghosts that are still vulnerable to normal
                     // when the timer runs out
-                    ghost_vulnerable_timer += delta_time;
                     if (ghost_vulnerable_timer >= ghost_vulnerable_time_seconds ) {
                         for( int i = 1; i < 5; ++i ) {
                             if( ghost_states[ i ] == STATE_VULNERABLE ) {
@@ -414,8 +421,8 @@ int main( int argc, char *argv[] ) {
 
             SDL_RenderDrawPoints( renderer, points_to_draw, 25 );
 
-            SDL_Rect pen_rect = { ghost_pen_position.x, ghost_pen_position.y, TILE_SIZE, TILE_SIZE };
-            SDL_RenderFillRect( renderer, &pen_rect);
+            // SDL_Rect pen_rect = { ghost_pen_position.x, ghost_pen_position.y, TILE_SIZE, TILE_SIZE };
+            // SDL_RenderFillRect( renderer, &pen_rect);
 
 
         }
