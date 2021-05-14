@@ -48,6 +48,13 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
         }
     }
 
+    // initialize wall
+    for( int row = 0; row < TILE_ROWS; row++ ) {
+        for( int col = 0; col < TILE_COLS; col++ ) {
+            tm->tm_walls[ row ][ col ] = ' ';
+        }
+    }
+
     // initialize dots normalized positions
     for( int row = 0; row < TILE_ROWS; row++ ) {
         for( int col = 0; col < TILE_COLS; col++ ) {
@@ -66,6 +73,7 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
     if( level_filename != NULL) {
         try_load_tilemap_texture_atlas_indexes_from_file( tm->tm_texture_atlas_indexes );
         try_load_dots_from_file( tm->tm_dots );
+        try_load_walls_from_file( tm->tm_walls );
     }
     
     // Space for any UI elements at the top of the screen

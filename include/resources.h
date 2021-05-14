@@ -15,4 +15,8 @@ void save_dots_to_file( char dots[ TILE_ROWS ][ TILE_COLS ] ) ;
 
 void try_load_dots_from_file( char dots[ TILE_ROWS ][ TILE_COLS ] );
 
+void save_walls_to_file( char walls[ TILE_ROWS ][ TILE_COLS ] ) ;
+
+void try_load_walls_from_file( char walls[ TILE_ROWS ][ TILE_COLS ] );
+
 #endif

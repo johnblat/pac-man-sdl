@@ -15,7 +15,8 @@ typedef struct TileSelectionPanel {
 
 typedef enum Mode {
     TILE_MODE,
-    DOT_MODE
+    DOT_MODE,
+    WALL_MODE
 } Mode;
 
 Mode current_mode = TILE_MODE;
@@ -54,7 +55,7 @@ void remove_tile_from_position( SDL_Point mouse_position, TwoDimensionalArrayInd
     atlas_indexes[ grid_point.y ][ grid_point.x ].c = -1;
 }
 
-
+// ALL THE SAME. COMPRESS
 void add_dot_to_position( SDL_Point mouse_position, SDL_Point tile_map_screen_position, char dots[ TILE_ROWS ][ TILE_COLS ] ) {
     if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
         return;
@@ -73,6 +74,26 @@ void remove_dot_from_position( SDL_Point mouse_position, SDL_Point tile_map_scre
     SDL_Point grid_point = screen_point_to_tile_grid_point( mouse_position,  tile_map_screen_position );
 
     dots[ grid_point.y ][ grid_point.x ] = ' ';
+}
+
+void add_wall_to_position( SDL_Point mouse_position, SDL_Point tile_map_screen_position, char walls[ TILE_ROWS ][ TILE_COLS ] ) {
+    if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
+        return;
+    }
+
+    SDL_Point grid_point = screen_point_to_tile_grid_point( mouse_position,  tile_map_screen_position );
+
+    walls[ grid_point.y ][ grid_point.x ] = 'x';
+}
+
+void remove_wall_from_position( SDL_Point mouse_position, SDL_Point tile_map_screen_position, char walls[ TILE_ROWS ][ TILE_COLS ] ) {
+    if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
+        return;
+    }
+
+    SDL_Point grid_point = screen_point_to_tile_grid_point( mouse_position,  tile_map_screen_position );
+
+    walls[ grid_point.y ][ grid_point.x ] = ' ';
 }
 
 /**
@@ -107,6 +128,12 @@ void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *pa
         int dot_size = 6;
         SDL_Rect dot_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - dot_size/2, TILE_SIZE/2 - dot_size/2, dot_size,dot_size};
         SDL_RenderFillRect( renderer, &dot_rect );
+    }
+    else if( current_mode == WALL_MODE ) {
+        SDL_SetRenderDrawColor( renderer, 255,200,150,255);
+        int wall_size = 40;
+        SDL_Rect wall_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - wall_size/2, TILE_SIZE/2 - wall_size/2, wall_size,wall_size};
+        SDL_RenderFillRect( renderer, &wall_rect );
     }
     // tile grid
     SDL_SetRenderDrawColor( renderer, 250,50,80,255);
@@ -160,6 +187,7 @@ int main( int argc, char *argv[] ) {
     SDL_SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_BLEND );
     
     tm_init_and_load_texture( renderer, &tilemap, "res/maze_file" );
+
     // placeholder
     tile_selection_panel.texture_atlas = tilemap.tm_texture_atlas;
     tile_selection_panel.tile_size = TILE_SIZE;
@@ -206,6 +234,7 @@ int main( int argc, char *argv[] ) {
                 else if ( event.key.keysym.sym == SDLK_s ) {
                     save_tilemap_texture_atlas_indexes_to_file( tilemap.tm_texture_atlas_indexes );
                     save_dots_to_file( tilemap.tm_dots );
+                    save_walls_to_file( tilemap.tm_walls );
                     SDL_SetRenderDrawColor(renderer, 0,100,0,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
                     SDL_RenderFillRect( renderer, &screen_rect);
@@ -216,6 +245,7 @@ int main( int argc, char *argv[] ) {
                 else if ( event.key.keysym.sym == SDLK_l ) {
                     try_load_tilemap_texture_atlas_indexes_from_file( tilemap.tm_texture_atlas_indexes );
                     try_load_dots_from_file( tilemap.tm_dots );
+                    try_load_walls_from_file( tilemap.tm_walls );
                     SDL_SetRenderDrawColor(renderer, 255,100,100,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
                     SDL_RenderFillRect( renderer, &screen_rect);
@@ -224,6 +254,9 @@ int main( int argc, char *argv[] ) {
                 }
                 else if( event.key.keysym.sym == SDLK_d ) {
                     current_mode = current_mode == DOT_MODE ? TILE_MODE : DOT_MODE;
+                }
+                else if( event.key.keysym.sym == SDLK_w ) {
+                    current_mode = current_mode == WALL_MODE ? TILE_MODE : WALL_MODE;
                 }
             }
         }
@@ -248,6 +281,9 @@ int main( int argc, char *argv[] ) {
             else if (current_mode == DOT_MODE ) {
                 add_dot_to_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_dots );
             }
+            else if( current_mode == WALL_MODE ) {
+                add_wall_to_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_walls );
+            }
             
             //tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
         }
@@ -270,12 +306,35 @@ int main( int argc, char *argv[] ) {
             else if( current_mode == DOT_MODE ) {
                 remove_dot_from_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_dots );
             }
+            else if( current_mode == WALL_MODE ) {
+                remove_wall_from_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_walls );
+            }
         }
 
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );
 
         tm_render_with_screen_position_offset( renderer, &tilemap );
+        // render walls - no need to render normally because won't see it during actual game.
+        if( current_mode == WALL_MODE ) {
+            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 150 );
+            for( int row = 0; row < TILE_ROWS; ++row ) {
+                for( int col = 0; col < TILE_COLS; ++col ) {
+                    if( tilemap.tm_walls[ row ][ col ] == 'x' ) {
+
+                        int dot_relative_to_tile_y_position = tilemap.tm_dot_particles[ row ][ col ].position.y * (TILE_SIZE);
+                        SDL_Rect dot_rect = {
+                            tilemap.tm_screen_position.x + ( TILE_SIZE * col ),
+                            tilemap.tm_screen_position.y + ( TILE_SIZE * row ),
+                            TILE_SIZE,
+                            TILE_SIZE
+                        };
+                        
+                        SDL_RenderFillRect( renderer, &dot_rect );
+                    }
+                }
+            } 
+        }
         render_tile_selection_panel( renderer, &tile_selection_panel, selected_texture_atlas_index );
         
         SDL_SetRenderDrawColor( renderer, 50,50,50,255);

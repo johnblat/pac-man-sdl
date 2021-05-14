@@ -52,10 +52,15 @@ typedef struct TileMap {
      */
     SDL_Texture *tm_texture_atlas;
     /**
-     * This ultimately represents the state of each tile in the tilemap
+     * This ultimately represents the texture clip of each tile in the tilemap
      * It will either pull from a tile in the texture atlas, or it won't ( it will be (-1, -1 ) )
      */
     TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ];
+
+    /**
+     * Represents a tile that pacman and ghosts cannot move through
+     */
+    char tm_walls[ TILE_ROWS ][ TILE_COLS ];
 
     /**
      * If there is an 'x' in the position, then that means there's a dot in the tile.
