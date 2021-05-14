@@ -6,7 +6,7 @@
  */
 
 void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) {
-    char *filename = "maze_file";
+    char *filename = "res/maze_file";
     char *write_binary_mode = "wb";
 
     SDL_RWops *write_context = SDL_RWFromFile( filename , write_binary_mode );

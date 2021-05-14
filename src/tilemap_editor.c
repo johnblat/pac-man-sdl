@@ -114,19 +114,6 @@ void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *pa
 
 }
 
-// void save_tile_map_atlas_indexes_to_file( TileMap *tile_map ) {
-//     SDL_RWops *write_context = SDL_RWFromFile("maze_file", "wb" );
-//     SDL_RWwrite( write_context, tile_map->tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TILE_ROWS * TILE_COLS );
-//     SDL_RWclose( write_context );
-// }
-
-// void load_tile_map_atlas_indexes_from_file( TileMap *tile_map ){
-//     SDL_RWops *read_context = SDL_RWFromFile( "maze_file", "rb" );
-//     size_t file_size_bytes = SDL_RWsize( read_context );
-//     size_t num_bytes_read = SDL_RWread( read_context, tile_map->tm_texture_atlas_indexes, sizeof( TwoDimensionalArrayIndex ), TILE_ROWS * TILE_COLS );
-
-// }
-
 
 void update_selected_texture_index_from_screen_based_position( SDL_Point mouse_position, TileSelectionPanel *panel, TwoDimensionalArrayIndex *selection_index ) {
     if ( mouse_position.x > panel->num_cols * panel->tile_size ) {
@@ -172,11 +159,11 @@ int main( int argc, char *argv[] ) {
 
     SDL_SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_BLEND );
     
-    tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
+    tm_init_and_load_texture( renderer, &tilemap, "res/maze_file" );
     // placeholder
     tile_selection_panel.texture_atlas = tilemap.tm_texture_atlas;
     tile_selection_panel.tile_size = TILE_SIZE;
-    tile_selection_panel.num_cols = 21;
+    tile_selection_panel.num_cols = 20;
     tile_selection_panel.num_rows = 2;
     
     SDL_Event event;
