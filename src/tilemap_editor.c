@@ -4,6 +4,7 @@
 #include "tiles.h"
 #include "resources.h"
 #include "constants.h"
+#include "comparisons.h"
 #include "jb_types.h"
 
 typedef struct TileSelectionPanel {
@@ -14,12 +15,21 @@ typedef struct TileSelectionPanel {
 } TileSelectionPanel;
 
 typedef enum Mode {
-    TILE_MODE,
-    DOT_MODE,
-    WALL_MODE
+    TILE_MODE,                    // Default ( No Key )
+    DOT_MODE,                     // D Key
+    WALL_MODE,                    // W Key 
+    PAC_PLACEMENT_MODE,           // P Key
+    GHOST_PEN_PLACEMENT_MODE,     // G Key
+    E_POWER_PELLET_PLACEMENT_MODE // E Key ( Energizer Power Pellet )
 } Mode;
 
 Mode current_mode = TILE_MODE;
+
+SDL_Point pac_starting_tile;
+
+SDL_Point tm_power_pellet_tiles[ 4 ];
+SDL_Point poopy_point = { -1, -1 };
+int num_power_pellets = 0;
 /**
  * Returns the values in the num_rows and num_cols pointer parameters
  * It'll be something like 2x18 or something like that because an atlas 
@@ -135,6 +145,12 @@ void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *pa
         SDL_Rect wall_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - wall_size/2, TILE_SIZE/2 - wall_size/2, wall_size,wall_size};
         SDL_RenderFillRect( renderer, &wall_rect );
     }
+    else if( current_mode == PAC_PLACEMENT_MODE ) {
+        SDL_SetRenderDrawColor( renderer, 242, 241, 57, 255 );
+        int pac_size = 40;
+        SDL_Rect pac_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - pac_size/2, TILE_SIZE/2 - pac_size/2, pac_size,pac_size};
+        SDL_RenderFillRect( renderer, &pac_rect );
+    }
     // tile grid
     SDL_SetRenderDrawColor( renderer, 250,50,80,255);
     render_grid( renderer, panel->tile_size, 0, 0, render_dst_rect.w, render_dst_rect.h );
@@ -163,6 +179,9 @@ int main( int argc, char *argv[] ) {
     TileMap tilemap;
     TileSelectionPanel tile_selection_panel;
     TwoDimensionalArrayIndex selected_texture_atlas_index = {0, 0};
+
+    pac_starting_tile.x = 0;
+    pac_starting_tile.y = 0;
     
     char *filename = "level";
 
@@ -187,11 +206,17 @@ int main( int argc, char *argv[] ) {
     SDL_SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_BLEND );
     
     tm_init_and_load_texture( renderer, &tilemap, "res/maze_file" );
+    try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
 
+    // set power pellets to poppoy tiels
+    for(int i = 0; i < 4; ++i ) {
+        tm_power_pellet_tiles[ i ] = poopy_point;
+    }
     // placeholder
     tile_selection_panel.texture_atlas = tilemap.tm_texture_atlas;
     tile_selection_panel.tile_size = TILE_SIZE;
-    tile_selection_panel.num_cols = 20;
+
+    tile_selection_panel.num_cols = 40;
     tile_selection_panel.num_rows = 2;
     
     SDL_Event event;
@@ -227,14 +252,18 @@ int main( int argc, char *argv[] ) {
                     right_button_pressed = 0;
                 }
             }
+            // TODO: examine and see if some of these should be key up
             else if (event.type == SDL_KEYDOWN ) {
                 if ( event.key.keysym.sym == SDLK_ESCAPE ) {
                     quit = SDL_TRUE;
                 }
                 else if ( event.key.keysym.sym == SDLK_s ) {
-                    save_tilemap_texture_atlas_indexes_to_file( tilemap.tm_texture_atlas_indexes );
-                    save_dots_to_file( tilemap.tm_dots );
-                    save_walls_to_file( tilemap.tm_walls );
+                    save_resource_to_file( tilemap.tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+                    save_resource_to_file( tilemap.tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+                    save_resource_to_file( tilemap.tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+                    save_resource_to_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
+                    save_resource_to_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
+
                     SDL_SetRenderDrawColor(renderer, 0,100,0,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
                     SDL_RenderFillRect( renderer, &screen_rect);
@@ -243,9 +272,12 @@ int main( int argc, char *argv[] ) {
                     
                 }
                 else if ( event.key.keysym.sym == SDLK_l ) {
-                    try_load_tilemap_texture_atlas_indexes_from_file( tilemap.tm_texture_atlas_indexes );
-                    try_load_dots_from_file( tilemap.tm_dots );
-                    try_load_walls_from_file( tilemap.tm_walls );
+                    try_load_resource_from_file( tilemap.tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+                    try_load_resource_from_file( tilemap.tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+                    try_load_resource_from_file( tilemap.tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+                    try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
+                    try_load_resource_from_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
+
                     SDL_SetRenderDrawColor(renderer, 255,100,100,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
                     SDL_RenderFillRect( renderer, &screen_rect);
@@ -258,6 +290,19 @@ int main( int argc, char *argv[] ) {
                 else if( event.key.keysym.sym == SDLK_w ) {
                     current_mode = current_mode == WALL_MODE ? TILE_MODE : WALL_MODE;
                 }
+                else if( event.key.keysym.sym == SDLK_p ) {
+                    current_mode = current_mode == PAC_PLACEMENT_MODE ? TILE_MODE : PAC_PLACEMENT_MODE;
+                }
+                else if( event.key.keysym.sym == SDLK_g ) {
+                    current_mode = current_mode == GHOST_PEN_PLACEMENT_MODE ? TILE_MODE : GHOST_PEN_PLACEMENT_MODE;
+                }
+                else if( event.key.keysym.sym == SDLK_e ) {
+                    current_mode = current_mode == E_POWER_PELLET_PLACEMENT_MODE ? TILE_MODE : E_POWER_PELLET_PLACEMENT_MODE;
+                }
+                else if( event.key.keysym.sym == SDLK_t ) {
+                    current_mode = TILE_MODE;
+                }
+                
             }
         }
 
@@ -284,6 +329,33 @@ int main( int argc, char *argv[] ) {
             else if( current_mode == WALL_MODE ) {
                 add_wall_to_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_walls );
             }
+            else if ( current_mode == PAC_PLACEMENT_MODE ) {
+                SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
+                pac_starting_tile.x = tile.x;
+                pac_starting_tile.y = tile.y;
+            }
+            else if( current_mode == E_POWER_PELLET_PLACEMENT_MODE && num_power_pellets < 4 ) {
+                SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
+
+                // TODO don't use flag 
+                SDL_bool tile_already_exists = SDL_FALSE;
+                for( int i = 0; i < 4; ++i ) {
+                    // tile already exists
+                    if( points_equal( tm_power_pellet_tiles[ i ], tile ) ) tile_already_exists = SDL_TRUE;
+                }
+
+                if( !tile_already_exists ) {
+                    for( int i = 0; i < 4; ++i ) {
+                        if( points_equal( tm_power_pellet_tiles[ i ], poopy_point ) ) {
+                            tm_power_pellet_tiles[ i ] = tile;
+                            break;
+                        }
+                    }
+                    num_power_pellets++;
+                }
+                
+                
+            }
             
             //tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
         }
@@ -309,12 +381,40 @@ int main( int argc, char *argv[] ) {
             else if( current_mode == WALL_MODE ) {
                 remove_wall_from_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_walls );
             }
+            else if( current_mode == E_POWER_PELLET_PLACEMENT_MODE ) {
+                SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
+                for( int i = 0 ; i < 4; ++i ) {
+                    if( points_equal( tm_power_pellet_tiles[ i ], tile ) ) {
+                        tm_power_pellet_tiles[ i ].x = -1;
+                        tm_power_pellet_tiles[ i ].y = -1;
+                        num_power_pellets--;
+                        break;
+                    }
+                }
+            }
+            
         }
 
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );
 
+        
+
         tm_render_with_screen_position_offset( renderer, &tilemap );
+
+        SDL_SetRenderDrawColor( renderer, 242, 241, 57, 150 );
+        SDL_Rect pac_rect = { pac_starting_tile.x * TILE_SIZE, pac_starting_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE};
+        SDL_RenderFillRect( renderer, &pac_rect );
+
+        // render power pellets
+        SDL_SetRenderDrawColor( renderer, 15, 250, 15, 150 );
+        for( int i = 0; i < 4; ++i ) {
+            if( points_equal( tm_power_pellet_tiles[ i ], poopy_point ) ) continue;
+            SDL_Point power_pellet_screen_point = tile_grid_point_to_screen_point( tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
+            SDL_Rect power_pellet_rect = { power_pellet_screen_point.x, power_pellet_screen_point.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderFillRect( renderer, &power_pellet_rect );
+        }
+
         // render walls - no need to render normally because won't see it during actual game.
         if( current_mode == WALL_MODE ) {
             SDL_SetRenderDrawColor( renderer, 255, 80, 50, 150 );
@@ -337,11 +437,13 @@ int main( int argc, char *argv[] ) {
         }
         render_tile_selection_panel( renderer, &tile_selection_panel, selected_texture_atlas_index );
         
+        
+
         SDL_SetRenderDrawColor( renderer, 50,50,50,255);
         render_grid( renderer, TILE_SIZE, 0, TILE_SIZE * 2, SCREEN_WIDTH, SCREEN_HEIGHT );
 
         SDL_RenderPresent(renderer);
-        SDL_Delay(50);
+        SDL_Delay(10);
     
     }
     // CLOSE DOWN

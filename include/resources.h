@@ -7,6 +7,9 @@
  * FILE I/O FOR SAVING/LOADING
  */
 
+void save_resource_to_file( void* resource_ptr, char *filename, size_t resource_size, int num_resources );
+void try_load_resource_from_file( void *resource_ptr, char *filename, size_t resource_size, int num_resources );
+
 void save_tilemap_texture_atlas_indexes_to_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) ;
 
 void try_load_tilemap_texture_atlas_indexes_from_file( TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ] ) ;

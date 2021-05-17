@@ -16,9 +16,9 @@
 #define TILE_ROWS ( SCREEN_HEIGHT / ( TILE_SIZE ) - 2 )
 #define TOTAL_NUMBER_OF_TILES ( TILE_ROWS * TILE_COLS )
 
-#define DOT_SIZE  5 
+#define DOT_SIZE  6 
 #define DOT_RADIUS  ( DOT_SIZE / 2 )
-#define DOT_PADDING  15
+#define DOT_PADDING 15
 #define DOT_SPEED  12
 
 /**
@@ -80,6 +80,7 @@ typedef struct TileMap {
      * SDL_Rect tm_tile_collision_rects[ TILE_ROWS ][ TILE_COLS ];
      * SDL_Point tm_tile_screen_positions[ TILE_ROWS ][ TILE_COLS ];
      */
+    
 
 } TileMap;
 

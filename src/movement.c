@@ -20,8 +20,7 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
             return;
         }
 
-        if(tm->tm_texture_atlas_indexes[ tile_above.y ][ tile_above.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ tile_above.y ][ tile_above.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
+        if(tm->tm_walls[ tile_above.y ][ tile_above.x ] != 'x' ) 
         {
             pacmonster->direction = DIR_UP;
         }
@@ -41,8 +40,7 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
             return;
         }
 
-        if(tm->tm_texture_atlas_indexes[ tile_below.y ][ tile_below.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ tile_below.y ][ tile_below.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
+        if(tm->tm_walls[ tile_below.y ][ tile_below.x ] != 'x' ) 
         {
             pacmonster->direction = DIR_DOWN;
         }
@@ -62,8 +60,7 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
             return;
         }
 
-        if(tm->tm_texture_atlas_indexes[ tile_to_left.y ][ tile_to_left.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ tile_to_left.y ][ tile_to_left.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
+        if(tm->tm_walls[ tile_to_left.y ][ tile_to_left.x ] != 'x'  ) 
         {
             pacmonster->direction = DIR_LEFT;
         }
@@ -83,8 +80,7 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
             return;
         }
 
-        if(tm->tm_texture_atlas_indexes[ tile_to_right.y ][ tile_to_right.x ].r == EMPTY_TILE_TEXTURE_ATLAS_INDEX.r 
-            && tm->tm_texture_atlas_indexes[ tile_to_right.y ][ tile_to_right.x ].c == EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) 
+        if(tm->tm_walls[ tile_to_right.y ][ tile_to_right.x ] != 'x'  ) 
         {
             pacmonster->direction = DIR_RIGHT;
         }
@@ -309,8 +305,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->top_sensor.x > target_tile_rect.x 
         && pacmonster->top_sensor.x < target_tile_rect.x + TILE_SIZE ) {
             // target tile is a wall
-            if ( tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-            && tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+            if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x' ) {
                 Vector_f reversed_velocity = { -velocity.x, -velocity.y };
                 move(pacmonster, reversed_velocity );
             }
@@ -354,8 +349,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->bottom_sensor.x > target_tile_rect.x 
         && pacmonster->bottom_sensor.x < target_tile_rect.x + TILE_SIZE ) {
             // target tile is a wall
-            if ( tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-            && tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+            if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x') {
                 Vector_f reversed_velocity = { -velocity.x, -velocity.y };
                 move(pacmonster, reversed_velocity );
             }
@@ -399,8 +393,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->left_sensor.y > target_tile_rect.y 
         && pacmonster->left_sensor.y < target_tile_rect.y + TILE_SIZE ) {
             // target tile is a wall
-            if ( tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-            && tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+            if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x' ) {
                 Vector_f reversed_velocity = { -velocity.x, -velocity.y };
                 move(pacmonster, reversed_velocity );
             }
@@ -444,8 +437,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->right_sensor.y > target_tile_rect.y 
         && pacmonster->right_sensor.y < target_tile_rect.y + TILE_SIZE ) {
             // target tile is a wall
-            if ( tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].r != EMPTY_TILE_TEXTURE_ATLAS_INDEX.r
-            && tm->tm_texture_atlas_indexes[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ].c != EMPTY_TILE_TEXTURE_ATLAS_INDEX.c ) {
+            if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x') {
                 Vector_f reversed_velocity = { -velocity.x, -velocity.y };
                 move(pacmonster, reversed_velocity );
             }

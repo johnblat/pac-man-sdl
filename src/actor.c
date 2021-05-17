@@ -2,6 +2,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <math.h>
+#include <stdio.h>
 #include "animation.h"
 #include "actor.h"
 #include "jb_types.h"

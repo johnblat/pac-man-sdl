@@ -1,6 +1,7 @@
-#include "stdlib.h"
+#include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <stdio.h>
 #include "render.h"
 #include "actor.h"
 #include "animation.h"
@@ -82,7 +83,7 @@ void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas 
 
 
 void set_render_texture_values_based_on_animation( Animation **animations, RenderClipFromTextureAtlas **render_textures, int num ) {
-    for( int i = 0; i < num; ++i ){
+    for( int i = 0; i < num ; ++i ){
         render_textures[ i ]->current_sprite_clip = animations[ i ]->current_frame;
     }
 }

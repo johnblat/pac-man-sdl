@@ -56,7 +56,7 @@ void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm ) {
     // just choosing first open tile ghost sees
     Direction direction_to_go = opposite_directions[ ghost->direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
      for( int i = 0; i < 4; ++i ) {
-        if( !two_dimensional_indexes_equal(tm->tm_texture_atlas_indexes[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ], EMPTY_TILE_TEXTURE_ATLAS_INDEX ) ) { 
+        if( tm->tm_walls[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ] == 'x' ) { 
             continue;
         }
 
@@ -167,7 +167,12 @@ void go_to_pen_enter( Actor *actor, RenderClipFromTextureAtlas *render_texture, 
     actor->speed = 280;
 }
 
-
+/** Need to fix this!!!
+ * Sometimes they can get stuck in an infinite loop.
+ * I need to make sure they definitely get to the pen.
+ * In the other states, its fine if they get caught and can't go to their target tile. 
+ * In this state its a necessity
+ */
 void go_to_pen_process( Actor *actor, TileMap *tm ) {
     //set_pen_target_tile( actor, tm );
     if( points_equal(actor->next_tile, actor->current_tile ) && !points_equal(actor->current_tile, ghost_pen_tile ) ) {
