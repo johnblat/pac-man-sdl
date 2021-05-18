@@ -71,9 +71,9 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
         
     // load the texture indexes to use for each tile in the tilemap
     if( level_filename != NULL) {
-        try_load_tilemap_texture_atlas_indexes_from_file( tm->tm_texture_atlas_indexes );
-        try_load_dots_from_file( tm->tm_dots );
-        try_load_walls_from_file( tm->tm_walls );
+        try_load_resource_from_file( tm->tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+        try_load_resource_from_file( tm->tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+        try_load_resource_from_file( tm->tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
     }
     
     // Space for any UI elements at the top of the screen

@@ -212,6 +212,9 @@ int main( int argc, char *argv[] ) {
     for(int i = 0; i < 4; ++i ) {
         tm_power_pellet_tiles[ i ] = poopy_point;
     }
+    try_load_resource_from_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
+
+
     // placeholder
     tile_selection_panel.texture_atlas = tilemap.tm_texture_atlas;
     tile_selection_panel.tile_size = TILE_SIZE;
@@ -232,7 +235,7 @@ int main( int argc, char *argv[] ) {
             }
             if ( event.type == SDL_KEYDOWN ) {
                 if ( event.key.keysym.sym == SDLK_SPACE ) {
-                    save_tilemap_texture_atlas_indexes_to_file( tilemap.tm_texture_atlas_indexes );
+                    save_resource_to_file( tilemap.tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
                 }
             }
             if ( event.type == SDL_MOUSEBUTTONDOWN ) {

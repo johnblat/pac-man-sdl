@@ -319,10 +319,7 @@ int main( int argc, char *argv[] ) {
                                     vulnerable_enter( actors[ g ], render_textures[ g ] );
                                 }
                                 
-                            }
-                           
-                            // enter vulnerable for this ghost
-                           
+                            }                           
                         }
                         
                     }
