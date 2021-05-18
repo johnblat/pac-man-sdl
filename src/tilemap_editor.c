@@ -25,11 +25,16 @@ typedef enum Mode {
 
 Mode current_mode = TILE_MODE;
 
+// pac starting tile data
 SDL_Point pac_starting_tile;
 
+// power pellet data
 SDL_Point tm_power_pellet_tiles[ 4 ];
 SDL_Point poopy_point = { -1, -1 };
 int num_power_pellets = 0;
+
+// ghost pen data
+SDL_Point ghost_pen_tile;
 /**
  * Returns the values in the num_rows and num_cols pointer parameters
  * It'll be something like 2x18 or something like that because an atlas 
@@ -151,6 +156,18 @@ void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *pa
         SDL_Rect pac_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - pac_size/2, TILE_SIZE/2 - pac_size/2, pac_size,pac_size};
         SDL_RenderFillRect( renderer, &pac_rect );
     }
+    else if( current_mode == E_POWER_PELLET_PLACEMENT_MODE ) {
+        SDL_SetRenderDrawColor( renderer, 20,255,20,255);
+        int pen_size = 40;
+        SDL_Rect pen_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - pen_size/2, TILE_SIZE/2 - pen_size/2, pen_size, pen_size };
+        SDL_RenderFillRect( renderer, &pen_rect );
+    }
+    else if( current_mode == GHOST_PEN_PLACEMENT_MODE ) {
+        SDL_SetRenderDrawColor( renderer, 255,20,20,255);
+        int pen_size = 40;
+        SDL_Rect pen_rect = { panel->num_cols * TILE_SIZE + TILE_SIZE/2 - pen_size/2, TILE_SIZE/2 - pen_size/2, pen_size, pen_size };
+        SDL_RenderFillRect( renderer, &pen_rect );
+    }
     // tile grid
     SDL_SetRenderDrawColor( renderer, 250,50,80,255);
     render_grid( renderer, panel->tile_size, 0, 0, render_dst_rect.w, render_dst_rect.h );
@@ -207,6 +224,7 @@ int main( int argc, char *argv[] ) {
     
     tm_init_and_load_texture( renderer, &tilemap, "res/maze_file" );
     try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
+    try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
 
     // set power pellets to poppoy tiels
     for(int i = 0; i < 4; ++i ) {
@@ -266,6 +284,7 @@ int main( int argc, char *argv[] ) {
                     save_resource_to_file( tilemap.tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
                     save_resource_to_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
                     save_resource_to_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
+                    save_resource_to_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
 
                     SDL_SetRenderDrawColor(renderer, 0,100,0,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -280,6 +299,7 @@ int main( int argc, char *argv[] ) {
                     try_load_resource_from_file( tilemap.tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
                     try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
                     try_load_resource_from_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
+                    try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
 
                     SDL_SetRenderDrawColor(renderer, 255,100,100,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -301,6 +321,9 @@ int main( int argc, char *argv[] ) {
                 }
                 else if( event.key.keysym.sym == SDLK_e ) {
                     current_mode = current_mode == E_POWER_PELLET_PLACEMENT_MODE ? TILE_MODE : E_POWER_PELLET_PLACEMENT_MODE;
+                }
+                else if( event.key.keysym.sym == SDLK_g ) {
+                    current_mode = current_mode == GHOST_PEN_PLACEMENT_MODE ? TILE_MODE : GHOST_PEN_PLACEMENT_MODE;
                 }
                 else if( event.key.keysym.sym == SDLK_t ) {
                     current_mode = TILE_MODE;
@@ -358,6 +381,10 @@ int main( int argc, char *argv[] ) {
                 }
                 
                 
+            }
+            else if( current_mode == GHOST_PEN_PLACEMENT_MODE ) {
+                SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
+                ghost_pen_tile = tile;
             }
             
             //tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
@@ -418,9 +445,16 @@ int main( int argc, char *argv[] ) {
             SDL_RenderFillRect( renderer, &power_pellet_rect );
         }
 
+        // render ghost pen
+        SDL_SetRenderDrawColor( renderer, 255,20,20,150);
+        SDL_Point pen_screen_point = tile_grid_point_to_screen_point( ghost_pen_tile, tilemap.tm_screen_position );
+
+        SDL_Rect pen_rect = {pen_screen_point.x, pen_screen_point.y, TILE_SIZE, TILE_SIZE};
+        SDL_RenderFillRect( renderer, &pen_rect );
+
         // render walls - no need to render normally because won't see it during actual game.
         if( current_mode == WALL_MODE ) {
-            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 150 );
+            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 60 );
             for( int row = 0; row < TILE_ROWS; ++row ) {
                 for( int col = 0; col < TILE_COLS; ++col ) {
                     if( tilemap.tm_walls[ row ][ col ] == 'x' ) {

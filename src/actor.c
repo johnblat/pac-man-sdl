@@ -16,12 +16,14 @@ void actor_set_current_tile( Actor *actor ) {
     actor->current_tile.y = ( ( ( actor->position.y + TILE_SIZE / 2 ) - (TILE_SIZE * 2 ) ) / TILE_SIZE ) ;
 }
 
-Actor *init_actor( Position_f initial_position ) {
+Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset ) {
     Actor *actor;
     actor = ( Actor *) malloc( sizeof( Actor ) );
 
-    actor->position.x = initial_position.x;
-    actor->position.y = initial_position.y;
+    SDL_Point screen_point = tile_grid_point_to_screen_point( initial_tile, tilemap_offset);
+
+    actor->position.x = screen_point.x;
+    actor->position.y = screen_point.y;
 
     actor->center_point.x = ( int ) actor->position.x + ( ACTOR_SIZE / 2 );
     actor->center_point.y = ( int ) actor->position.y + ( ACTOR_SIZE / 2 );

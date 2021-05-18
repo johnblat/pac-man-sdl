@@ -65,7 +65,7 @@ typedef struct Actor {
  * *****************/
 
 
-Actor *init_actor( Position_f initial_position ) ;
+Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset ) ;
 
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer );
 

@@ -19,6 +19,7 @@ SDL_bool g_show_debug_info = SDL_TRUE;
 SDL_Color pac_color = {200,150,0};
 
 // TODO don't store globally here
+// power pellet
 SDL_Point poopy_tile = { -1, -1 };
 SDL_Point tm_power_pellet_tiles[ 4 ];
 SDL_Point tm_power_pellet_screen_points[ 4 ];
@@ -119,39 +120,51 @@ int main( int argc, char *argv[] ) {
     // INIT PACMONSTER
     SDL_Point pac_starting_tile;
     try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
-    SDL_Point pac_initial_pos_point = tile_grid_point_to_screen_point( pac_starting_tile, tilemap.tm_screen_position );
-    Position_f initial_pos;
-    initial_pos.x = pac_initial_pos_point.x;
-    initial_pos.y = pac_initial_pos_point.y;
 
-    actors[ 0 ] = init_actor( initial_pos );
+    actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position );
     render_textures[ 0 ] = init_render_texture( 0 );
     animations[ 0 ] = init_animation( 0, 0.07f, g_texture_atlases[ 0 ].num_sprite_clips );
     actors[ 0 ]->speed = 300;
 
     // INIT GHOST
-    Position_f ghost_pos = { TILE_SIZE * 22, TILE_SIZE * 11 };
-    actors[ 1 ] = init_actor( ghost_pos );
+    SDL_Point ghost_pen_tile;
+    try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
+    // doing this in case need more ghosts in future. don't want to harder hard code their exact starting positions. Can define their offsets in a config file
+    SDL_Point pinky_from_pen = {0, 0};
+    SDL_Point blinky_from_pen = {0, -3};
+    SDL_Point inky_from_pen = { -1, 0 };
+    SDL_Point clyde_from_pen = {1, 0};
+
+    SDL_Point blinky_tile;
+    blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
+    blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
+    actors[ 1 ] = init_actor( blinky_tile, tilemap.tm_screen_position );
     render_textures[ 1 ] = init_render_texture( 1 );
     animations[ 1 ] = init_animation( 0, 0.08f, g_texture_atlases[ 1 ].num_sprite_clips );
 
-    Position_f pinky_position = { TILE_SIZE * 22, TILE_SIZE * 13};
-    actors[ 2 ]= init_actor( pinky_position );
+    SDL_Point pinky_tile;
+    pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
+    pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
+    actors[ 2 ]= init_actor( pinky_tile, tilemap.tm_screen_position );
     render_textures[ 2 ]= init_render_texture( 2 );
     animations[ 2 ] = init_animation( 0, 0.08f, g_texture_atlases[ 2 ].num_sprite_clips );
 
-    Position_f inky_position = { TILE_SIZE * 22, TILE_SIZE * 13};
-    actors[ 3 ]= init_actor( pinky_position );
+    SDL_Point inky_tile;
+    inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
+    inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
+    actors[ 3 ]= init_actor( inky_tile, tilemap.tm_screen_position );
     render_textures[ 3 ]= init_render_texture( 3 );
     animations[ 3 ] = init_animation( 0, 0.08f, g_texture_atlases[ 3 ].num_sprite_clips );
 
-    Position_f clyde_position = { TILE_SIZE * 22, TILE_SIZE * 13};
-    actors[ 4 ]= init_actor( pinky_position );
+    SDL_Point clyde_tile;
+    clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
+    clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
+    actors[ 4 ]= init_actor( clyde_tile, tilemap.tm_screen_position );
     render_textures[ 4 ]= init_render_texture( 4 );
     animations[ 4 ] = init_animation( 0, 0.08f, g_texture_atlases[ 4 ].num_sprite_clips );
 
     for( int i = 1; i < 5; ++i ) {
-        actors[ i ]->speed = 80;
+        actors[ i ]->speed = 250;
     }
 
     // power pellet
@@ -420,21 +433,20 @@ int main( int argc, char *argv[] ) {
                 SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
             }
 
-            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 150 );
+            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 30 );
             for( int row = 0; row < TILE_ROWS; row++ ) {
                 for( int col = 0; col < TILE_COLS; col ++ ) {
 
                     if( tilemap.tm_walls[ row ][ col ] == 'x' ) {
 
-                        int dot_relative_to_tile_y_position = tilemap.tm_dot_particles[ row ][ col ].position.y * (TILE_SIZE);
-                        SDL_Rect dot_rect = {
+                        SDL_Rect wall_rect = {
                             tilemap.tm_screen_position.x + ( TILE_SIZE * col ),
                             tilemap.tm_screen_position.y + ( TILE_SIZE * row ),
                             TILE_SIZE,
                             TILE_SIZE
                         };
                         
-                        SDL_RenderFillRect( renderer, &dot_rect );
+                        SDL_RenderFillRect( renderer, &wall_rect );
 
                     } 
                 }

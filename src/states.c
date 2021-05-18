@@ -82,7 +82,7 @@ void normal_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture, uin
     // set texture atlas id to the id
     render_texture->texture_atlas_id = texture_atlas_id;
     ghost->next_tile = ghost->current_tile;
-    ghost->speed = 80;
+    ghost->speed = 250;
 
 }
 
@@ -164,7 +164,7 @@ void go_to_pen_enter( Actor *actor, RenderClipFromTextureAtlas *render_texture, 
     render_texture->texture_atlas_id = texture_atlas_id;
     actor->next_tile = actor->current_tile;
     actor->target_tile = ghost_pen_tile;
-    actor->speed = 280;
+    actor->speed = 350;
 }
 
 /** Need to fix this!!!
