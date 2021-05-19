@@ -50,7 +50,7 @@ int main( int argc, char *argv[] ) {
     GhostState ghost_states[ 5 ]; // 1 thru 5
     // TIMER USED FOR VULNERABILITY STATE
     float ghost_vulnerable_timer = 0.0f;
-    uint8_t ghost_vulnerable_time_seconds = 20;
+    //uint8_t ghost_vulnerable_time_seconds = 20;
     // GHOST BEHAVIOR TIMER FOR CURRENT GLOBAL GHOST MODE
     float ghost_mode_timer = 0.0f;
     float ghost_change_mode_time = g_scatter_chase_period_seconds[ g_current_scatter_chase_period ];
@@ -243,7 +243,7 @@ int main( int argc, char *argv[] ) {
                     g_show_debug_info = !g_show_debug_info;
                 }
                 if (event.key.keysym.sym == SDLK_v ) {
-                    ghost_vulnerable_timer = 0.0f;
+                    ghost_vulnerable_timer = 20.0f;
                     for( int i = 1; i < 5; ++i ) {
                         ghost_states[ i ] = STATE_VULNERABLE;
                         vulnerable_enter( actors[ i ], render_textures[ i ] );
@@ -275,26 +275,26 @@ int main( int argc, char *argv[] ) {
 
         // ghost
 
-        // state checks
-        // increase vulnerable timer if any are vulnerable
+        // decrease vulnerable timer if any are vulnerable
         for( int i = 1; i < 5; ++i ) {
             if( ghost_states[ i ] == STATE_VULNERABLE ) {
-                ghost_vulnerable_timer += delta_time;
+                ghost_vulnerable_timer -= delta_time;
                 break;
             }
         }
+        
+        // state checks
 
         for(int i = 1; i < 5; ++i ) {
             switch( ghost_states[ i ] ) {
                 case STATE_VULNERABLE :
                     // return all ghosts that are still vulnerable to normal
                     // when the timer runs out
-                    if (ghost_vulnerable_timer >= ghost_vulnerable_time_seconds ) {
+                    if (ghost_vulnerable_timer <= 0.0f ) {
                         for( int i = 1; i < 5; ++i ) {
                             if( ghost_states[ i ] == STATE_VULNERABLE ) {
                                 ghost_states[ i ] = STATE_NORMAL;
                                 normal_enter( actors[ i ], render_textures[ i ], i );
-                                ghost_vulnerable_timer = 0.0f;
                             }
                         }
                     }
@@ -332,7 +332,8 @@ int main( int argc, char *argv[] ) {
                                     vulnerable_enter( actors[ g ], render_textures[ g ] );
                                 }
                                 
-                            }                           
+                            }   
+                            ghost_vulnerable_timer = 20.0f;                        
                         }
                         
                     }
