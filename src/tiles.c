@@ -19,6 +19,7 @@
 // const float DOT_SPEED = 12;
 
 const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX = { -1, -1 };
+const SDL_Point TILE_NONE = { -1, -1 };
 
 /**
  * INITIALIZATION for tm ( tilemap )

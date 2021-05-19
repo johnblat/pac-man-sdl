@@ -39,6 +39,7 @@ typedef struct TwoDimensionalArrayIndex {
 } TwoDimensionalArrayIndex;
 
 extern const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX;
+extern const SDL_Point TILE_NONE;
 
 typedef struct TileMap {
     /** The screen position where the tilemap begins
@@ -75,12 +76,12 @@ typedef struct TileMap {
      * However, then i would lose the velocity
      */
     DotParticle tm_dot_particles[ TILE_ROWS ][ TILE_COLS ];
+
     /**
-     * Members I might want
-     * SDL_Rect tm_tile_collision_rects[ TILE_ROWS ][ TILE_COLS ];
-     * SDL_Point tm_tile_screen_positions[ TILE_ROWS ][ TILE_COLS ];
+     * Contains the tile coordinates of power pellets
+     * If there are no power pellets in an index, then the value should be { -1, -1 }
      */
-    
+    SDL_Point tm_power_pellet_tiles[ 4 ];
 
 } TileMap;
 

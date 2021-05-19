@@ -18,11 +18,7 @@ SDL_bool g_show_debug_info = SDL_TRUE;
 
 SDL_Color pac_color = {200,150,0};
 
-// TODO don't store globally here
-// power pellet
-SDL_Point poopy_tile = { -1, -1 };
-SDL_Point tm_power_pellet_tiles[ 4 ];
-SDL_Point tm_power_pellet_screen_points[ 4 ];
+
 
 void set_cross( SDL_Point center_point, int starting_index, SDL_Point *points ) {
     points[ starting_index ].x = center_point.x;
@@ -115,7 +111,7 @@ int main( int argc, char *argv[] ) {
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
 
-    try_load_resource_from_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
+    try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
 
     // INIT PACMONSTER
     SDL_Point pac_starting_tile;
@@ -179,7 +175,7 @@ int main( int argc, char *argv[] ) {
     // animations[ 5 ] = init_animation( 0, 0.1f, g_texture_atlases[ 7 ].num_sprite_clips );
 
     for( int i = 0; i < 4; ++i ) {
-        SDL_Point screen_position = tile_grid_point_to_screen_point( tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
+        SDL_Point screen_position = tile_grid_point_to_screen_point( tilemap.tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
         render_textures[ 5 + i ] = init_render_texture( 7 );
         render_textures[ 5 + i ]->dest_rect.x = screen_position.x;
         render_textures[ 5 + i ]->dest_rect.y = screen_position.y;
@@ -275,7 +271,9 @@ int main( int argc, char *argv[] ) {
 
         // ghost
 
-        // decrease vulnerable timer if any are vulnerable
+        /******************
+         * VULNERABLE TIMER
+         * ******************/
         for( int i = 1; i < 5; ++i ) {
             if( ghost_states[ i ] == STATE_VULNERABLE ) {
                 ghost_vulnerable_timer -= delta_time;
@@ -283,7 +281,9 @@ int main( int argc, char *argv[] ) {
             }
         }
         
-        // state checks
+        /***************************
+         * STATE TRANSITION CHECKS
+         * ************************/
 
         for(int i = 1; i < 5; ++i ) {
             switch( ghost_states[ i ] ) {
@@ -299,12 +299,11 @@ int main( int argc, char *argv[] ) {
                         }
                     }
                     
-                    // kill ghost if pacman touches
+                    // eat ghost if pacman touches
                     if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
                     && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y ) {
                         ghost_states[ i ] = STATE_GO_TO_PEN;
                         go_to_pen_enter( actors[ i ], render_textures[ i ], i);
-                        // enter go to pen state
                     }
                     break;
                     
@@ -321,15 +320,20 @@ int main( int argc, char *argv[] ) {
 
                 
                 case STATE_NORMAL :
-                    // pacman is on power pellet
-                    // WTF fix this bad code. Well more than likely i'll need to fix the way data is getting stored too
-                    for( int p = 0; p < 4; ++p ) {
-                        if ( points_equal( actors[ 0 ]->current_tile, tm_power_pellet_tiles[ p ] ) ){
-                            tm_power_pellet_tiles[ p ] = poopy_tile;
-                            for( int g = 1; g < 5; ++g ) {
-                                if ( ghost_states[ g ] != STATE_GO_TO_PEN ) {
-                                    ghost_states[ g ] = STATE_VULNERABLE;
-                                    vulnerable_enter( actors[ g ], render_textures[ g ] );
+                    // NOTE: I change my mind that this isn't necessarily bad since it does what it needs to
+                    // one option might be an event system. but might be even more overkill
+                    for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
+                        // pac-man eats power pellet
+                        if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
+
+                            tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
+
+                            for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
+
+                                if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN ) {
+
+                                    ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
+                                    vulnerable_enter( actors[ ghost_state_idx ], render_textures[ ghost_state_idx ] );
                                 }
                                 
                             }   
@@ -338,26 +342,25 @@ int main( int argc, char *argv[] ) {
                         
                     }
                     break;
-                    
-
-                
             }
-            
         }
 
+        /*******************
+         * PROCESS STATES
+         * ******************/
         states_machine_process( actors, ghost_states, &tilemap );
 
-        // process based on states
-        // gather all ghosts in normal
-        // gather all ghosts in vulnerable
-        // gather all ghosts in go to pen
-        // or
-        // process state code for each ghost
-        
+        /********************
+         * MOVE GHOSTS
+         * ********************/
         ghost_move( actors, &tilemap, delta_time );
+
+
+        /*********************
+         * GHOST MODE PERIOD
+         * *******************/
         ghost_mode_timer += delta_time;
-      
-        // moving to next period
+
         if( g_current_scatter_chase_period < NUM_SCATTER_CHASE_PERIODS && ghost_mode_timer > g_scatter_chase_period_seconds[ g_current_scatter_chase_period ] ) {
             if( g_current_ghost_mode == MODE_CHASE ) {
                 g_current_ghost_mode = MODE_SCATTER;
@@ -383,7 +386,9 @@ int main( int argc, char *argv[] ) {
             g_current_scatter_chase_period++;
         }
 
-        // UPDATE DOTS ANIMATION
+        /**********
+         * UPDATE DOTS ANIMATION
+         * **********/
 
         for( int r = 0; r < TILE_ROWS; ++r ) {
             for( int c = 0; c < TILE_COLS; ++c ) {
@@ -402,7 +407,9 @@ int main( int argc, char *argv[] ) {
             }
         }
 
-        // RENDER
+        /**********
+         * RENDER
+         * **********/
 
         set_render_texture_values_based_on_actor( actors, render_textures, 5 );
         set_render_texture_values_based_on_animation( animations, render_textures, 9 );
@@ -413,13 +420,13 @@ int main( int argc, char *argv[] ) {
         tm_render_with_screen_position_offset( renderer, &tilemap );
 
         render_render_textures( renderer, render_textures, 5 );
+
         // power pellets
         for( int i = 0; i < 4; ++i ) {
-            if( !points_equal( tm_power_pellet_tiles[ i ], poopy_tile ) ) {
+            if( !points_equal( tilemap.tm_power_pellet_tiles[ i ], TILE_NONE ) ) {
                 render_render_textures( renderer, render_textures + 5 + i, 1);
             }
         }
-        //render_render_textures( renderer, render_textures + 5, 1);
 
         SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
 
