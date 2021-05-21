@@ -62,8 +62,21 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm )
         }
     }
 
+    // 23 is the actual tilemap on the screen height - because of offset
     actor->direction = (Direction) shortest_direction;
     actor->next_tile = surrounding_tiles[ shortest_direction ];
+    if( actor->next_tile.y > 22 ) {
+        actor->next_tile.y = 1;
+    } 
+    if( actor->next_tile.y < 0 ){
+        actor->next_tile.y = 22;
+    }
+    if( actor->next_tile.x > 47 ) {
+        actor->next_tile.x = 1;
+    }
+    if( actor->next_tile.x < 0 ) {
+        actor->next_tile.x = 47;
+    }
 }
 
 
@@ -84,7 +97,7 @@ void set_shadow_target_tile( Actor **actors, uint8_t actor_id, TileMap *tm ) {
 }
 
 
-void set_ambush_target_tile( Actor **actors, TileMap *tm ) {
+inline void set_ambush_target_tile( Actor **actors, TileMap *tm ) {
 
     switch( actors[ 0 ]->direction ) {
         case DIR_UP:
@@ -110,7 +123,7 @@ void set_ambush_target_tile( Actor **actors, TileMap *tm ) {
     }   
 }
 
-void set_moody_target_tile(Actor **actors, TileMap *tm) {
+inline void set_moody_target_tile(Actor **actors, TileMap *tm) {
 
     SDL_Point other_ghost_current_tile = actors[ 1 ]->current_tile;
     SDL_Point offset_tile;
@@ -188,7 +201,7 @@ void set_moody_target_tile(Actor **actors, TileMap *tm) {
 
 }
 
-void set_pokey_target_tile( Actor **actors, TileMap *tm ) {
+inline void set_pokey_target_tile( Actor **actors, TileMap *tm ) {
     SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
     float shadow_range = 64;
     SDL_Point b_current_tile = actors[ 4 ]->current_tile;

@@ -129,32 +129,32 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
             break;
 
     }
+    // pacman dies
+    // if ( actors[ 0 ]->current_tile.x == actors[ ghost_id ]->current_tile.x 
+    // && actors[ 0 ]->current_tile.y == actors[ ghost_id ]->current_tile.y  ) {
+    //     actors[ 0 ]->position.x = TILE_SIZE * 22;
+    //     actors[ 0 ]->position.y =  TILE_SIZE * 15;
+    //     actors[ 0 ]->center_point.x = ( int ) actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
+    //     actors[ 0 ]->center_point.y = ( int ) actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
 
-    if ( actors[ 0 ]->current_tile.x == actors[ ghost_id ]->current_tile.x 
-    && actors[ 0 ]->current_tile.y == actors[ ghost_id ]->current_tile.y  ) {
-        actors[ 0 ]->position.x = TILE_SIZE * 22;
-        actors[ 0 ]->position.y =  TILE_SIZE * 15;
-        actors[ 0 ]->center_point.x = ( int ) actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
-        actors[ 0 ]->center_point.y = ( int ) actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
+    //     actors[ 0 ]->top_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
+    //     actors[ 0 ]->top_sensor.y = actors[ 0 ]->position.y;
 
-        actors[ 0 ]->top_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
-        actors[ 0 ]->top_sensor.y = actors[ 0 ]->position.y;
+    //     actors[ 0 ]->bottom_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
+    //     actors[ 0 ]->bottom_sensor.y = actors[ 0 ]->position.y + ACTOR_SIZE;
 
-        actors[ 0 ]->bottom_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
-        actors[ 0 ]->bottom_sensor.y = actors[ 0 ]->position.y + ACTOR_SIZE;
+    //     actors[ 0 ]->left_sensor.x = actors[ 0 ]->position.x;
+    //     actors[ 0 ]->left_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
 
-        actors[ 0 ]->left_sensor.x = actors[ 0 ]->position.x;
-        actors[ 0 ]->left_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
+    //     actors[ 0 ]->right_sensor.x = actors[ 0 ]->position.x + ACTOR_SIZE;
+    //     actors[ 0 ]->right_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );    
 
-        actors[ 0 ]->right_sensor.x = actors[ 0 ]->position.x + ACTOR_SIZE;
-        actors[ 0 ]->right_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );    
+    //     actors[ 0 ]->direction = DIR_NONE;
 
-        actors[ 0 ]->direction = DIR_NONE;
-
-        actor_set_current_tile( actors[ 0 ] );
-        actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
-        actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
-    }
+    //     actor_set_current_tile( actors[ 0 ] );
+    //     actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
+    //     actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
+    //}
     
 }
 
