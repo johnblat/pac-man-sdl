@@ -23,15 +23,17 @@ extern uint8_t num_texture_atlases;
 
 typedef struct RenderClipFromTextureAtlas {
     uint8_t texture_atlas_id;
+    uint8_t animation_id;
     Uint8 current_sprite_clip;
     float rotation;
     SDL_Rect dest_rect;
     SDL_RendererFlip flip;
 } RenderClipFromTextureAtlas;
 
+
 int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_sprites );
 
-RenderClipFromTextureAtlas *init_render_texture( uint8_t texture_atlas_id ) ;
+RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t animation_id ) ;
 
 void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas **render_textures, int number_render_textures ) ;
 

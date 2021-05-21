@@ -19,6 +19,7 @@ typedef struct Animation {
 
 Animation *init_animation( Uint8 actor_id, float frame_interval, Uint8 num_frames );
 
-void inc_animation_frame( Animation *animations, uint8_t num_animations, float delta_time ) ;
+void inc_animations( Animation **animations, uint8_t num_animations, float delta_time ) ;
+
 
 #endif

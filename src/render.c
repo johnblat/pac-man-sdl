@@ -48,54 +48,55 @@ int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_spr
     return ++num_texture_atlases;
 }
 
-RenderClipFromTextureAtlas *init_render_texture( uint8_t texture_atlas_id ) {
+RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t animation_id ) {
     
-    RenderClipFromTextureAtlas *render_texture = ( RenderClipFromTextureAtlas * ) malloc (sizeof(RenderClipFromTextureAtlas ));
+    RenderClipFromTextureAtlas *render_clip = ( RenderClipFromTextureAtlas * ) malloc (sizeof(RenderClipFromTextureAtlas ));
 
     if( texture_atlas_id >= num_texture_atlases)  {
         fprintf(stderr, "Trying to assign texture atlas id %d that's more than the number of texture atlases created %d \n", texture_atlas_id, num_texture_atlases );
         return NULL;
     }
 
-    render_texture->texture_atlas_id = texture_atlas_id;
-    
-    render_texture->dest_rect.x = 0;
-    render_texture->dest_rect.y = 0;
-    render_texture->dest_rect.w = 0;
-    render_texture->dest_rect.h = 0;
+    render_clip->texture_atlas_id = texture_atlas_id;
+    render_clip->animation_id = animation_id;
 
-    render_texture->rotation = 0.0f;
+    render_clip->dest_rect.x = 0;
+    render_clip->dest_rect.y = 0;
+    render_clip->dest_rect.w = 0;
+    render_clip->dest_rect.h = 0;
 
-    render_texture->current_sprite_clip = 0;
+    render_clip->rotation = 0.0f;
 
-    render_texture->flip = SDL_FLIP_NONE;
+    render_clip->current_sprite_clip = 0;
+
+    render_clip->flip = SDL_FLIP_NONE;
 
 
-    return render_texture;
+    return render_clip;
 }
 
-void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas **render_textures, int number_render_textures ) {
+void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas **render_clips, int number_render_textures ) {
     for( int i = 0; i < number_render_textures; ++i ) {
-        SDL_Rect src_rect = g_texture_atlases[ render_textures[ i ]->texture_atlas_id ].sprite_clips[ render_textures[ i ]->current_sprite_clip ];
-        SDL_RenderCopyEx( renderer, g_texture_atlases[ render_textures[ i ]->texture_atlas_id ].texture, &src_rect, &render_textures[ i ]->dest_rect, render_textures[ i ]->rotation, NULL, render_textures[ i ]->flip);
+        SDL_Rect src_rect = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ];
+        SDL_RenderCopyEx( renderer, g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].texture, &src_rect, &render_clips[ i ]->dest_rect, render_clips[ i ]->rotation, NULL, render_clips[ i ]->flip);
     }
 }
 
 
-void set_render_texture_values_based_on_animation( Animation **animations, RenderClipFromTextureAtlas **render_textures, int num ) {
+void set_render_texture_values_based_on_animation( Animation **animations, RenderClipFromTextureAtlas **render_clips, int num ) {
     for( int i = 0; i < num ; ++i ){
-        render_textures[ i ]->current_sprite_clip = animations[ i ]->current_frame;
+        render_clips[ i ]->current_sprite_clip = animations[ render_clips[ i ]->animation_id ]->current_frame ;
     }
 }
 
-void set_render_texture_values_based_on_actor( Actor **actors, RenderClipFromTextureAtlas **render_textures, int num ) {
+void set_render_texture_values_based_on_actor( Actor **actors, RenderClipFromTextureAtlas **render_clips, int num ) {
     for( int i = 0; i < num; ++i ) {
         // center the sprite around the actor size
-        render_textures[ i ]->dest_rect.x = actors[ i ]->position.x - ( g_texture_atlases[ render_textures[ i ]->texture_atlas_id ].sprite_clips[ render_textures[ i ]->current_sprite_clip ].w - ACTOR_SIZE ) / 2;
-        render_textures[ i ]->dest_rect.y = actors[ i ]->position.y - ( g_texture_atlases[ render_textures[ i ]->texture_atlas_id ].sprite_clips[ render_textures[ i ]->current_sprite_clip ].h  - ACTOR_SIZE ) / 2;
-        render_textures[ i ]->dest_rect.w = g_texture_atlases[ render_textures[ i ]->texture_atlas_id ].sprite_clips[ render_textures[ i ]->current_sprite_clip ].w;
-        render_textures[ i ]->dest_rect.h = g_texture_atlases[ render_textures[ i ]->texture_atlas_id ].sprite_clips[ render_textures[ i ]->current_sprite_clip ].h;
+        render_clips[ i ]->dest_rect.x = actors[ i ]->position.x - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w - ACTOR_SIZE ) / 2;
+        render_clips[ i ]->dest_rect.y = actors[ i ]->position.y - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h  - ACTOR_SIZE ) / 2;
+        render_clips[ i ]->dest_rect.w = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w;
+        render_clips[ i ]->dest_rect.h = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h;
 
-        render_textures[ i ]->flip = actors[ i ]->direction == DIR_LEFT ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+        render_clips[ i ]->flip = actors[ i ]->direction == DIR_LEFT ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
     }
 }
