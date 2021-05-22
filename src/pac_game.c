@@ -120,7 +120,16 @@ int main( int argc, char *argv[] ) {
     actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position );
     render_clips[ 0 ] = init_render_clip( 0, 0 );
     animations[ 0 ] = init_animation( 0, 0.07f, g_texture_atlases[ 0 ].num_sprite_clips );
-    actors[ 0 ]->speed = 300;
+    // read in file
+    SDL_RWops *read_context = SDL_RWFromFile("res/default_pac_speed", "r");
+    unsigned long size = read_context->size(read_context);
+    char *content = (char *)malloc( size + 1 );
+    SDL_RWread( read_context, content, size, 1 );
+    content[ size ] = '\0';
+    char *end_ptr;
+    actors[ 0 ]->speed = strtol(content, &end_ptr, 10);
+    free( content );
+    SDL_RWclose( read_context );
 
     // INIT GHOST
     SDL_Point ghost_pen_tile;
@@ -159,7 +168,7 @@ int main( int argc, char *argv[] ) {
 
 
     for( int i = 1; i < 5; ++i ) {
-        actors[ i ]->speed = 250;
+        actors[ i ]->speed = actors[ 0 ]->speed * 0.80;
     }
 
     // power pellet
