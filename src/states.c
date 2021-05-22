@@ -25,13 +25,13 @@ void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_t
     } 
 }
 
-void vulnerable_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture ) {
+void vulnerable_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture ) {
     uint8_t vulnerable_texture_atlas_id = 5;
 
     render_texture->texture_atlas_id = vulnerable_texture_atlas_id;
-    ghost->direction = opposite_directions[ ghost->direction ];
-    ghost->next_tile = ghost->current_tile;
-    ghost->speed = 60;
+    actors[ actor_id ]->direction = opposite_directions[ actors[ actor_id ]->direction ];
+    actors[ actor_id ]->next_tile = actors[ actor_id ]->current_tile;
+    actors[ actor_id ]->speed = actors[ 0 ]->speed * 0.4;
 
 }
 
@@ -78,11 +78,11 @@ void vulnerable_process( Actor *actor, TileMap *tm ) {
     }
 }
 
-void normal_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) {
+void normal_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) {
     // set texture atlas id to the id
     render_texture->texture_atlas_id = texture_atlas_id;
-    ghost->next_tile = ghost->current_tile;
-    ghost->speed = 250;
+    actors[ actor_id ]->next_tile =  actors[ actor_id ]->current_tile;
+     actors[ actor_id ]->speed =  actors[ 0 ]->speed * 0.8;
 
 }
 
@@ -158,13 +158,13 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
     
 }
 
-void go_to_pen_enter( Actor *actor, RenderClipFromTextureAtlas *render_texture, uint8_t id ) {
+void go_to_pen_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t id ) {
     uint8_t texture_atlas_id = 6;
 
     render_texture->texture_atlas_id = texture_atlas_id;
-    actor->next_tile = actor->current_tile;
-    actor->target_tile = ghost_pen_tile;
-    actor->speed = 350;
+    actors[ actor_id ]->next_tile = actors[ actor_id ]->current_tile;
+    actors[ actor_id ]->target_tile = ghost_pen_tile;
+    actors[ actor_id ]->speed = actors[ 0 ]->speed * 1.6;
 }
 
 /** Need to fix this!!!

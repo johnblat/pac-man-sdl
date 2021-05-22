@@ -38,18 +38,18 @@ extern GhostMode g_current_ghost_mode;
 
 void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_textures );
 
-void vulnerable_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture );
+void vulnerable_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture );
 
 
 void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm );
 
 void vulnerable_process( Actor *actor, TileMap *tm );
 
-void normal_enter( Actor *ghost, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id );
+void normal_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) ;
 
 void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm );
 
-void go_to_pen_enter( Actor *actor, RenderClipFromTextureAtlas *render_texture, uint8_t id );
+void go_to_pen_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t id );
 
 
 void go_to_pen_process( Actor *actor, TileMap *tm );

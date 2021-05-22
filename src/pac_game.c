@@ -251,7 +251,7 @@ int main( int argc, char *argv[] ) {
                     ghost_vulnerable_timer = 20.0f;
                     for( int i = 1; i < 5; ++i ) {
                         ghost_states[ i ] = STATE_VULNERABLE;
-                        vulnerable_enter( actors[ i ], render_clips[ i ] );
+                        vulnerable_enter( actors, i, render_clips[ i ] );
                     }
                     
                 }
@@ -330,7 +330,7 @@ int main( int argc, char *argv[] ) {
                         for( int i = 1; i < 5; ++i ) {
                             if( ghost_states[ i ] == STATE_VULNERABLE ) {
                                 ghost_states[ i ] = STATE_NORMAL;
-                                normal_enter( actors[ i ], render_clips[ i ], i );
+                                normal_enter( actors, i , render_clips[ i ], i );
                             }
                         }
                     }
@@ -339,7 +339,7 @@ int main( int argc, char *argv[] ) {
                     if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
                     && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y ) {
                         ghost_states[ i ] = STATE_GO_TO_PEN;
-                        go_to_pen_enter( actors[ i ], render_clips[ i ], i);
+                        go_to_pen_enter( actors, i, render_clips[ i ], i);
                     }
 
                     // pacman eats pellet
@@ -362,7 +362,7 @@ int main( int argc, char *argv[] ) {
                         actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
                         actors[ i ]->next_tile = actors[ i ]->current_tile;
                         ghost_states[ i ] = STATE_NORMAL;
-                        normal_enter( actors[ i ], render_clips[ i ], i );
+                        normal_enter( actors, i , render_clips[ i ], i );
                     }
                     break;
 
@@ -381,7 +381,7 @@ int main( int argc, char *argv[] ) {
                                 if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN ) {
 
                                     ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
-                                    vulnerable_enter( actors[ ghost_state_idx ], render_clips[ ghost_state_idx ] );
+                                    vulnerable_enter( actors, ghost_state_idx, render_clips[ ghost_state_idx ] );
                                 }
                                 
                             }   
