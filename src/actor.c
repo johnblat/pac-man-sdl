@@ -52,6 +52,25 @@ Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset ) {
     return actor;
 }
 
+void actor_align_world_data_based_on_world_position( Actor *actor ) {
+    actor->world_center_point.x = ( int ) actor->world_position.x + ( TILE_SIZE / 2 );
+    actor->world_center_point.y = ( int ) actor->world_position.y + ( TILE_SIZE / 2 );
+
+    actor->current_tile.x = ( ( actor->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
+    actor->current_tile.y = ( ( ( actor->world_position.y + TILE_SIZE / 2 ) ) / TILE_SIZE ) ;
+
+    actor->world_top_sensor.x = actor->world_position.x + ( TILE_SIZE / 2 );
+    actor->world_top_sensor.y = actor->world_position.y;
+
+    actor->world_bottom_sensor.x = actor->world_position.x + ( TILE_SIZE / 2 );
+    actor->world_bottom_sensor.y = actor->world_position.y + TILE_SIZE;
+
+    actor->world_left_sensor.x = actor->world_position.x;
+    actor->world_left_sensor.y = actor->world_position.y + ( TILE_SIZE / 2 );
+
+    actor->world_right_sensor.x = actor->world_position.x + TILE_SIZE;
+    actor->world_right_sensor.y = actor->world_position.y + ( TILE_SIZE / 2 );
+}
 
 
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer ) {

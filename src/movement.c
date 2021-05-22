@@ -109,23 +109,24 @@ void move( Actor *actor, Vector_f velocity ) {
         actor->world_position.y = 1000;
     }
 
-    actor->world_center_point.x = ( int ) actor->world_position.x + ( TILE_SIZE / 2 );
-    actor->world_center_point.y = ( int ) actor->world_position.y + ( TILE_SIZE / 2 );
+    actor_align_world_data_based_on_world_position( actor );
+    // actor->world_center_point.x = ( int ) actor->world_position.x + ( TILE_SIZE / 2 );
+    // actor->world_center_point.y = ( int ) actor->world_position.y + ( TILE_SIZE / 2 );
 
-    actor->current_tile.x = ( ( actor->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
-    actor->current_tile.y = ( ( ( actor->world_position.y + TILE_SIZE / 2 ) ) / TILE_SIZE ) ;
+    // actor->current_tile.x = ( ( actor->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
+    // actor->current_tile.y = ( ( ( actor->world_position.y + TILE_SIZE / 2 ) ) / TILE_SIZE ) ;
 
-    actor->world_top_sensor.x = actor->world_position.x + ( TILE_SIZE / 2 );
-    actor->world_top_sensor.y = actor->world_position.y;
+    // actor->world_top_sensor.x = actor->world_position.x + ( TILE_SIZE / 2 );
+    // actor->world_top_sensor.y = actor->world_position.y;
 
-    actor->world_bottom_sensor.x = actor->world_position.x + ( TILE_SIZE / 2 );
-    actor->world_bottom_sensor.y = actor->world_position.y + TILE_SIZE;
+    // actor->world_bottom_sensor.x = actor->world_position.x + ( TILE_SIZE / 2 );
+    // actor->world_bottom_sensor.y = actor->world_position.y + TILE_SIZE;
 
-    actor->world_left_sensor.x = actor->world_position.x;
-    actor->world_left_sensor.y = actor->world_position.y + ( TILE_SIZE / 2 );
+    // actor->world_left_sensor.x = actor->world_position.x;
+    // actor->world_left_sensor.y = actor->world_position.y + ( TILE_SIZE / 2 );
 
-    actor->world_right_sensor.x = actor->world_position.x + TILE_SIZE;
-    actor->world_right_sensor.y = actor->world_position.y + ( TILE_SIZE / 2 );
+    // actor->world_right_sensor.x = actor->world_position.x + TILE_SIZE;
+    // actor->world_right_sensor.y = actor->world_position.y + ( TILE_SIZE / 2 );
 }
 
 void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
@@ -221,6 +222,37 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             }
         }
         move(actors[ i ], velocity );
+
+        // account for overshooting
+        // note velocity will never be in x and y direction.
+        if( velocity.x > 0 && !( actors[ i ]->direction == DIR_RIGHT )) { // right
+            if( actors[ i ]->world_center_point.x > tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
+                actors[ i ]->world_position.x = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ i ] );
+
+            }
+        }
+        else if( velocity.x < 0 && !( actors[ i ]->direction == DIR_LEFT )) { // left
+            if( actors[ i ]->world_center_point.x < tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
+                actors[ i ]->world_position.x = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ i ] );
+
+            }
+        }
+        else if( velocity.y > 0 && !( actors[ i ]->direction == DIR_DOWN )) { // down
+            if( actors[ i ]->world_center_point.y > tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
+                actors[ i ]->world_position.y = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ i ] );
+
+            }
+        }
+        else if( velocity.y < 0 && !( actors[ i ]->direction == DIR_UP )) { // up
+            if( actors[ i ]->world_center_point.y < tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
+                actors[ i ]->world_position.y = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ i ] );
+
+            }
+        }
     }
     
 }
