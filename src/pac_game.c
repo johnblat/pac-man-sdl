@@ -332,6 +332,18 @@ int main( int argc, char *argv[] ) {
                         ghost_states[ i ] = STATE_GO_TO_PEN;
                         go_to_pen_enter( actors[ i ], render_clips[ i ], i);
                     }
+
+                    // pacman eats pellet
+                    for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
+                        // pac-man eats power pellet
+                        if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
+
+                            tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
+                            ghost_vulnerable_timer = 20.0f;                        
+                        }
+                        
+                    }
+                    
                     break;
                     
                 case STATE_GO_TO_PEN :
