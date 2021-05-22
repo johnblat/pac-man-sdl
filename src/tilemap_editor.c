@@ -332,6 +332,37 @@ int main( int argc, char *argv[] ) {
             }
         }
 
+        const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
+        if( current_key_states[ SDL_SCANCODE_DOWN ] ) {
+            tilemap.tm_screen_position.y++;
+            // increase double speed if shift held down
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.y+=4;
+            }
+        }
+        if( current_key_states[ SDL_SCANCODE_UP ] ) {
+            tilemap.tm_screen_position.y--;
+            // increase double speed if shift held down
+
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.y-=4;
+            }
+        }
+        if( current_key_states[ SDL_SCANCODE_RIGHT ] ) {
+            tilemap.tm_screen_position.x++;
+            // increase double speed if shift held down
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.x+=4;
+            }
+        }
+        if( current_key_states[ SDL_SCANCODE_LEFT ] ) {
+            tilemap.tm_screen_position.x--;
+            // increase double speed if shift held down
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.x-=4;
+            }
+        }
+
         if ( left_button_pressed ) {
             SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
             SDL_Point tile_grid_point;
@@ -433,7 +464,8 @@ int main( int argc, char *argv[] ) {
         tm_render_with_screen_position_offset( renderer, &tilemap );
 
         SDL_SetRenderDrawColor( renderer, 242, 241, 57, 150 );
-        SDL_Rect pac_rect = { pac_starting_tile.x * TILE_SIZE, pac_starting_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE};
+        SDL_Point pac_screen_point = tile_grid_point_to_screen_point(pac_starting_tile, tilemap.tm_screen_position);
+        SDL_Rect pac_rect = { pac_screen_point.x, pac_screen_point.y, TILE_SIZE, TILE_SIZE};
         SDL_RenderFillRect( renderer, &pac_rect );
 
         // render power pellets
@@ -477,7 +509,7 @@ int main( int argc, char *argv[] ) {
         
 
         SDL_SetRenderDrawColor( renderer, 50,50,50,255);
-        render_grid( renderer, TILE_SIZE, 0, TILE_SIZE * 2, SCREEN_WIDTH, SCREEN_HEIGHT );
+        render_grid( renderer, TILE_SIZE, tilemap.tm_screen_position.x, tilemap.tm_screen_position.y, SCREEN_WIDTH, SCREEN_HEIGHT );
 
         SDL_RenderPresent(renderer);
         SDL_Delay(10);

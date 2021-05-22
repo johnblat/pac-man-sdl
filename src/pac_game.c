@@ -20,21 +20,21 @@ SDL_Color pac_color = {200,150,0};
 
 
 
-void set_cross( SDL_Point center_point, int starting_index, SDL_Point *points ) {
-    points[ starting_index ].x = center_point.x;
-    points[ starting_index ].y = center_point.y;
+void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_screen_position, SDL_Point *points ) {
+    points[ starting_index ].x = center_point.x + tilemap_screen_position.x;
+    points[ starting_index ].y = center_point.y + tilemap_screen_position.y ;
     //above
-    points[ starting_index + 1 ].x = center_point.x;
-    points[ starting_index + 1 ].y = center_point.y - 1;
+    points[ starting_index + 1 ].x = center_point.x + tilemap_screen_position.x ;
+    points[ starting_index + 1 ].y = center_point.y - 1 + tilemap_screen_position.y;
     //below
-    points[ starting_index + 2 ].x = center_point.x;
-    points[ starting_index + 2 ].y = center_point.y + 1;
+    points[ starting_index + 2 ].x = center_point.x + tilemap_screen_position.x ;
+    points[ starting_index + 2 ].y = center_point.y + 1 + tilemap_screen_position.y ;
     //left
-    points[ starting_index + 3 ].x = center_point.x - 1;
-    points[ starting_index + 3 ].y = center_point.y;
+    points[ starting_index + 3 ].x = center_point.x - 1 + tilemap_screen_position.x ;
+    points[ starting_index + 3 ].y = center_point.y + tilemap_screen_position.y ;
     //right
-    points[ starting_index + 4 ].x = center_point.x + 1;
-    points[ starting_index + 4 ].y = center_point.y;
+    points[ starting_index + 4 ].x = center_point.x + 1 + tilemap_screen_position.x ;
+    points[ starting_index + 4 ].y = center_point.y + tilemap_screen_position.y ;
 }
 
 int main( int argc, char *argv[] ) {
@@ -73,7 +73,7 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    window = SDL_CreateWindow( "JB Pacmonster", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
+    window = SDL_CreateWindow( "JB Pacmonster", 1921, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
     if ( window == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
@@ -187,7 +187,7 @@ int main( int argc, char *argv[] ) {
     
 
 
-    SDL_Point ghost_pen_position = tile_grid_point_to_screen_point( ghost_pen_tile, tilemap.tm_screen_position ); 
+    SDL_Point ghost_pen_position = tile_grid_point_to_world_point( ghost_pen_tile ); 
     SDL_Point ghost_pen_center_point;
     ghost_pen_center_point.x = ghost_pen_position.x + (TILE_SIZE / 2);
     ghost_pen_center_point.y = ghost_pen_position.y + (TILE_SIZE / 2);
@@ -254,6 +254,38 @@ int main( int argc, char *argv[] ) {
 
         const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
 
+        // adjust tilemap
+        if( current_key_states[ SDL_SCANCODE_S ] ) {
+            tilemap.tm_screen_position.y++;
+            // increase double speed if shift held down
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.y+=4;
+            }
+        }
+        if( current_key_states[ SDL_SCANCODE_W ] ) {
+            tilemap.tm_screen_position.y--;
+            // increase double speed if shift held down
+
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.y-=4;
+            }
+        }
+        if( current_key_states[ SDL_SCANCODE_D ] ) {
+            tilemap.tm_screen_position.x++;
+            // increase double speed if shift held down
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.x+=4;
+            }
+        }
+        if( current_key_states[ SDL_SCANCODE_A ] ) {
+            tilemap.tm_screen_position.x--;
+            // increase double speed if shift held down
+            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                tilemap.tm_screen_position.x-=4;
+            }
+        }
+
+
         // UPDATE PACMONSTER
         pac_try_set_direction( actors[ 0 ], current_key_states, &tilemap);
        
@@ -305,7 +337,7 @@ int main( int argc, char *argv[] ) {
                 case STATE_GO_TO_PEN :
                     // ghost is in pen
                     
-                    if( points_equal(actors[ i ]->current_tile, ghost_pen_tile ) && actors[ i ]->center_point.y >= ghost_pen_center_point.y) {
+                    if( points_equal(actors[ i ]->current_tile, ghost_pen_tile ) && actors[ i ]->world_center_point.y >= ghost_pen_center_point.y) {
                         actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
                         actors[ i ]->next_tile = actors[ i ]->current_tile;
                         ghost_states[ i ] = STATE_NORMAL;
@@ -406,7 +438,17 @@ int main( int argc, char *argv[] ) {
          * RENDER
          * **********/
 
-        set_render_texture_values_based_on_actor( actors, render_clips, 5 );
+        set_render_texture_values_based_on_actor( actors, tilemap.tm_screen_position.x, tilemap.tm_screen_position.y,render_clips, 5 );
+        for( int i = 0; i < 4; ++i ) {
+            SDL_Point world_position = tile_grid_point_to_world_point( tilemap.tm_power_pellet_tiles[ i ] );
+            SDL_Point screen_point = world_point_to_screen_point( world_position, tilemap.tm_screen_position );
+            render_clips[ 5 + i ] = init_render_clip( 7, 2 );
+            render_clips[ 5 + i ]->dest_rect.x = screen_point.x;
+            render_clips[ 5 + i ]->dest_rect.y = screen_point.y;
+            render_clips[ 5 + i ]->dest_rect.w = TILE_SIZE;
+            render_clips[ 5 + i ]->dest_rect.h = TILE_SIZE;
+            render_clips[ 5 + i ]->flip = SDL_FLIP_NONE;
+        }
         set_render_texture_values_based_on_animation( animations, render_clips, 9 );
 
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
@@ -429,10 +471,10 @@ int main( int argc, char *argv[] ) {
         if ( g_show_debug_info ) {
             //grid
             SDL_SetRenderDrawColor( renderer, 50,50,50,255);
-            for ( int y = 0; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
+            for ( int y = tilemap.tm_screen_position.y; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
                 SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
             }
-            for ( int x = 0; x < SCREEN_WIDTH; x+= TILE_SIZE) {
+            for ( int x = tilemap.tm_screen_position.x; x < SCREEN_WIDTH; x+= TILE_SIZE) {
                 SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
             }
 
@@ -458,32 +500,32 @@ int main( int argc, char *argv[] ) {
             // current_tile
             for(int i = 0; i < 4; ++i) {
                 SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
-                SDL_Rect tile_rect = { actors[ i ]->current_tile.x * TILE_SIZE, actors[ i ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
+                SDL_Rect tile_rect = { actors[ i ]->current_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
                 SDL_RenderFillRect( renderer, &tile_rect);
             }
             
             // next tile 
             for( int i = 0; i < 5; ++i ) {
                 SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
-                SDL_Rect next_rect = { actors[ i ]->next_tile.x * TILE_SIZE, actors[ i ]->next_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                SDL_Rect next_rect = { actors[ i ]->next_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->next_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
                 SDL_RenderFillRect( renderer, &next_rect );
 
             }
 
             SDL_SetRenderDrawColor( renderer, 255,0,0,255);
-            SDL_Rect b_target_rect = { actors[ 1 ]->target_tile.x * TILE_SIZE, actors[ 1 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_Rect b_target_rect = { actors[ 1 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 1 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderDrawRect( renderer, &b_target_rect );
 
             SDL_SetRenderDrawColor( renderer, 255,150,255,255);
-            SDL_Rect p_target_rect = { actors[ 2 ]->target_tile.x * TILE_SIZE, actors[ 2 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_Rect p_target_rect = { actors[ 2 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 2 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderDrawRect( renderer, &p_target_rect );
 
             SDL_SetRenderDrawColor( renderer, 3,252,248,255);
-            SDL_Rect i_target_rect = { actors[ 3 ]->target_tile.x * TILE_SIZE, actors[ 3 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_Rect i_target_rect = { actors[ 3 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 3 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderDrawRect( renderer, &i_target_rect );
 
             SDL_SetRenderDrawColor( renderer, 235, 155, 52,255);
-            SDL_Rect c_target_rect = { actors[ 4 ]->target_tile.x * TILE_SIZE, actors[ 4 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_Rect c_target_rect = { actors[ 4 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 4 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderDrawRect( renderer, &c_target_rect );
             
             // pacman center point
@@ -491,18 +533,20 @@ int main( int argc, char *argv[] ) {
             SDL_Point points_to_draw[ 25 ];
             
             //CENTER
-            set_cross( actors[ 0 ]->center_point, 0, points_to_draw );
+            set_cross( actors[ 0 ]->world_center_point, 0, tilemap.tm_screen_position, points_to_draw );
             
             // SENSORS
-            set_cross( actors[ 0 ]->top_sensor, 5, points_to_draw );
-            set_cross( actors[ 0 ]->bottom_sensor, 10, points_to_draw );
-            set_cross( actors[ 0 ]->left_sensor, 15, points_to_draw );
-            set_cross( actors[ 0 ]->right_sensor, 20, points_to_draw );
+            set_cross( actors[ 0 ]->world_top_sensor, 5, tilemap.tm_screen_position, points_to_draw );
+            set_cross( actors[ 0 ]->world_bottom_sensor, 10, tilemap.tm_screen_position, points_to_draw );
+            set_cross( actors[ 0 ]->world_left_sensor, 15, tilemap.tm_screen_position,points_to_draw );
+            set_cross( actors[ 0 ]->world_right_sensor, 20,tilemap.tm_screen_position, points_to_draw );
 
             SDL_RenderDrawPoints( renderer, points_to_draw, 25 );
 
+            // GHOST PEN
             SDL_SetRenderDrawColor( renderer, 255,255,255,50);
-            SDL_Rect pen_rect = { ghost_pen_position.x, ghost_pen_position.y, TILE_SIZE, TILE_SIZE };
+            SDL_Point ghost_pen_screen_point = world_point_to_screen_point( ghost_pen_position, tilemap.tm_screen_position );
+            SDL_Rect pen_rect = { ghost_pen_screen_point.x, ghost_pen_screen_point.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderFillRect( renderer, &pen_rect);
 
 

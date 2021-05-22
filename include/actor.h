@@ -32,17 +32,17 @@ extern Direction opposite_directions[ 4 ];
 
 
 typedef struct Actor {
-    Position_f  position;     // screen position
-    SDL_Point   center_point; // screen position
-    SDL_Point   current_tile; // grid coord where the actor currently is
-    SDL_Point   next_tile;    // grid coord where the actor will move to next
-    SDL_Point   target_tile;  // grid coord where the actor is trying to get to. unused by pac
-    SDL_Point   top_sensor;   // screen position
-    SDL_Point   bottom_sensor;// screen position
-    SDL_Point   left_sensor;  // screen position
-    SDL_Point   right_sensor; // screen position
+    Position_f  world_position; // relative position inside the tilemapped world. 
+    SDL_Point   world_center_point; // 
+    SDL_Point   current_tile; // tm coord where the actor currently is
+    SDL_Point   next_tile;    // tm coord where the actor will move to next
+    SDL_Point   target_tile;  // tm coord where the actor is trying to get to. unused by pac
+    SDL_Point   world_top_sensor;   // relative position inside the tilemapped world.
+    SDL_Point   world_bottom_sensor;// relative position inside the tilemapped world.
+    SDL_Point   world_left_sensor;  // relative position inside the tilemapped world.
+    SDL_Point   world_right_sensor; // relative position inside the tilemapped world.
     Direction   direction;    // direction the actor wants to move
-    float       speed;
+    float       speed; // TODO: make speed multiplier
     Vector_f    velocity;     // current velocity
 } Actor;
 

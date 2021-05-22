@@ -39,6 +39,6 @@ void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas 
 
 void set_render_texture_values_based_on_animation( Animation **animations, RenderClipFromTextureAtlas **render_textures, int num ) ;
 
-void set_render_texture_values_based_on_actor( Actor **actors, RenderClipFromTextureAtlas **render_textures, int num );
+void set_render_texture_values_based_on_actor( Actor **actors, int offset_x, int offset_y, RenderClipFromTextureAtlas **render_textures, int num );
 
 #endif

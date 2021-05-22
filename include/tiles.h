@@ -100,6 +100,10 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
 
 SDL_Point tile_grid_point_to_screen_point( SDL_Point tile_grid_point, SDL_Point tile_map_screen_position ) ;
 
+SDL_Point tile_grid_point_to_world_point( SDL_Point tile_grid_point );
+
+SDL_Point world_point_to_screen_point( SDL_Point world_point, SDL_Point tile_map_screen_position );
+
 SDL_Point screen_point_to_tile_grid_point( SDL_Point screen_point, SDL_Point tile_map_screen_position ) ;
 /**
  * RENDERING

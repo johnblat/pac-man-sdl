@@ -89,11 +89,14 @@ void set_render_texture_values_based_on_animation( Animation **animations, Rende
     }
 }
 
-void set_render_texture_values_based_on_actor( Actor **actors, RenderClipFromTextureAtlas **render_clips, int num ) {
+void set_render_texture_values_based_on_actor( Actor **actors, int offset_x, int offset_y, RenderClipFromTextureAtlas **render_clips, int num ) {
     for( int i = 0; i < num; ++i ) {
         // center the sprite around the actor size
-        render_clips[ i ]->dest_rect.x = actors[ i ]->position.x - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w - ACTOR_SIZE ) / 2;
-        render_clips[ i ]->dest_rect.y = actors[ i ]->position.y - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h  - ACTOR_SIZE ) / 2;
+        render_clips[ i ]->dest_rect.x = 
+              offset_x  
+            + actors[ i ]->world_position.x 
+            - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w - ACTOR_SIZE ) / 2;
+        render_clips[ i ]->dest_rect.y = offset_y + actors[ i ]->world_position.y - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h  - ACTOR_SIZE ) / 2;
         render_clips[ i ]->dest_rect.w = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w;
         render_clips[ i ]->dest_rect.h = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h;
 

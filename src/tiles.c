@@ -109,6 +109,20 @@ SDL_Point screen_point_to_tile_grid_point( SDL_Point screen_point, SDL_Point til
     return grid_point; 
 }
 
+SDL_Point tile_grid_point_to_world_point( SDL_Point tile_grid_point ) {
+    SDL_Point world_position;
+    world_position.x = tile_grid_point.x * TILE_SIZE;
+    world_position.y = tile_grid_point.y * TILE_SIZE;
+    return world_position;
+}
+
+SDL_Point world_point_to_screen_point( SDL_Point world_point, SDL_Point tile_map_screen_position ) {
+    SDL_Point screen_point;
+    screen_point.x = ( world_point.x + tile_map_screen_position.x );
+    screen_point.y = ( world_point.y + tile_map_screen_position.y );
+    return screen_point;
+}
+
 /**
  * RENDERING
  */
