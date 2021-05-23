@@ -5,3 +5,9 @@ hell/**
 notes
 notes/**
 maze_file
+windows/**
+windows
+*.zip
+**.exe
+bin
+bin/**
