@@ -33,7 +33,7 @@ const SDL_Point TILE_NONE = { -1, -1 };
 void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_filename ) {
     // LOAD the texture
     SDL_Surface *surface;
-    surface = IMG_Load("res/tileset.png");
+    surface = IMG_Load("res/img/tileset.png");
     tm->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
     SDL_FreeSurface( surface );
 

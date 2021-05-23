@@ -99,14 +99,14 @@ int main( int argc, char *argv[] ) {
     }
 
     // INIT TEXTURE ATLASES
-    add_texture_atlas( renderer, "res/pac-guy-4.png", 8 );          // 0
-    add_texture_atlas( renderer, "res/blinky.png", 1 );             // 1
-    add_texture_atlas( renderer, "res/pinky.png", 1 );              // 2
-    add_texture_atlas( renderer, "res/inky.png", 1 );               // 3
-    add_texture_atlas( renderer, "res/clyde.png", 1 );              // 4
-    add_texture_atlas( renderer, "res/vulnerable.png", 1 );         // 5
-    add_texture_atlas( renderer, "res/go_to_pen_eyes.png", 1);      // 6
-    add_texture_atlas( renderer, "res/power_pellet_anim.png", 6);   // 7
+    add_texture_atlas( renderer, "res/img/pac-guy-4.png", 8 );          // 0
+    add_texture_atlas( renderer, "res/img/blinky.png", 1 );             // 1
+    add_texture_atlas( renderer, "res/img/pinky.png", 1 );              // 2
+    add_texture_atlas( renderer, "res/img/inky.png", 1 );               // 3
+    add_texture_atlas( renderer, "res/img/clyde.png", 1 );              // 4
+    add_texture_atlas( renderer, "res/img/vulnerable.png", 1 );         // 5
+    add_texture_atlas( renderer, "res/img/go_to_pen_eyes.png", 1);      // 6
+    add_texture_atlas( renderer, "res/img/power_pellet_anim.png", 6);   // 7
 
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
