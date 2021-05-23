@@ -93,7 +93,7 @@ typedef struct TileMap {
  *  - NULL: will initialize an empty tilemap 
  *  - NOT NULL: will load the tilemap for the level of the filename passed
  */
-void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_filename ) ;
+void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm ) ;
 /**
  * CONVERTING TILE MAP GRID COORDINATES AND SCREEN COORDINATES
  */

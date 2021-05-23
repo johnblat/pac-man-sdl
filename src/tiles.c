@@ -30,7 +30,7 @@ const SDL_Point TILE_NONE = { -1, -1 };
  *  - NULL: will initialize an empty tilemap 
  *  - NOT NULL: will load the tilemap for the level of the filename passed
  */
-void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_filename ) {
+void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm) {
     // LOAD the texture
     SDL_Surface *surface;
     surface = IMG_Load("res/img/tileset.png");
@@ -73,11 +73,11 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm, char *level_
     }
         
     // load the texture indexes to use for each tile in the tilemap
-    if( level_filename != NULL) {
-        try_load_resource_from_file( tm->tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
-        try_load_resource_from_file( tm->tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
-        try_load_resource_from_file( tm->tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
-    }
+    
+    try_load_resource_from_file( tm->tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+    try_load_resource_from_file( tm->tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+    try_load_resource_from_file( tm->tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+    
     
     // Space for any UI elements at the top of the screen
     tm->tm_screen_position.x = 0;

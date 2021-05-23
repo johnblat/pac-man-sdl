@@ -109,7 +109,7 @@ int main( int argc, char *argv[] ) {
     add_texture_atlas( renderer, "res/img/power_pellet_anim.png", 6);   // 7
 
     // INIT TILEMAP
-    tm_init_and_load_texture( renderer, &tilemap, "maze_file" );
+    tm_init_and_load_texture( renderer, &tilemap );
 
     try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
 
