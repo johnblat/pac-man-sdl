@@ -42,7 +42,8 @@ typedef struct Actor {
     SDL_Point   world_left_sensor;  // relative position inside the tilemapped world.
     SDL_Point   world_right_sensor; // relative position inside the tilemapped world.
     Direction   direction;    // direction the actor wants to move
-    float       speed; // TODO: make speed multiplier
+    float       base_speed;   // base_speed. Might want to consider moving this elsewhere? It's going to be the same for all actors
+    float       speed_multp;  // multiply base speed by multiplier to get velocity
     Vector_f    velocity;     // current velocity
 } Actor;
 
@@ -65,7 +66,7 @@ typedef struct Actor {
  * *****************/
 
 
-Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset ) ;
+Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset, float base_speed, float speed_multp ) ;
 
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer );
 

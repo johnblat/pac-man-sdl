@@ -142,20 +142,14 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             if ( actors[ i ]->world_center_point.x == tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = -1;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
             } 
             else if( actors[ i ]->world_center_point.x < tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
             }
             else if( actors[ i ]->world_center_point.x > tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
             }
         }
         else if( actors[ i ]->direction == DIR_DOWN ){
@@ -163,20 +157,17 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             if ( actors[ i ]->world_center_point.x == tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+                
             } 
             else if( actors[ i ]->world_center_point.x < tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+
             }
             else if( actors[ i ]->world_center_point.x >tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+
             }
         } 
         else if( actors[ i ]->direction == DIR_LEFT ) {
@@ -184,20 +175,17 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             if ( actors[ i ]->world_center_point.y == tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = -1;
                 velocity.y = 0;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+
             } 
             else if( actors[ i ]->world_center_point.y < tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+                
             }
             else if( actors[ i ]->world_center_point.y >tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+
             }
         }
         else if(actors[ i ]->direction == DIR_RIGHT ) {
@@ -205,22 +193,22 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
             if ( actors[ i ]->world_center_point.y == tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+
             } 
             else if( actors[ i ]->world_center_point.y < tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+
             }
             else if( actors[ i ]->world_center_point.y >tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
-                velocity.x *= actors[ i ]->speed * delta_time;
-                velocity.y *= actors[ i ]->speed * delta_time;
+
             }
         }
+        velocity.x *= actors[ i ]->base_speed * actors[ i ]->speed_multp * delta_time;
+        velocity.y *= actors[ i ]->base_speed * actors[ i ]->speed_multp * delta_time;
+
         move(actors[ i ], velocity );
 
         // account for overshooting
@@ -271,22 +259,19 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->world_center_point.x == tile_grid_point_to_world_point( pacmonster->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0;
             velocity.y = -1;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->world_center_point.x < tile_grid_point_to_world_point( pacmonster->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->world_center_point.x >tile_grid_point_to_world_point( pacmonster->current_tile).x  + ( TILE_SIZE / 2 )){
             velocity.x = -0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
+            
         }
 
+        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp  * delta_time;
         // move
         move(pacmonster, velocity );
 
@@ -318,22 +303,17 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->world_center_point.x == tile_grid_point_to_world_point( pacmonster->current_tile).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0;
             velocity.y = 1;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->world_center_point.x < tile_grid_point_to_world_point( pacmonster->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->world_center_point.x >tile_grid_point_to_world_point( pacmonster->current_tile).x  + ( TILE_SIZE / 2 )){
             velocity.x = -0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         }
-
+        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
         move(pacmonster, velocity );
 
@@ -365,22 +345,18 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->world_center_point.y == tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = -1;
             velocity.y = 0;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->world_center_point.y < tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = -0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->world_center_point.y >tile_grid_point_to_world_point( pacmonster->current_tile).y  + ( TILE_SIZE / 2 )){
             velocity.x = -0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         }
 
+        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
         move(pacmonster, velocity );
 
@@ -413,22 +389,18 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         if ( pacmonster->world_center_point.y == tile_grid_point_to_world_point( pacmonster->current_tile).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 1;
             velocity.y = 0;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         } 
         else if( pacmonster->world_center_point.y < tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
             velocity.x = 0.7071068;
             velocity.y = 0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         }
         else if( pacmonster->world_center_point.y >tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 )){
             velocity.x = 0.7071068;
             velocity.y = -0.7071068;
-            velocity.x *= pacmonster->speed * delta_time;
-            velocity.y *= pacmonster->speed * delta_time;
         }
 
+        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
         move(pacmonster, velocity );
 

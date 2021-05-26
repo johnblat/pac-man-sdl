@@ -100,6 +100,6 @@ void set_render_texture_values_based_on_actor( Actor **actors, int offset_x, int
         render_clips[ i ]->dest_rect.w = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w;
         render_clips[ i ]->dest_rect.h = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h;
 
-        render_clips[ i ]->flip = actors[ i ]->direction == DIR_LEFT ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+        render_clips[ i ]->flip = SDL_FLIP_NONE;
     }
 }

@@ -9,6 +9,8 @@
 #include "constants.h"
 #include "tiles.h"
 
+
+
 Direction opposite_directions[ 4 ] = { DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT };
 
 void actor_set_current_tile( Actor *actor ) {
@@ -16,7 +18,7 @@ void actor_set_current_tile( Actor *actor ) {
     actor->current_tile.y = ( ( ( actor->world_position.y + TILE_SIZE / 2 ) - (TILE_SIZE * 2 ) ) / TILE_SIZE ) ;
 }
 
-Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset ) {
+Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset, float base_speed, float speed_multp ) {
     Actor *actor;
     actor = ( Actor *) malloc( sizeof( Actor ) );
 
@@ -47,7 +49,8 @@ Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset ) {
     actor->next_tile = actor->current_tile;
     actor->next_tile = actor->current_tile;
 
-    actor->speed = 0;
+    actor->base_speed = base_speed;
+    actor->speed_multp = speed_multp;
 
     return actor;
 }

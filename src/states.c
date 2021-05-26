@@ -31,7 +31,7 @@ void vulnerable_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAt
     render_texture->texture_atlas_id = vulnerable_texture_atlas_id;
     actors[ actor_id ]->direction = opposite_directions[ actors[ actor_id ]->direction ];
     actors[ actor_id ]->next_tile = actors[ actor_id ]->current_tile;
-    actors[ actor_id ]->speed = actors[ 0 ]->speed * 0.4;
+    actors[ actor_id ]->speed_multp = 0.4f;
 
 }
 
@@ -82,7 +82,7 @@ void normal_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas 
     // set texture atlas id to the id
     render_texture->texture_atlas_id = texture_atlas_id;
     actors[ actor_id ]->next_tile =  actors[ actor_id ]->current_tile;
-     actors[ actor_id ]->speed =  actors[ 0 ]->speed * 0.8;
+     actors[ actor_id ]->speed_multp = 0.8f;
 
 }
 
@@ -164,7 +164,7 @@ void go_to_pen_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtl
     render_texture->texture_atlas_id = texture_atlas_id;
     actors[ actor_id ]->next_tile = actors[ actor_id ]->current_tile;
     actors[ actor_id ]->target_tile = ghost_pen_tile;
-    actors[ actor_id ]->speed = actors[ 0 ]->speed * 1.6;
+    actors[ actor_id ]->speed_multp = 1.6f;
 }
 
 /** Need to fix this!!!

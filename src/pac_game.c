@@ -100,12 +100,12 @@ int main( int argc, char *argv[] ) {
 
     // INIT TEXTURE ATLASES
     add_texture_atlas( renderer, "res/img/pac-guy-4.png", 8 );          // 0
-    add_texture_atlas( renderer, "res/img/blinky.png", 1 );             // 1
-    add_texture_atlas( renderer, "res/img/pinky.png", 1 );              // 2
-    add_texture_atlas( renderer, "res/img/inky.png", 1 );               // 3
-    add_texture_atlas( renderer, "res/img/clyde.png", 1 );              // 4
-    add_texture_atlas( renderer, "res/img/vulnerable.png", 1 );         // 5
-    add_texture_atlas( renderer, "res/img/go_to_pen_eyes.png", 1);      // 6
+    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );             // 1
+    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );              // 2
+    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );               // 3
+    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );              // 4
+    add_texture_atlas( renderer, "res/img/vulnerable.png", 4 );         // 5
+    add_texture_atlas( renderer, "res/img/go_to_pen_eyes.png", 4);      // 6
     add_texture_atlas( renderer, "res/img/power_pellet_anim.png", 6);   // 7
 
     // INIT TILEMAP
@@ -117,9 +117,6 @@ int main( int argc, char *argv[] ) {
     SDL_Point pac_starting_tile;
     try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
 
-    actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position );
-    render_clips[ 0 ] = init_render_clip( 0, 0 );
-    animations[ 0 ] = init_animation( 0, 0.07f, g_texture_atlases[ 0 ].num_sprite_clips );
     // read in file
     SDL_RWops *read_context = SDL_RWFromFile("res/default_pac_speed", "r");
     unsigned long size = read_context->size(read_context);
@@ -127,9 +124,14 @@ int main( int argc, char *argv[] ) {
     SDL_RWread( read_context, content, size, 1 );
     content[ size ] = '\0';
     char *end_ptr;
-    actors[ 0 ]->speed = strtol(content, &end_ptr, 10);
+    float base_speed = strtol(content, &end_ptr, 10);
     free( content );
     SDL_RWclose( read_context );
+
+    actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f );
+    render_clips[ 0 ] = init_render_clip( 0, 0 );
+    animations[ 0 ] = init_animation(12, g_texture_atlases[ 0 ].num_sprite_clips );
+    
 
     // INIT GHOST
     SDL_Point ghost_pen_tile;
@@ -143,33 +145,28 @@ int main( int argc, char *argv[] ) {
     SDL_Point blinky_tile;
     blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
     blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
-    actors[ 1 ] = init_actor( blinky_tile, tilemap.tm_screen_position );
+    actors[ 1 ] = init_actor( blinky_tile, tilemap.tm_screen_position, base_speed, 0.8f );
     render_clips[ 1 ] = init_render_clip( 1, 1 );
 
     SDL_Point pinky_tile;
     pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
     pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
-    actors[ 2 ]= init_actor( pinky_tile, tilemap.tm_screen_position );
+    actors[ 2 ]= init_actor( pinky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
     render_clips[ 2 ]= init_render_clip( 2, 1 );
 
     SDL_Point inky_tile;
     inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
     inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
-    actors[ 3 ]= init_actor( inky_tile, tilemap.tm_screen_position );
+    actors[ 3 ]= init_actor( inky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
     render_clips[ 3 ]= init_render_clip( 3, 1 );
 
     SDL_Point clyde_tile;
     clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
     clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
-    actors[ 4 ]= init_actor( clyde_tile, tilemap.tm_screen_position );
+    actors[ 4 ]= init_actor( clyde_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
     render_clips[ 4 ]= init_render_clip( 4, 1 );
 
-    animations[ 1 ] = init_animation( 0, 0.08f, g_texture_atlases[ 1 ].num_sprite_clips );
-
-
-    for( int i = 1; i < 5; ++i ) {
-        actors[ i ]->speed = actors[ 0 ]->speed * 0.80;
-    }
+    animations[ 1 ] = init_animation( 6, g_texture_atlases[ 1 ].num_sprite_clips );
 
     // power pellet
     // SDL_Point power_pellet_grid_point = { 19, 14 };
@@ -191,7 +188,7 @@ int main( int argc, char *argv[] ) {
         render_clips[ 5 + i ]->dest_rect.h = TILE_SIZE;
         render_clips[ 5 + i ]->flip = SDL_FLIP_NONE;
     }
-    animations[ 2 ] = init_animation( 0, 0.1f, g_texture_atlases[ 7 ].num_sprite_clips ); // used for all of the power pellets
+    animations[ 2 ] = init_animation( 12, g_texture_atlases[ 7 ].num_sprite_clips ); // used for all of the power pellets
 
     
 
