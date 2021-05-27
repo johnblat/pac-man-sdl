@@ -41,7 +41,7 @@ int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Actor *actors[ 5 ]; 
-    Animation *animations[ 3 ]; // pac-man, ghosts, power-pellets
+    AnimatedSprite *animations[ 5 ]; // pac-man, ghosts, power-pellets, eyes
     RenderClipFromTextureAtlas *render_clips[ 9 ]; // for render textures, 5 thru 9 only different is the Rect x and y 
     GhostState ghost_states[ 5 ]; // 1 thru 5
     // TIMER USED FOR VULNERABILITY STATE
@@ -100,13 +100,22 @@ int main( int argc, char *argv[] ) {
 
     // INIT TEXTURE ATLASES
     add_texture_atlas( renderer, "res/img/pac-guy-4.png", 8 );          // 0
-    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );             // 1
-    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );              // 2
-    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );               // 3
-    add_texture_atlas( renderer, "res/img/blinky-2.png", 4 );              // 4
-    add_texture_atlas( renderer, "res/img/vulnerable.png", 4 );         // 5
-    add_texture_atlas( renderer, "res/img/go_to_pen_eyes.png", 4);      // 6
+    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );             // 1
+    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );              // 2
+    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );               // 3
+    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );              // 4
+    add_texture_atlas( renderer, "res/img/vulnerable.png", 1 );         // 5
+    add_texture_atlas( renderer, "res/img/go_to_pen_eyes.png", 1);      // 6
     add_texture_atlas( renderer, "res/img/power_pellet_anim.png", 6);   // 7
+
+    animations[ 0 ] = init_animation( 0, 12, g_texture_atlases[ 0 ].num_sprite_clips );
+    animations[ 1 ] = init_animation( 1, 12, g_texture_atlases[ 1 ].num_sprite_clips );
+    animations[ 2 ] = init_animation( 7, 12, g_texture_atlases[ 7 ].num_sprite_clips ); // used for all of the power pellets
+
+    animations[ 3 ] = init_animation( 5, 1, g_texture_atlases[ 5 ].num_sprite_clips );
+    animations[ 4 ] = init_animation(6, 1, 1);
+
+
 
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap );
@@ -130,7 +139,6 @@ int main( int argc, char *argv[] ) {
 
     actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f );
     render_clips[ 0 ] = init_render_clip( 0, 0 );
-    animations[ 0 ] = init_animation(12, g_texture_atlases[ 0 ].num_sprite_clips );
     
 
     // INIT GHOST
@@ -166,7 +174,6 @@ int main( int argc, char *argv[] ) {
     actors[ 4 ]= init_actor( clyde_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
     render_clips[ 4 ]= init_render_clip( 4, 1 );
 
-    animations[ 1 ] = init_animation( 6, g_texture_atlases[ 1 ].num_sprite_clips );
 
     // power pellet
     // SDL_Point power_pellet_grid_point = { 19, 14 };
@@ -188,7 +195,6 @@ int main( int argc, char *argv[] ) {
         render_clips[ 5 + i ]->dest_rect.h = TILE_SIZE;
         render_clips[ 5 + i ]->flip = SDL_FLIP_NONE;
     }
-    animations[ 2 ] = init_animation( 12, g_texture_atlases[ 7 ].num_sprite_clips ); // used for all of the power pellets
 
     
 
@@ -298,7 +304,7 @@ int main( int argc, char *argv[] ) {
         pac_try_move( actors[ 0 ], &tilemap, delta_time );
 
         // TODO we probably want to update all of these at once
-        inc_animations( animations, 3, delta_time); //pacman
+        inc_animations( animations, 4, delta_time); //pacman
         
         pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &score, renderer );
 
@@ -455,8 +461,8 @@ int main( int argc, char *argv[] ) {
         /**********
          * RENDER
          * **********/
-
-        set_render_texture_values_based_on_actor( actors, tilemap.tm_screen_position.x, tilemap.tm_screen_position.y,render_clips, 5 );
+        set_render_clip_values_based_on_actor_and_animation( render_clips, actors, tilemap.tm_screen_position, animations, 5 );
+        //set_render_texture_values_based_on_actor( actors, tilemap.tm_screen_position.x, tilemap.tm_screen_position.y,render_clips, 5 );
         for( int i = 0; i < 4; ++i ) {
             SDL_Point world_position = tile_grid_point_to_world_point( tilemap.tm_power_pellet_tiles[ i ] );
             SDL_Point screen_point = world_point_to_screen_point( world_position, tilemap.tm_screen_position );
@@ -467,19 +473,19 @@ int main( int argc, char *argv[] ) {
             render_clips[ 5 + i ]->dest_rect.h = TILE_SIZE;
             render_clips[ 5 + i ]->flip = SDL_FLIP_NONE;
         }
-        set_render_texture_values_based_on_animation( animations, render_clips, 9 );
+        //set_render_texture_values_based_on_animation( animations, render_clips, 9 );
 
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );    
 
         tm_render_with_screen_position_offset( renderer, &tilemap );
 
-        render_render_textures( renderer, render_clips, 5 );
+        render_render_textures( renderer, render_clips, animations, 5 );
 
         // power pellets
         for( int i = 0; i < 4; ++i ) {
             if( !points_equal( tilemap.tm_power_pellet_tiles[ i ], TILE_NONE ) ) {
-                render_render_textures( renderer, render_clips + 5 + i, 1);
+                render_render_textures( renderer, render_clips + 5 + i, animations, 1);
             }
         }
 

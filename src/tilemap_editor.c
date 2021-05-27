@@ -222,7 +222,7 @@ int main( int argc, char *argv[] ) {
 
     SDL_SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_BLEND );
     
-    tm_init_and_load_texture( renderer, &tilemap, "res/maze_file" );
+    tm_init_and_load_texture( renderer, &tilemap );
     try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
     try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
 

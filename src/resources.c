@@ -30,3 +30,13 @@ void try_load_resource_from_file( void *resource_ptr, char *filename, size_t res
     SDL_RWread( read_context, resource_ptr,  resource_size , num_resources );
     SDL_RWclose( read_context );
 }
+
+// void try_load_texture_atlases_from_config_file( char *filename ) {
+//     int count = 0;
+//     FILE *f;
+//     f = fopen(filename, "r");
+//     if( f == NULL ) {
+//         fprintf(stderr, "Error opening file %s\n", filename );
+//     }
+//     fgets()
+// }
