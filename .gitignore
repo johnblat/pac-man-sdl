@@ -11,3 +11,7 @@ windows
 **.exe
 bin
 bin/**
+buildMingw64
+toolchains
+build
+include/SDL2
