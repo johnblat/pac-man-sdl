@@ -70,6 +70,6 @@ Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset, float base_
 
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer );
 
-
+void actor_align_world_data_based_on_world_position( Actor *actor );
 
 #endif
