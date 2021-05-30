@@ -99,21 +99,10 @@ int main( int argc, char *argv[] ) {
     }
 
     // INIT TEXTURE ATLASES
-    add_texture_atlas( renderer, "res/img/pac-guy-4.png", 8 );          // 0
-    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );             // 1
-    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );              // 2
-    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );               // 3
-    add_texture_atlas( renderer, "res/img/blinky-4.png", 8 );              // 4
-    add_texture_atlas( renderer, "res/img/vulnerable.png", 1 );         // 5
-    add_texture_atlas( renderer, "res/img/go_to_pen_eyes.png", 1);      // 6
-    add_texture_atlas( renderer, "res/img/power_pellet_anim.png", 6);   // 7
 
-    animations[ 0 ] = init_animation( 0, 12, g_texture_atlases[ 0 ].num_sprite_clips );
-    animations[ 1 ] = init_animation( 1, 12, g_texture_atlases[ 1 ].num_sprite_clips );
-    animations[ 2 ] = init_animation( 7, 12, g_texture_atlases[ 7 ].num_sprite_clips ); // used for all of the power pellets
+    load_global_texture_atlases_from_config_file( renderer );
 
-    animations[ 3 ] = init_animation( 5, 1, g_texture_atlases[ 5 ].num_sprite_clips );
-    animations[ 4 ] = init_animation(6, 1, 1);
+    load_animations_from_config_file( animations );
 
 
 

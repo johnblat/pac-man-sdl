@@ -2,7 +2,14 @@
 #define RESOURCES_H
 
 #include "jb_types.h"
+#include <SDL2/SDL.h>
+#include <assert.h>
+#include "animation.h"
 #include "tiles.h"
+
+void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer );
+
+void load_animations_from_config_file( AnimatedSprite **animated_sprites );
 /**
  * FILE I/O FOR SAVING/LOADING
  */

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "render.h"
 #include "actor.h"
+#include <assert.h>
 #include "animation.h"
 
 
@@ -48,6 +49,7 @@ int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_spr
     return ++num_texture_atlases;
 }
 
+
 RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t animation_id ) {
     
     RenderClipFromTextureAtlas *render_clip = ( RenderClipFromTextureAtlas * ) malloc (sizeof(RenderClipFromTextureAtlas ));
@@ -56,6 +58,7 @@ RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t 
         fprintf(stderr, "Trying to assign texture atlas id %d that's more than the number of texture atlases created %d \n", texture_atlas_id, num_texture_atlases );
         return NULL;
     }
+    assert( texture_atlas_id >= num_texture_atlases );
 
     //render_clip->texture_atlas_id = texture_atlas_id;
     render_clip->animation_id = animation_id;
