@@ -83,6 +83,12 @@ typedef struct TileMap {
      */
     SDL_Point tm_power_pellet_tiles[ 4 ];
 
+    /**
+     * One way tile that will represent the ghost pen entrance
+     * actors can only enter through bottom. IOW, if their direction is DIR_UP
+     */
+    SDL_Point one_way_tile;
+
 } TileMap;
 
 

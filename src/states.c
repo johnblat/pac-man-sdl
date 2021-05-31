@@ -111,25 +111,25 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
                 case 1:
                     if(points_equal(  actors[ ghost_id ]->next_tile, actors[ ghost_id ]->current_tile )) {
                         set_shadow_target_tile( actors, ghost_id, tm );
-                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm );
+                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm, STATE_NORMAL );
                     }
                     break;
                 case 2:
                     if( points_equal( actors[ ghost_id ]->next_tile, actors[ ghost_id ]->current_tile ) ) {
                         set_ambush_target_tile( actors, tm );
-                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm );
+                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm, STATE_NORMAL );
                     }
                     break;
                 case 3:
                     if(points_equal( actors[ ghost_id ]->next_tile, actors[ ghost_id ]->current_tile ) ) {
                         set_moody_target_tile( actors, tm );
-                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm );
+                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ],  tm, STATE_NORMAL );
                     }
                     break;
                 case 4:
                     if( points_equal( actors[ ghost_id ]->next_tile, actors[ ghost_id ]->current_tile )) {
                         set_pokey_target_tile( actors, tm );
-                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm );
+                        set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ],  tm, STATE_NORMAL );
                     }
                     break;
 
@@ -140,7 +140,7 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
         case MODE_SCATTER:
             set_scatter_target_tile( actors, ghost_id, tm, home_tiles[ ghost_id ] );
             if( points_equal( actors[ ghost_id ]->next_tile, actors[ ghost_id ]->current_tile ) ) {
-                set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm );
+                set_direction_and_next_tile_shortest_to_target( actors[ ghost_id ], tm, STATE_NORMAL );
             }
             break;
 
@@ -192,7 +192,7 @@ void go_to_pen_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtl
 void go_to_pen_process( Actor *actor, TileMap *tm ) {
     //set_pen_target_tile( actor, tm );
     if( points_equal(actor->next_tile, actor->current_tile ) && !points_equal(actor->current_tile, ghost_pen_tile ) ) {
-        set_direction_and_next_tile_shortest_to_target( actor, tm );
+        set_direction_and_next_tile_shortest_to_target( actor, tm, STATE_GO_TO_PEN );
     }
 }
 

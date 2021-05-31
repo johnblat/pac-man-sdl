@@ -5,7 +5,6 @@
 #include "tiles.h"
 #include <inttypes.h>
 
-void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm ) ;
 
 void actor_set_current_tile( Actor *actor);
 

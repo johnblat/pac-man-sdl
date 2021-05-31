@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include "actor.h"
 #include "tiles.h"
+#include "comparisons.h"
 #include "jb_types.h"
 
 
@@ -40,6 +41,10 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
             return;
         }
 
+        if( points_equal( tile_below, tm->one_way_tile) ) {
+            return;
+        }
+
         if(tm->tm_walls[ tile_below.y ][ tile_below.x ] != 'x' ) 
         {
             pacmonster->direction = DIR_DOWN;
@@ -60,6 +65,10 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
             return;
         }
 
+        if( points_equal( tile_to_left, tm->one_way_tile) ) {
+            return;
+        }
+
         if(tm->tm_walls[ tile_to_left.y ][ tile_to_left.x ] != 'x'  ) 
         {
             pacmonster->direction = DIR_LEFT;
@@ -77,6 +86,10 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
             return;
         }
         if( pacmonster->world_center_point.y < tile_to_right_rect.y + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_UP ) {
+            return;
+        }
+
+        if( points_equal( tile_to_right, tm->one_way_tile) ) {
             return;
         }
 

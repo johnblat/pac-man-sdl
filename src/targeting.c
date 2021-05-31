@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include "targeting.h"
 #include "actor.h"
+#include "states.h"
 #include "comparisons.h"
 #include "tiles.h"
 
@@ -9,7 +10,7 @@ SDL_Point ambush_home_tile = { TILE_COLS - 1, 0 };
 SDL_Point moody_home_tile = { 0, TILE_ROWS - 1 };
 SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
 
-void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm ) {
+void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, GhostState ghost_state ) {
     SDL_Point tile_above, tile_below, tile_left, tile_right;
     tile_above.x = actor->current_tile.x;
     tile_above.y = actor->current_tile.y - 1;
@@ -68,6 +69,13 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm )
     for( int i = 0; i < 4; ++i ) {
         if( tm->tm_walls[ surrounding_tiles[ i ].y][ surrounding_tiles[ i ].x ] == 'x' ) {
             continue;
+        }
+
+        if( 
+            points_equal(surrounding_tiles[ i ], tm->one_way_tile) 
+            && i == DIR_DOWN 
+            && ghost_state != STATE_GO_TO_PEN ) {
+                continue;
         }
 
         if( i == opposite_directions[ actor->direction  ] ) continue;

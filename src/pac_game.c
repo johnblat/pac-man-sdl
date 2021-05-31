@@ -105,6 +105,8 @@ int main( int argc, char *argv[] ) {
 
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap );
+    tilemap.one_way_tile.x = ghost_pen_tile.x;
+    tilemap.one_way_tile.y = ghost_pen_tile.y - 2;
 
     try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
 
@@ -559,6 +561,11 @@ int main( int argc, char *argv[] ) {
             SDL_Rect pen_rect = { ghost_pen_screen_point.x, ghost_pen_screen_point.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderFillRect( renderer, &pen_rect);
 
+            // GHOST PEN ENTRANCE
+            SDL_SetRenderDrawColor( renderer, 255,255,255,50);
+            SDL_Point ghost_pen_entrance_screen_point = tile_grid_point_to_screen_point(tilemap.one_way_tile, tilemap.tm_screen_position);//world_point_to_screen_point( tilemap.one_way_tile, tilemap.tm_screen_position );
+            SDL_Rect pen_entrance_rect = { ghost_pen_entrance_screen_point.x, ghost_pen_entrance_screen_point.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderFillRect( renderer, &pen_entrance_rect);
 
         }
         SDL_RenderPresent( renderer );
