@@ -1,4 +1,5 @@
 #include "render.c"
 #include "tiles.c"
 #include "resources.c"
+#include "animation.c"
 #include "tilemap_editor.c"

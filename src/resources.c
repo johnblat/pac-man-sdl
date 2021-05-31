@@ -107,6 +107,50 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {
 
     }
 }
+
+void load_render_xx_from_config_file( RenderClipFromTextureAtlas **render_clips ) {
+
+    int num_render_clips = 0;
+
+    char *filename_config = "res/render_anims";
+    FILE *f;
+    f = fopen(filename_config, "r");
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file %s\n", filename_config );
+    }
+    
+    char current_line[ 256 ];
+
+    /**
+     * Very specific and not general-purpose at all
+    */
+    while( fgets( current_line, 256, f ) != NULL ) {
+        if( current_line[ 0 ] == '#') { // COMMENT
+            continue;
+        }
+        int texture_atlas_id = -1;
+        int animation_id = -1;
+
+        int values[ 2 ];
+
+        int line_idx = 0;
+
+        for( int i = 0; i < 2; i++ ) {
+            values[ i ] = strtol( current_line + line_idx , NULL, 10 );
+
+            while( current_line[ line_idx ] != ' ' && current_line[ line_idx ] != '\n') {
+                line_idx++;
+            }
+            line_idx++;
+        }
+
+        texture_atlas_id = values[ 0 ];
+        animation_id = values[ 1 ];
+
+        render_clips[ num_render_clips ] = init_render_clip( texture_atlas_id, animation_id );
+        num_render_clips++;
+    }
+}
 /**
  * FILE I/O FOR SAVING/LOADING
  */

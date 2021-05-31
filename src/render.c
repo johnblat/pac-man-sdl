@@ -58,7 +58,7 @@ RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t 
         fprintf(stderr, "Trying to assign texture atlas id %d that's more than the number of texture atlases created %d \n", texture_atlas_id, num_texture_atlases );
         return NULL;
     }
-    assert( texture_atlas_id >= num_texture_atlases );
+    assert( texture_atlas_id < num_texture_atlases );
 
     //render_clip->texture_atlas_id = texture_atlas_id;
     render_clip->animation_id = animation_id;

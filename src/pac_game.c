@@ -41,12 +41,13 @@ int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Actor *actors[ 5 ]; 
-    AnimatedSprite *animations[ 5 ]; // pac-man, ghosts, power-pellets, eyes
+    AnimatedSprite *animations[ 6 ]; // pac-man, ghosts, power-pellets, eyes
     RenderClipFromTextureAtlas *render_clips[ 9 ]; // for render textures, 5 thru 9 only different is the Rect x and y 
     GhostState ghost_states[ 5 ]; // 1 thru 5
+    TTF_Font *font; 
+    TileMap tilemap;
     // TIMER USED FOR VULNERABILITY STATE
     float ghost_vulnerable_timer = 0.0f;
-    //uint8_t ghost_vulnerable_time_seconds = 20;
     // GHOST BEHAVIOR TIMER FOR CURRENT GLOBAL GHOST MODE
     float ghost_mode_timer = 0.0f;
     float ghost_change_mode_time = g_scatter_chase_period_seconds[ g_current_scatter_chase_period ];
@@ -56,11 +57,6 @@ int main( int argc, char *argv[] ) {
     for( int i = 1; i < 5; ++i ) {
         ghost_states[ i ] = STATE_NORMAL;
     }
-
-    TTF_Font *gasted_font; 
-    TileMap tilemap;
-
-    
 
     // Initializing stuff
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -92,8 +88,8 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
     
-    gasted_font = TTF_OpenFont("res/gomarice_no_continue.ttf", 30 );
-    if ( gasted_font == NULL ) {
+    font = TTF_OpenFont("res/gomarice_no_continue.ttf", 30 );
+    if ( font == NULL ) {
         fprintf(stderr, "%s\n", TTF_GetError());
         exit( EXIT_FAILURE );
     }
@@ -104,6 +100,7 @@ int main( int argc, char *argv[] ) {
 
     load_animations_from_config_file( animations );
 
+    load_render_xx_from_config_file( render_clips );
 
 
     // INIT TILEMAP
@@ -127,7 +124,7 @@ int main( int argc, char *argv[] ) {
     SDL_RWclose( read_context );
 
     actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f );
-    render_clips[ 0 ] = init_render_clip( 0, 0 );
+   // render_clips[ 0 ] = init_render_clip( 0, 0 );
     
 
     // INIT GHOST
@@ -143,25 +140,25 @@ int main( int argc, char *argv[] ) {
     blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
     blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
     actors[ 1 ] = init_actor( blinky_tile, tilemap.tm_screen_position, base_speed, 0.8f );
-    render_clips[ 1 ] = init_render_clip( 1, 1 );
+    //render_clips[ 1 ] = init_render_clip( 1, 1 );
 
     SDL_Point pinky_tile;
     pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
     pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
     actors[ 2 ]= init_actor( pinky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-    render_clips[ 2 ]= init_render_clip( 2, 1 );
+    //render_clips[ 2 ]= init_render_clip( 2, 1 );
 
     SDL_Point inky_tile;
     inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
     inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
     actors[ 3 ]= init_actor( inky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-    render_clips[ 3 ]= init_render_clip( 3, 1 );
+    //render_clips[ 3 ]= init_render_clip( 3, 5 );
 
     SDL_Point clyde_tile;
     clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
     clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
     actors[ 4 ]= init_actor( clyde_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-    render_clips[ 4 ]= init_render_clip( 4, 1 );
+   // render_clips[ 4 ]= init_render_clip( 4, 5 );
 
 
     // power pellet
@@ -177,7 +174,7 @@ int main( int argc, char *argv[] ) {
 
     for( int i = 0; i < 4; ++i ) {
         SDL_Point screen_position = tile_grid_point_to_screen_point( tilemap.tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
-        render_clips[ 5 + i ] = init_render_clip( 7, 2 );
+        //render_clips[ 5 + i ] = init_render_clip( 7, 2 );
         render_clips[ 5 + i ]->dest_rect.x = screen_position.x;
         render_clips[ 5 + i ]->dest_rect.y = screen_position.y;
         render_clips[ 5 + i ]->dest_rect.w = TILE_SIZE;
@@ -195,7 +192,7 @@ int main( int argc, char *argv[] ) {
 
     // INIT SCORE
     Score score;
-    score.font = gasted_font;
+    score.font = font;
     score.score_color = pac_color;
     score.score_number = 0;
     SDL_Surface *score_surface = TTF_RenderText_Solid( score.font, "Score : 0", score.score_color);
@@ -293,7 +290,7 @@ int main( int argc, char *argv[] ) {
         pac_try_move( actors[ 0 ], &tilemap, delta_time );
 
         // TODO we probably want to update all of these at once
-        inc_animations( animations, 4, delta_time); //pacman
+        inc_animations( animations, 6, delta_time); //pacman
         
         pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &score, renderer );
 
@@ -455,7 +452,7 @@ int main( int argc, char *argv[] ) {
         for( int i = 0; i < 4; ++i ) {
             SDL_Point world_position = tile_grid_point_to_world_point( tilemap.tm_power_pellet_tiles[ i ] );
             SDL_Point screen_point = world_point_to_screen_point( world_position, tilemap.tm_screen_position );
-            render_clips[ 5 + i ] = init_render_clip( 7, 2 );
+            //render_clips[ 5 + i ] = init_render_clip( 7, 2 );
             render_clips[ 5 + i ]->dest_rect.x = screen_point.x;
             render_clips[ 5 + i ]->dest_rect.y = screen_point.y;
             render_clips[ 5 + i ]->dest_rect.w = TILE_SIZE;

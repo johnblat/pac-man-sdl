@@ -26,7 +26,7 @@ void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_t
 }
 
 void vulnerable_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture ) {
-    uint8_t vulnerable_texture_atlas_id = 5;
+    uint8_t vulnerable_texture_atlas_id = 3;
     uint8_t vulnerable_animation_id = 3;
     render_texture->animation_id = vulnerable_animation_id;
     actors[ actor_id ]->direction = opposite_directions[ actors[ actor_id ]->direction ];
@@ -96,7 +96,7 @@ void vulnerable_process( Actor *actor, TileMap *tm ) {
 
 void normal_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) {
     // set texture atlas id to the id
-    render_texture->animation_id = 1;
+    render_texture->animation_id = actor_id < 3 ? 1: 5; // PLACEHOLDER
     actors[ actor_id ]->next_tile =  actors[ actor_id ]->current_tile;
      actors[ actor_id ]->speed_multp = 0.8f;
 

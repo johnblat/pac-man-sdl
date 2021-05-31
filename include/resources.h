@@ -5,11 +5,14 @@
 #include <SDL2/SDL.h>
 #include <assert.h>
 #include "animation.h"
+#include "render.h"
 #include "tiles.h"
 
 void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer );
 
 void load_animations_from_config_file( AnimatedSprite **animated_sprites );
+
+void load_render_xx_from_config_file( RenderClipFromTextureAtlas **render_clips );
 /**
  * FILE I/O FOR SAVING/LOADING
  */
