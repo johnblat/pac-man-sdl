@@ -26,6 +26,22 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm )
     surrounding_tiles[ DIR_LEFT ] = tile_left;
     surrounding_tiles[ DIR_RIGHT ] = tile_right;
 
+    // wrap around tilemaps Issue 150
+    for( int i = 0; i < 4; i++ ) {
+        if( surrounding_tiles[ i ].x < 0 ) {
+            surrounding_tiles[ i ].x = 47;
+        }
+        else if( surrounding_tiles[ i ].x > 47 ) {
+            surrounding_tiles[ i ].x = 0;
+        }
+        else if( surrounding_tiles[ i ].y < 0 ) {
+            surrounding_tiles[ i ].y = 22;
+        }
+        else if( surrounding_tiles[ i ].y > 22) {
+            surrounding_tiles[ i ].y = 0;
+        }
+    }
+
     float above_to_target_dist = distance(tile_above.x, tile_above.y,  actor->target_tile.x, actor->target_tile.y ); 
     float below_to_target_dist = distance(tile_below.x, tile_below.y,  actor->target_tile.x, actor->target_tile.y ); 
     float left_to_target_dist  = distance(tile_left.x, tile_left.y,  actor->target_tile.x, actor->target_tile.y ); 
