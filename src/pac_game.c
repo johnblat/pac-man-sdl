@@ -394,6 +394,8 @@ int main( int argc, char *argv[] ) {
          * ********************/
         ghost_move( actors, &tilemap, delta_time );
 
+        set_animation_row( animations[ 1 ], actors[ 1 ] );
+
 
         /*********************
          * GHOST MODE PERIOD

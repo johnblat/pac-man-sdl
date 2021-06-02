@@ -14,7 +14,7 @@
 
 uint8_t num_texture_atlases = 0; 
 
-int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_sprites ) {
+int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_rows, int num_cols ) {
     if( num_texture_atlases >= MAX_TEXTURE_ATLASES ) {
         fprintf(stderr, "Can't add more texture atlases. Limit of %d reached\n", MAX_TEXTURE_ATLASES );
         return -1;
@@ -32,19 +32,32 @@ int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_spr
         exit( EXIT_FAILURE );
     }
 
-    int stride = surface->w / num_sprites;
+    int stride_cols = surface->w / num_cols;
+    int stride_rows = surface->h / num_rows;
+    int num_sprites = num_rows * num_cols;
 
     g_texture_atlases[ num_texture_atlases ].sprite_clips = (SDL_Rect *) malloc(sizeof(SDL_Rect) * num_sprites);
-    for( int i = 0; i < num_sprites; ++i ) {
-        g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].x = i * stride;
-        g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].y = 0;
-        g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].w = stride;
-        g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].h = stride;
+
+    for( int row = 0 ; row < num_rows; row ++ ) {
+        for( int col = 0; col < num_cols; col++ ) {
+            g_texture_atlases[ num_texture_atlases ].sprite_clips[ ( row * num_cols ) + col  ].x = col * stride_cols;
+            g_texture_atlases[ num_texture_atlases ].sprite_clips[ ( row * num_cols ) + col ].y = row * stride_rows;
+            g_texture_atlases[ num_texture_atlases ].sprite_clips[ ( row * num_cols ) + col ].w = stride_cols;
+            g_texture_atlases[ num_texture_atlases ].sprite_clips[ ( row * num_cols ) + col ].h = stride_rows;
+        }
     }
+
+    // for( int i = 0; i < num_sprites; ++i ) {
+    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].x = i * stride;
+    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].y = 0;
+    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].w = stride;
+    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].h = stride;
+    // }
 
     SDL_FreeSurface( surface );
 
-    g_texture_atlases[ num_texture_atlases ].num_sprite_clips = num_sprites;
+    g_texture_atlases[ num_texture_atlases ].rows = num_rows;
+    g_texture_atlases[ num_texture_atlases ].cols = num_cols;
     
     return ++num_texture_atlases;
 }
@@ -81,8 +94,13 @@ RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t 
 void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas **render_clips, AnimatedSprite **animations, int number_render_textures ) {
     for( int i = 0; i < number_render_textures; ++i ) {
         uint8_t animation_id = render_clips[ i ]->animation_id;
+        uint8_t anim_frame_col = animations[ animation_id ]->current_frame_col;
+        uint8_t anim_row = animations[ animation_id ]->current_anim_row;
+        uint8_t num_frames_col = animations[ animation_id ]->num_frames_col;
+        uint8_t clip_idx = (  ( anim_row * num_frames_col ) + anim_frame_col );
+
         uint8_t texture_atlas_id = animations[ animation_id ]->texture_atlas_id;
-        SDL_Rect src_rect = g_texture_atlases[ texture_atlas_id ].sprite_clips[ animations[ animation_id ]->current_frame ];
+        SDL_Rect src_rect = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx ];
         
         SDL_RenderCopyEx( renderer, g_texture_atlases[ texture_atlas_id ].texture, &src_rect, &render_clips[ i ]->dest_rect, render_clips[ i ]->rotation, NULL, render_clips[ i ]->flip);
     }
@@ -114,17 +132,20 @@ void set_render_clip_values_based_on_actor_and_animation( RenderClipFromTextureA
     for ( int i = 0; i < num; ++i ) {
         uint8_t animation_id = render_clips[ i ]->animation_id;
         uint8_t texture_atlas_id = animated_sprites[ animation_id ]->texture_atlas_id;
-        uint8_t current_frame = animated_sprites[ animation_id ]->current_frame;
+        uint8_t current_col = animated_sprites[ animation_id ]->current_frame_col;
+        uint8_t current_row = animated_sprites[ animation_id ]->current_anim_row;
+        uint8_t num_cols = animated_sprites[ animation_id ]->num_frames_col; 
+        uint8_t clip_idx = ( current_row * num_cols ) + current_col;
         render_clips[ i ]->dest_rect.x =
             offset.x
             + actors[ i ]->world_position.x
-            - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[ current_frame ].w - ACTOR_SIZE ) / 2;
+            - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].w - ACTOR_SIZE ) / 2;
         render_clips[ i ]->dest_rect.y = 
             offset.y
             + actors[ i ]->world_position.y 
-            - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[ current_frame ].h - ACTOR_SIZE ) / 2;
-        render_clips[ i ]->dest_rect.w = g_texture_atlases[ texture_atlas_id ].sprite_clips[ current_frame ].w;
-        render_clips[ i ]->dest_rect.h = g_texture_atlases[ texture_atlas_id ].sprite_clips[ current_frame ].h;
+            - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].h - ACTOR_SIZE ) / 2;
+        render_clips[ i ]->dest_rect.w = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].w;
+        render_clips[ i ]->dest_rect.h = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].h;
 
         render_clips[ i ]->flip = SDL_FLIP_NONE;
 

@@ -14,7 +14,8 @@
 typedef struct {
     SDL_Texture *texture;
     SDL_Rect *sprite_clips;
-    uint8_t num_sprite_clips;
+    uint8_t rows;
+    uint8_t cols;
 } TextureAtlas;
 
 #define MAX_TEXTURE_ATLASES 10 
@@ -31,7 +32,7 @@ typedef struct RenderClipFromTextureAtlas {
 } RenderClipFromTextureAtlas;
 
 
-int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_sprites );
+int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_rows, int num_cols );
 
 RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t animation_id ) ;
 

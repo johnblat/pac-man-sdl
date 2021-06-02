@@ -20,8 +20,8 @@
 #define ACTOR_SIZE TILE_SIZE
 
 typedef enum Direction {
-    DIR_UP,
     DIR_DOWN,
+    DIR_UP,
     DIR_LEFT,
     DIR_RIGHT,
     DIR_NONE

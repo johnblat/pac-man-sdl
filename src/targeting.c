@@ -10,7 +10,7 @@ SDL_Point ambush_home_tile = { TILE_COLS - 1, 0 };
 SDL_Point moody_home_tile = { 0, TILE_ROWS - 1 };
 SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
 
-void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, GhostState ghost_state ) {
+void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, int ghost_state ) {
     SDL_Point tile_above, tile_below, tile_left, tile_right;
     tile_above.x = actor->current_tile.x;
     tile_above.y = actor->current_tile.y - 1;

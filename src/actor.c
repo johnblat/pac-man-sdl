@@ -11,7 +11,7 @@
 
 
 
-Direction opposite_directions[ 4 ] = { DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT };
+Direction opposite_directions[ 4 ] = { DIR_UP, DIR_DOWN, DIR_RIGHT, DIR_LEFT };
 
 void actor_set_current_tile( Actor *actor ) {
     actor->current_tile.x = ( ( actor->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;

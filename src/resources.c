@@ -50,12 +50,20 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
         beg_value_idx = line_idx + 1;
         line_idx = beg_value_idx;
 
-        char *end_ptr;
+        // NUMERIC VALUES
+        int numeric_values[ 2 ];
+        for( int i = 0; i < 2 ; i++ ) {
+            numeric_values[ i ] = strtol( current_line + line_idx , NULL, 10 );
+            while( current_line[ line_idx ] != ' ' && current_line[ line_idx ] != '\n') {
+                line_idx++;
+            }
+            line_idx++;
+        }
 
-        num_sprites_texture_atlas = strtol( current_line + beg_value_idx , &end_ptr, 10 );
-        assert( *end_ptr == '\n' || *end_ptr == ' ' || *end_ptr == '\0');
+        int num_rows = numeric_values[ 0 ];
+        int num_cols = numeric_values[ 1 ];
+        add_texture_atlas( renderer, filename_texture_atlas, num_rows, num_cols );
 
-        add_texture_atlas( renderer, filename_texture_atlas, num_sprites_texture_atlas );
     }
 }
 
@@ -80,14 +88,15 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {
         }
         // zero these out
         int texture_atlas_id = -1;
-        int number_of_frames = -1;
+        int number_cols = -1;
+        int number_rows = -1;
         int fps = -1;
 
-        int values[ 3 ];
+        int values[ 4 ];
 
         int line_idx = 0;
         
-        for( int i = 0; i < 3; i++ ) {
+        for( int i = 0; i < 4; i++ ) {
             //char *end_ptr;
             values[ i ] = strtol( current_line + line_idx , NULL, 10 );
 
@@ -98,10 +107,11 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {
         }
         
         texture_atlas_id = values[ 0 ];
-        number_of_frames = values[ 1 ];
-        fps = values[ 2 ];
+        fps = values[ 1 ];
+        number_rows = values[ 2 ];
+        number_cols = values[ 3 ];
 
-        animated_sprites[ num_animated_sprites ] = init_animation( texture_atlas_id, fps, number_of_frames );
+        animated_sprites[ num_animated_sprites ] = init_animation( texture_atlas_id, fps, number_rows, number_cols );
         num_animated_sprites++;
         //assert( *end_ptr == '\n' || *end_ptr == ' ' || *end_ptr == '\0');
 
