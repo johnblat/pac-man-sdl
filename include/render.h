@@ -25,6 +25,7 @@ extern uint8_t num_texture_atlases;
 typedef struct RenderClipFromTextureAtlas {
     // uint8_t texture_atlas_id;
     uint8_t animation_id;
+    uint8_t default_animation_id; // TEMPORARY FOR GHOSTS' VULN ANIM. NEED TO FIX ( TODO )
     Uint8 current_sprite_clip;
     float rotation;
     SDL_Rect dest_rect;

@@ -46,7 +46,7 @@ int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_row
             g_texture_atlases[ num_texture_atlases ].sprite_clips[ ( row * num_cols ) + col ].h = stride_rows;
         }
     }
-
+    
     // for( int i = 0; i < num_sprites; ++i ) {
     //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].x = i * stride;
     //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].y = 0;
@@ -75,6 +75,7 @@ RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t 
 
     //render_clip->texture_atlas_id = texture_atlas_id;
     render_clip->animation_id = animation_id;
+    render_clip->default_animation_id = animation_id;
 
     render_clip->dest_rect.x = 0;
     render_clip->dest_rect.y = 0;

@@ -96,7 +96,7 @@ void vulnerable_process( Actor *actor, TileMap *tm ) {
 
 void normal_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) {
     // set texture atlas id to the id
-    render_texture->animation_id = actor_id < 3 ? 1: 5; // PLACEHOLDER
+    render_texture->animation_id = render_texture->default_animation_id;
     actors[ actor_id ]->next_tile =  actors[ actor_id ]->current_tile;
      actors[ actor_id ]->speed_multp = 0.8f;
 

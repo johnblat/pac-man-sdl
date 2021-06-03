@@ -41,7 +41,7 @@ int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Actor *actors[ 5 ]; 
-    AnimatedSprite *animations[ 6 ]; // pac-man, ghosts, power-pellets, eyes
+    AnimatedSprite *animations[ 8 ]; // pac-man, ghosts, power-pellets, eyes
     RenderClipFromTextureAtlas *render_clips[ 9 ]; // for render textures, 5 thru 9 only different is the Rect x and y 
     GhostState ghost_states[ 5 ]; // 1 thru 5
     TTF_Font *font; 
@@ -292,7 +292,7 @@ int main( int argc, char *argv[] ) {
         pac_try_move( actors[ 0 ], &tilemap, delta_time );
 
         // TODO we probably want to update all of these at once
-        inc_animations( animations, 6, delta_time); //pacman
+        inc_animations( animations, 8, delta_time); //pacman
         
         pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &score, renderer );
 
@@ -395,6 +395,9 @@ int main( int argc, char *argv[] ) {
         ghost_move( actors, &tilemap, delta_time );
 
         set_animation_row( animations[ 1 ], actors[ 1 ] );
+        set_animation_row( animations[ 5 ], actors[ 3 ] );
+        set_animation_row( animations[ 6 ], actors[ 2 ] );
+        set_animation_row( animations[ 7 ], actors[ 4 ] );
 
 
         /*********************
@@ -470,7 +473,7 @@ int main( int argc, char *argv[] ) {
 
         tm_render_with_screen_position_offset( renderer, &tilemap );
 
-        render_render_textures( renderer, render_clips, animations, 5 );
+        render_render_textures( renderer, render_clips, animations, 6 );
 
         // power pellets
         for( int i = 0; i < 4; ++i ) {
