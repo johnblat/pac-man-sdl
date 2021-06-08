@@ -4,13 +4,25 @@
 #include "comparisons.h"
 #include "jb_types.h"
 
-
+void tile_wrap( SDL_Point *tile ) {
+    if( tile->y >= TILE_ROWS ) 
+        tile->y = 0;
+    if( tile->y < 0 )
+        tile->y = TILE_ROWS - 1;
+    if( tile->x >= TILE_COLS )
+        tile->x = 0;
+    if( tile->x < 0 )
+        tile->x = TILE_COLS - 1;
+}
 
 void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, TileMap *tm ) {
 
     // don't allow changing direciton if pacman is more than half of the tile
     if( current_key_states[ SDL_SCANCODE_UP ] ) {
         SDL_Point tile_above = { pacmonster->current_tile.x, pacmonster->current_tile.y - 1 };
+
+        tile_wrap( &tile_above );
+        
         SDL_Rect tile_above_rect = {tile_grid_point_to_world_point( tile_above ).x, tile_grid_point_to_world_point( tile_above ).y, TILE_SIZE, TILE_SIZE };
 
         if( pacmonster->world_center_point.x > tile_above_rect.x + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_RIGHT ) {
@@ -32,6 +44,9 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
 
     if( current_key_states[ SDL_SCANCODE_DOWN ] ) {
         SDL_Point tile_below = { pacmonster->current_tile.x, pacmonster->current_tile.y + 1 };
+
+        tile_wrap( &tile_below );
+
         SDL_Rect tile_below_rect = {tile_grid_point_to_world_point( tile_below ).x, tile_grid_point_to_world_point( tile_below ).y, TILE_SIZE, TILE_SIZE };
 
         if( pacmonster->world_center_point.x > tile_below_rect.x + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_RIGHT ) {
@@ -56,6 +71,9 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
 
     if( current_key_states[ SDL_SCANCODE_LEFT ] ) {
         SDL_Point tile_to_left = { pacmonster->current_tile.x - 1, pacmonster->current_tile.y  };
+
+        tile_wrap( &tile_to_left );
+
         SDL_Rect tile_to_left_rect = {tile_grid_point_to_world_point( tile_to_left ).x, tile_grid_point_to_world_point( tile_to_left ).y, TILE_SIZE, TILE_SIZE };
 
         if( pacmonster->world_center_point.y > tile_to_left_rect.y + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_DOWN ) {
@@ -80,6 +98,9 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
 
     if( current_key_states[ SDL_SCANCODE_RIGHT ] ) {
         SDL_Point tile_to_right = { pacmonster->current_tile.x + 1, pacmonster->current_tile.y };
+
+        tile_wrap( &tile_to_right );
+
         SDL_Rect tile_to_right_rect = {tile_grid_point_to_world_point( tile_to_right ).x, tile_grid_point_to_world_point( tile_to_right ).y, TILE_SIZE, TILE_SIZE };
 
         if( pacmonster->world_center_point.y > tile_to_right_rect.y + ( TILE_SIZE / 2 ) && pacmonster->direction == DIR_DOWN ) {
@@ -110,16 +131,16 @@ void move( Actor *actor, Vector_f velocity ) {
 
     // MOVE TO OTHER SIDE OF SCREEN IF OFF EDGE
     if( actor->world_position.x > SCREEN_WIDTH ) {
-        actor->world_position.x = 0 ;//- TILE_SIZE;
+        actor->world_position.x = -TILE_SIZE ;//- TILE_SIZE;
     }
-    if( actor->world_position.y > 1000 ) {
-        actor->world_position.y = 0;// + 80 - TILE_SIZE;
+    if( actor->world_position.y > TILE_ROWS * TILE_SIZE  ) {
+        actor->world_position.y = -TILE_SIZE;// + 80 - TILE_SIZE;
     }
-    if( actor->world_position.x < 0 ) {//+ TILE_SIZE < 0 ) {
+    if( actor->world_position.x < -TILE_SIZE ) {//+ TILE_SIZE < 0 ) {
         actor->world_position.x = SCREEN_WIDTH;
     }
-    if( actor->world_position.y < 0 ) { //} + TILE_SIZE < 80 ) {
-        actor->world_position.y = 1000;
+    if( actor->world_position.y < -TILE_SIZE ) { //} + TILE_SIZE < 80 ) {        
+        actor->world_position.y = TILE_ROWS * TILE_SIZE;
     }
 
     actor_align_world_data_based_on_world_position( actor );
