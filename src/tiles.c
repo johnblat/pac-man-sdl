@@ -168,7 +168,7 @@ void tm_render_with_screen_position_offset( SDL_Renderer *renderer, TileMap *tm 
         for( int col = 0; col < TILE_COLS; ++col ) {
             if( tm->tm_dots[ row ][ col ] == 'x' ) {
 
-                int dot_relative_to_tile_y_position = tm->tm_dot_particles[ row ][ col ].position.y * (TILE_SIZE);
+                //int dot_relative_to_tile_y_position = tm->tm_dot_particles[ row ][ col ].position.y * (TILE_SIZE);
                 SDL_Rect dot_rect = {
                     tm->tm_screen_position.x + ( TILE_SIZE * col ) + tm->tm_dot_particles[ row ][ col ].position.x,
                     tm->tm_screen_position.y + ( TILE_SIZE * row ) + tm->tm_dot_particles[ row ][ col ].position.y, //dot_relative_to_tile_y_position,

@@ -41,7 +41,7 @@ int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Actor *actors[ 5 ]; 
-    AnimatedSprite *animations[ 8 ]; // pac-man, ghosts, power-pellets, eyes
+    AnimatedSprite *animations[ 9 ]; // pac-man, ghosts, power-pellets, eyes, etc
     RenderClipFromTextureAtlas *render_clips[ 9 ]; // for render textures, 5 thru 9 only different is the Rect x and y 
     GhostState ghost_states[ 5 ]; // 1 thru 5
     TTF_Font *font; 
@@ -50,7 +50,6 @@ int main( int argc, char *argv[] ) {
     float ghost_vulnerable_timer = 0.0f;
     // GHOST BEHAVIOR TIMER FOR CURRENT GLOBAL GHOST MODE
     float ghost_mode_timer = 0.0f;
-    float ghost_change_mode_time = g_scatter_chase_period_seconds[ g_current_scatter_chase_period ];
 
     
     // initialize the ghost states
@@ -69,7 +68,7 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    window = SDL_CreateWindow( "JB Pacmonster", 1921, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
+    window = SDL_CreateWindow( "JB Pacmonster", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
     if ( window == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
@@ -142,41 +141,25 @@ int main( int argc, char *argv[] ) {
     blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
     blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
     actors[ 1 ] = init_actor( blinky_tile, tilemap.tm_screen_position, base_speed, 0.8f );
-    //render_clips[ 1 ] = init_render_clip( 1, 1 );
 
     SDL_Point pinky_tile;
     pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
     pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
     actors[ 2 ]= init_actor( pinky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-    //render_clips[ 2 ]= init_render_clip( 2, 1 );
 
     SDL_Point inky_tile;
     inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
     inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
     actors[ 3 ]= init_actor( inky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-    //render_clips[ 3 ]= init_render_clip( 3, 5 );
 
     SDL_Point clyde_tile;
     clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
     clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
     actors[ 4 ]= init_actor( clyde_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-   // render_clips[ 4 ]= init_render_clip( 4, 5 );
 
-
-    // power pellet
-    // SDL_Point power_pellet_grid_point = { 19, 14 };
-    // Position_f power_pellet_position = { TILE_SIZE * 19, TILE_SIZE * 16 };
-    // render_textures[ 5 ] = init_render_texture( 7 );
-    // render_textures[ 5 ]->dest_rect.x = power_pellet_position.x; 
-    // render_textures[ 5 ]->dest_rect.y = power_pellet_position.y;
-    // render_textures[ 5 ]->dest_rect.w = TILE_SIZE; 
-    // render_textures[ 5 ]->dest_rect.h = TILE_SIZE;
-    // render_textures[ 5 ]->flip = SDL_FLIP_NONE;
-    // animations[ 5 ] = init_animation( 0, 0.1f, g_texture_atlases[ 7 ].num_sprite_clips );
 
     for( int i = 0; i < 4; ++i ) {
         SDL_Point screen_position = tile_grid_point_to_screen_point( tilemap.tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
-        //render_clips[ 5 + i ] = init_render_clip( 7, 2 );
         render_clips[ 5 + i ]->dest_rect.x = screen_position.x;
         render_clips[ 5 + i ]->dest_rect.y = screen_position.y;
         render_clips[ 5 + i ]->dest_rect.w = TILE_SIZE;
@@ -211,14 +194,9 @@ int main( int argc, char *argv[] ) {
     SDL_Event event;
     int quit = 0;
 
-    
-    
-    // delta time
-    float time = 0.0;
+    // delta time - frame rate independent movement
     float max_delta_time = 1 / 60.0;
     float previous_frame_ticks = SDL_GetTicks() / 1000.0;
-
-
 
     while (!quit) {
 
@@ -226,7 +204,7 @@ int main( int argc, char *argv[] ) {
         float current_frame_ticks = SDL_GetTicks() / 1000.0;
         float delta_time = current_frame_ticks - previous_frame_ticks;
         previous_frame_ticks = current_frame_ticks;
-        // adjust for any pauses 
+        // adjust for any pauses, debugging breaks, etc
         delta_time = delta_time < max_delta_time ?  delta_time : max_delta_time;
 
         // EVENTS
@@ -285,22 +263,18 @@ int main( int argc, char *argv[] ) {
             }
         }
 
+        // UPDATE SIMULATION
 
-        // UPDATE PACMONSTER
         pac_try_set_direction( actors[ 0 ], current_key_states, &tilemap);
        
         pac_try_move( actors[ 0 ], &tilemap, delta_time );
 
-        // TODO we probably want to update all of these at once
-        inc_animations( animations, 8, delta_time); //pacman
+        inc_animations( animations, 8, delta_time); 
         
         pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &score, renderer );
 
-        // ghost
 
-        /******************
-         * VULNERABLE TIMER
-         * ******************/
+        // VULNERABLE TIMER
         for( int i = 1; i < 5; ++i ) {
             if( ghost_states[ i ] == STATE_VULNERABLE ) {
                 ghost_vulnerable_timer -= delta_time;
@@ -308,10 +282,7 @@ int main( int argc, char *argv[] ) {
             }
         }
         
-        /***************************
-         * STATE TRANSITION CHECKS
-         * ************************/
-
+        // CHECK STATE TRANSITIONS FOR GHOSTS
         for(int i = 1; i < 5; ++i ) {
             switch( ghost_states[ i ] ) {
                 case STATE_VULNERABLE :
@@ -333,7 +304,7 @@ int main( int argc, char *argv[] ) {
                         go_to_pen_enter( actors, i, render_clips[ i ], i);
                     }
 
-                    // pacman eats pellet
+                    // pacman eats power pellet
                     for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
                         // pac-man eats power pellet
                         if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
@@ -394,6 +365,10 @@ int main( int argc, char *argv[] ) {
          * ********************/
         ghost_move( actors, &tilemap, delta_time );
 
+        // ADJUST ANIMATION DEPENDING ON DIRECTION ACTOR IS MOVING
+        // hardcoded ids! uh oh!
+        // we really just want to do this on all animations that have more than 1 row. It must have 4 rows for ghosts because they can move in 4 directions
+        // When pac-man animations are complete, he will have 8 rows because he can move in 8 directions ( he cuts corners diaganolly )
         set_animation_row( animations[ 1 ], actors[ 1 ] );
         set_animation_row( animations[ 5 ], actors[ 3 ] );
         set_animation_row( animations[ 6 ], actors[ 2 ] );
@@ -459,7 +434,6 @@ int main( int argc, char *argv[] ) {
         for( int i = 0; i < 4; ++i ) {
             SDL_Point world_position = tile_grid_point_to_world_point( tilemap.tm_power_pellet_tiles[ i ] );
             SDL_Point screen_point = world_point_to_screen_point( world_position, tilemap.tm_screen_position );
-            //render_clips[ 5 + i ] = init_render_clip( 7, 2 );
             render_clips[ 5 + i ]->dest_rect.x = screen_point.x;
             render_clips[ 5 + i ]->dest_rect.y = screen_point.y;
             render_clips[ 5 + i ]->dest_rect.w = TILE_SIZE;
@@ -484,6 +458,9 @@ int main( int argc, char *argv[] ) {
 
         SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
 
+        SDL_Rect black_bar = {0,0, 1920, TILE_SIZE * 2};
+        SDL_SetRenderDrawColor( renderer, 0,0,0,255 );
+        SDL_RenderFillRect( renderer, &black_bar);
         // DEBUG
         if ( g_show_debug_info ) {
             //grid
@@ -578,11 +555,39 @@ int main( int argc, char *argv[] ) {
     }
 
     // CLOSE DOWN
-    SDL_DestroyRenderer( renderer );
-    SDL_DestroyWindow( window );
-    
     for( int i = 0; i < num_texture_atlases; ++i ) {
         SDL_DestroyTexture( g_texture_atlases[ i ].texture );
+        g_texture_atlases[ i ].texture = NULL;
+    }
+        SDL_DestroyRenderer( renderer );
+    SDL_DestroyWindow( window );
+    TTF_CloseFont( font );
+
+/**
+ *    This reduces noise if you're running the program through a memory
+ *  profiler like valgrind. It won't complain about un-freed memory.
+ * Plus, for some unknown reason, its conventional to free your memory before
+ * the program ends, even though your program will automatically free it upon
+ * exit anyway
+    */
+    for( int i = 0; i < 5; i++ ) {
+        free(actors[ i ]);
+        actors[ i ] = NULL;
+    }
+    for( int i = 0; i < 8; i++ ) {
+        free(animations[ i ]);
+        animations[ i ] = NULL;
+        //animations[ i ]->texture_atlas_id = -1;
+    }
+    for( int i = 0; i < 9; i++ ){
+        free(render_clips[ i ]);
+        render_clips[ i ] = NULL;
+        //render_clips[ i ]->animation_id = -1;
+    }
+    for( int i = 0; i < 10; i++ ) {
+        free( g_texture_atlases[ i ].sprite_clips );
+        g_texture_atlases[ i ].sprite_clips = NULL;
+
     }
 
     SDL_Quit();

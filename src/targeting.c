@@ -226,7 +226,7 @@ inline void set_moody_target_tile(Actor **actors, TileMap *tm) {
 }
 
 inline void set_pokey_target_tile( Actor **actors, TileMap *tm ) {
-    SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
+   // SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
     float shadow_range = 64;
     SDL_Point b_current_tile = actors[ 4 ]->current_tile;
     SDL_Point pac_current_tile = actors[ 0 ]->current_tile;

@@ -26,7 +26,7 @@ void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_t
 }
 
 void vulnerable_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture ) {
-    uint8_t vulnerable_texture_atlas_id = 3;
+    //uint8_t vulnerable_texture_atlas_id = 3;
     uint8_t vulnerable_animation_id = 3;
     render_texture->animation_id = vulnerable_animation_id;
     actors[ actor_id ]->direction = opposite_directions[ actors[ actor_id ]->direction ];
