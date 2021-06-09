@@ -20,6 +20,7 @@
 
 const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX = { -1, -1 };
 const SDL_Point TILE_NONE = { -1, -1 };
+const int  MAX_SLOW_TILES = 20;
 
 
 
@@ -78,6 +79,11 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm) {
     try_load_resource_from_file( tm->tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
     try_load_resource_from_file( tm->tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
     
+    for( int i = 0; i < MAX_SLOW_TILES; i++ ) {
+        tm->tm_slow_tiles[ i ].x = -1;
+        tm->tm_slow_tiles[ i ].y = -1;
+    }
+    try_load_resource_from_file( tm->tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
     
     // Space for any UI elements at the top of the screen
     tm->tm_screen_position.x = 0;

@@ -325,6 +325,7 @@ int main( int argc, char *argv[] ) {
                         actors[ i ]->next_tile = actors[ i ]->current_tile;
                         ghost_states[ i ] = STATE_NORMAL;
                         normal_enter( actors, i , render_clips[ i ], i );
+                        actors[ i ]->next_tile.y -=3; // makes sure that they go out of pen
                     }
                     break;
 

@@ -20,7 +20,8 @@ typedef enum Mode {
     WALL_MODE,                    // W Key 
     PAC_PLACEMENT_MODE,           // P Key
     GHOST_PEN_PLACEMENT_MODE,     // G Key
-    E_POWER_PELLET_PLACEMENT_MODE // E Key ( Energizer Power Pellet )
+    E_POWER_PELLET_PLACEMENT_MODE,// E Key ( Energizer Power Pellet )
+    SLOW_TILE_PLACEMENT_MODE      // V Key ( V has a down shape to it )
 } Mode;
 
 Mode current_mode = TILE_MODE;
@@ -32,6 +33,7 @@ SDL_Point pac_starting_tile;
 SDL_Point tm_power_pellet_tiles[ 4 ];
 SDL_Point poopy_point = { -1, -1 };
 int num_power_pellets = 0;
+int num_slow_tiles = 0;
 
 // ghost pen data
 SDL_Point ghost_pen_tile;
@@ -232,7 +234,13 @@ int main( int argc, char *argv[] ) {
     }
     try_load_resource_from_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
 
+    // set slow tiles to poopy
+    for( int i = 0; i < MAX_SLOW_TILES; ++i ) {
+        tilemap.tm_slow_tiles[ i ] = poopy_point;
+    }
 
+    try_load_resource_from_file( tilemap.tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
+    
     // placeholder
     tile_selection_panel.texture_atlas = tilemap.tm_texture_atlas;
     tile_selection_panel.tile_size = TILE_SIZE;
@@ -285,6 +293,7 @@ int main( int argc, char *argv[] ) {
                     save_resource_to_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
                     save_resource_to_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
                     save_resource_to_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
+                    save_resource_to_file( tilemap.tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
 
                     SDL_SetRenderDrawColor(renderer, 0,100,0,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -300,6 +309,7 @@ int main( int argc, char *argv[] ) {
                     try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
                     try_load_resource_from_file( tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
                     try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
+                    try_load_resource_from_file( tilemap.tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
 
                     SDL_SetRenderDrawColor(renderer, 255,100,100,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -327,6 +337,9 @@ int main( int argc, char *argv[] ) {
                 }
                 else if( event.key.keysym.sym == SDLK_t ) {
                     current_mode = TILE_MODE;
+                }
+                else if( event.key.keysym.sym == SDLK_v ) {
+                    current_mode = current_mode == SLOW_TILE_PLACEMENT_MODE ? TILE_MODE : SLOW_TILE_PLACEMENT_MODE;
                 }
                 
             }
@@ -417,6 +430,25 @@ int main( int argc, char *argv[] ) {
                 SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
                 ghost_pen_tile = tile;
             }
+            else if( current_mode == SLOW_TILE_PLACEMENT_MODE && num_slow_tiles < MAX_SLOW_TILES) {
+                SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
+
+                SDL_bool tile_already_exists = SDL_FALSE;
+                for( int i = 0; i < MAX_SLOW_TILES; ++i ) {
+                    // tile already exists
+                    if( points_equal( tilemap.tm_slow_tiles[ i ], tile ) ) tile_already_exists = SDL_TRUE;
+                }
+
+                if( !tile_already_exists ) {
+                    for( int i = 0; i < MAX_SLOW_TILES; ++i ) {
+                        if( points_equal( tilemap.tm_slow_tiles[ i ], poopy_point ) ) {
+                            tilemap.tm_slow_tiles[ i ] = tile;
+                            break;
+                        }
+                    }
+                    num_slow_tiles++;
+                }
+            }
             
             //tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = 'x';
         }
@@ -453,6 +485,17 @@ int main( int argc, char *argv[] ) {
                     }
                 }
             }
+            else if( current_mode == SLOW_TILE_PLACEMENT_MODE ) {
+                SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
+                for( int i = 0 ; i < MAX_SLOW_TILES; ++i ) {
+                    if( points_equal( tilemap.tm_slow_tiles[ i ], tile ) ) {
+                        tilemap.tm_slow_tiles[ i ].x = -1;
+                        tilemap.tm_slow_tiles[ i ].y = -1;
+                        num_slow_tiles--;
+                        break;
+                    }
+                }
+            }
             
         }
 
@@ -475,6 +518,15 @@ int main( int argc, char *argv[] ) {
             SDL_Point power_pellet_screen_point = tile_grid_point_to_screen_point( tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
             SDL_Rect power_pellet_rect = { power_pellet_screen_point.x, power_pellet_screen_point.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderFillRect( renderer, &power_pellet_rect );
+        }
+
+        // render slow tiles
+        SDL_SetRenderDrawColor( renderer, 84, 67, 45, 150 );
+        for( int i = 0; i < MAX_SLOW_TILES; i++ ) {
+            if( points_equal( tilemap.tm_slow_tiles[ i ], poopy_point ) ) continue;
+            SDL_Point slow_tile_point = tile_grid_point_to_screen_point( tilemap.tm_slow_tiles[ i ], tilemap.tm_screen_position );
+            SDL_Rect slow_rect = { slow_tile_point.x, slow_tile_point.y, TILE_SIZE, TILE_SIZE };
+            SDL_RenderFillRect( renderer, &slow_rect );
         }
 
         // render ghost pen

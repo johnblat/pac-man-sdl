@@ -4,6 +4,7 @@
 #include "targeting.h"
 #include "movement.h"
 #include "comparisons.h"
+#include "tiles.h"
 #include "states.h"
 
 
@@ -60,6 +61,12 @@ void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm ) {
             continue;
         }
 
+        if( 
+            points_equal(surrounding_tiles[ i ], tm->one_way_tile) 
+            && i == DIR_DOWN) {
+                continue;
+        }
+        
         if( i == opposite_directions[ ghost->direction  ] ) continue;
 
         direction_to_go = (Direction) i;
@@ -104,7 +111,16 @@ void normal_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas 
 
 void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
     SDL_Point home_tiles[ 5 ] = { shadow_home_tile, shadow_home_tile, ambush_home_tile, moody_home_tile, pokey_home_tile };
-
+         
+    // probably won't really help, but can do a lookup in hash table to get this out of a O(n^2)
+    // may be useful if more ghosts or slow tiles are added in some circumstances
+    actors[ ghost_id ]->speed_multp = 0.85f;
+    for( int j = 0; j < MAX_SLOW_TILES; j++ ) {
+        if ( points_equal( actors[ ghost_id ]->current_tile, tm->tm_slow_tiles[ j ] ) ) {
+            actors[ ghost_id ]->speed_multp = 0.5f;
+            break;
+        }
+    }
     switch( g_current_ghost_mode ) {
         case MODE_CHASE:
             switch (ghost_id) {
