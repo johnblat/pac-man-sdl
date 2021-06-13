@@ -22,6 +22,7 @@
 
 typedef struct AnimatedSprite {
     uint8_t texture_atlas_id;
+    uint8_t default_texture_atlas_id;
     uint8_t current_anim_row;
     uint8_t current_frame_col;
     float frame_interval;
@@ -31,11 +32,14 @@ typedef struct AnimatedSprite {
     
 } AnimatedSprite;
 
+
 // typedef struct AnimationRow {
 
 // }
 
 AnimatedSprite *init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim );
+
+float fps_to_frame_interval( int fps, int num_frames );
 
 void inc_animations( AnimatedSprite **animations, uint8_t num_animations, float delta_time ) ;
 

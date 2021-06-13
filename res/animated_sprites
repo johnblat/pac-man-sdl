@@ -1,0 +1,25 @@
+# each of the entries here will get an animation_id of 0,1,2,3,... and so on
+#
+# texture_atlas_id fps num_anims(rows) num_frames(cols)
+#
+#pacman
+0 32 8 10
+#blinky
+1 24 4 8
+# pinky
+2 24 4 8
+# inky
+7 24 4 8
+#clyde
+6 24 4 8
+#vuln
+3 24 4 8
+#go_pen
+4 1 1 1
+#powerpellet
+5 12 1 6
+# more vulnerable ones
+3 24 4 8
+3 24 4 8
+3 24 4 8
+3 24 4 8

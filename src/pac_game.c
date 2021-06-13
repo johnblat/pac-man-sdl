@@ -41,7 +41,7 @@ int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     Actor *actors[ 5 ]; 
-    AnimatedSprite *animations[ 9 ]; // pac-man, ghosts, power-pellets, eyes, etc
+    AnimatedSprite *animations[ 12 ]; // pac-man, ghosts, power-pellets, eyes, etc
     RenderClipFromTextureAtlas *render_clips[ 9 ]; // for render textures, 5 thru 9 only different is the Rect x and y 
     GhostState ghost_states[ 5 ]; // 1 thru 5
     TTF_Font *font; 
@@ -220,7 +220,7 @@ int main( int argc, char *argv[] ) {
                     ghost_vulnerable_timer = 20.0f;
                     for( int i = 1; i < 5; ++i ) {
                         ghost_states[ i ] = STATE_VULNERABLE;
-                        vulnerable_enter( actors, i, render_clips[ i ] );
+                        vulnerable_enter( actors, animations, i, render_clips[ i ] );
                     }
                     
                 }
@@ -292,7 +292,7 @@ int main( int argc, char *argv[] ) {
                         for( int i = 1; i < 5; ++i ) {
                             if( ghost_states[ i ] == STATE_VULNERABLE ) {
                                 ghost_states[ i ] = STATE_NORMAL;
-                                normal_enter( actors, i , render_clips[ i ], i );
+                                normal_enter( actors, animations, i , render_clips[ i ], i );
                             }
                         }
                     }
@@ -301,19 +301,27 @@ int main( int argc, char *argv[] ) {
                     if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
                     && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y ) {
                         ghost_states[ i ] = STATE_GO_TO_PEN;
-                        go_to_pen_enter( actors, i, render_clips[ i ], i);
+                        uint8_t texture_atlas_id = 4;
+                        animations[ i ]->texture_atlas_id = texture_atlas_id;
+                        animations[ i ] ->num_frames_col = 0;
+                        animations[ i ]->current_anim_row = 0;
+                        animations[ i ]->accumulator = 0.0f;
+                        actors[ i ]->next_tile = actors[ i ]->current_tile;
+                        actors[ i ]->target_tile = ghost_pen_tile;
+                        actors[ i ]->speed_multp = 1.6f;
+                        //go_to_pen_enter( actors, i, render_clips[ i ], i);
                     }
 
                     // pacman eats power pellet
-                    for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
-                        // pac-man eats power pellet
-                        if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
+                    // for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
+                    //     // pac-man eats power pellet
+                    //     if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
 
-                            tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-                            ghost_vulnerable_timer = 20.0f;                        
-                        }
+                    //         tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
+                    //         ghost_vulnerable_timer = 20.0f;                        
+                    //     }
                         
-                    }
+                    // }
                     
                     break;
                     
@@ -324,7 +332,7 @@ int main( int argc, char *argv[] ) {
                         actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
                         actors[ i ]->next_tile = actors[ i ]->current_tile;
                         ghost_states[ i ] = STATE_NORMAL;
-                        normal_enter( actors, i , render_clips[ i ], i );
+                        normal_enter( actors, animations, i , render_clips[ i ], i );
                         actors[ i ]->next_tile.y -=3; // makes sure that they go out of pen
                     }
                     break;
@@ -333,28 +341,49 @@ int main( int argc, char *argv[] ) {
                 case STATE_NORMAL :
                     // NOTE: I change my mind that this isn't necessarily bad since it does what it needs to
                     // one option might be an event system. but might be even more overkill
-                    for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
-                        // pac-man eats power pellet
-                        if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
+                    // for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
+                    //     // pac-man eats power pellet
+                    //     if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
 
-                            tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
+                    //         tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
 
-                            for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
+                    //         for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
 
-                                if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN ) {
+                    //             if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN ) {
 
-                                    ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
-                                    vulnerable_enter( actors, ghost_state_idx, render_clips[ ghost_state_idx ] );
-                                }
+                    //                 ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
+                    //                 vulnerable_enter( actors, ghost_state_idx, render_clips[ ghost_state_idx ] );
+                    //             }
                                 
-                            }   
-                            ghost_vulnerable_timer = 20.0f;                        
-                        }
+                    //         }   
+                    //         ghost_vulnerable_timer = 20.0f;                        
+                    //     }
                         
-                    }
+                    // }
                     break;
             }
         }
+
+        // pacman eats power pellet
+        for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
+        // pac-man eats power pellet
+        if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
+
+            tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
+
+            for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
+
+                if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN ) {
+
+                    ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
+                    vulnerable_enter( actors, animations, ghost_state_idx, render_clips[ ghost_state_idx ] );
+                }
+                
+            }   
+            ghost_vulnerable_timer = 20.0f;                        
+        }
+        
+    }
 
         /*******************
          * PROCESS STATES
@@ -370,10 +399,41 @@ int main( int argc, char *argv[] ) {
         // hardcoded ids! uh oh!
         // we really just want to do this on all animations that have more than 1 row. It must have 4 rows for ghosts because they can move in 4 directions
         // When pac-man animations are complete, he will have 8 rows because he can move in 8 directions ( he cuts corners diaganolly )
-        set_animation_row( animations[ 1 ], actors[ 1 ] );
-        set_animation_row( animations[ 5 ], actors[ 3 ] );
-        set_animation_row( animations[ 6 ], actors[ 2 ] );
-        set_animation_row( animations[ 7 ], actors[ 4 ] );
+        if( ghost_states[ 1 ] !=  STATE_GO_TO_PEN )
+            set_animation_row( animations[ 1 ], actors[ 1 ] );
+        if( ghost_states[ 3 ] !=  STATE_GO_TO_PEN )
+            set_animation_row( animations[ 3 ], actors[ 3 ] );
+        if( ghost_states[ 2 ] !=  STATE_GO_TO_PEN )
+            set_animation_row( animations[ 2 ], actors[ 2 ] );
+        if( ghost_states[ 4 ] !=  STATE_GO_TO_PEN )
+            set_animation_row( animations[ 4 ], actors[ 4 ] );
+
+        // pacman animation row
+        if( actors[ 0 ]->velocity.x > 0 && actors[ 0 ]->velocity.y == 0 ) { // right
+            animations[ 0 ]->current_anim_row = 0;
+        }
+        if( actors[ 0 ]->velocity.x < 0 && actors[ 0 ]->velocity.y == 0 ) { // left
+            animations[ 0 ]->current_anim_row = 1;
+        }
+        if( actors[ 0 ]->velocity.x == 0 && actors[ 0 ]->velocity.y > 0 ) { // down
+            animations[ 0 ]->current_anim_row = 2;
+        }
+        if( actors[ 0 ]->velocity.x == 0 && actors[ 0 ]->velocity.y < 0 ) { // up
+            animations[ 0 ]->current_anim_row = 3;
+        }
+        if( actors[ 0 ]->velocity.x > 0 && actors[ 0 ]->velocity.y < 0 ) { //  up-right
+            animations[ 0 ]->current_anim_row = 4;
+        }
+        if( actors[ 0 ]->velocity.x < 0 && actors[ 0 ]->velocity.y < 0 ) { // up-left
+            animations[ 0 ]->current_anim_row = 5;
+        }
+        if( actors[ 0 ]->velocity.x > 0 && actors[ 0 ]->velocity.y > 0 ) { // down-right
+            animations[ 0 ]->current_anim_row = 6;
+        }
+        if( actors[ 0 ]->velocity.x < 0 && actors[ 0 ]->velocity.y > 0 ) { // down-left
+            animations[ 0 ]->current_anim_row = 7;
+        }
+
 
 
         /*********************

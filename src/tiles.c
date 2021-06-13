@@ -20,7 +20,7 @@
 
 const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX = { -1, -1 };
 const SDL_Point TILE_NONE = { -1, -1 };
-const int  MAX_SLOW_TILES = 20;
+const int  MAX_SLOW_TILES = 21;
 
 
 

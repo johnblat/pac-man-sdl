@@ -1,14 +1,47 @@
+#include <dirent.h>
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include "animation.h"
+#include "render.h"
 #include "resources.h"
 #include "tiles.h"
-#include "render.h"
-#include "animation.h"
-#include <string.h>
+
 
 const int MAX_FILENAME_SIZE = 64;
 
+int g_current_level = 0;
 
+int determine_number_of_levels_from_dirs( ) {
+    int num_levels = 0;
+    DIR *res_dir = opendir("res");
+    struct dirent *d;
+    char *first_five_chars = "level";
+    while( ( d = readdir( res_dir ) ) != NULL ) {
+        if( strncmp( first_five_chars, d->d_name, 5 ) == 0 ) {
+            num_levels++;
+        }
+
+    } 
+    return num_levels;
+}
+
+void load_level_off_disk( int level_num, int num_levels ) {
+    if( level_num > num_levels ) {
+        fprintf( stderr, "Could not load level because requested level number greater than %d. Max is %d\n", num_levels, level_num );
+    }
+    char level_dirname[ MAX_FILENAME_SIZE ];
+    memset( level_dirname, '\0', MAX_FILENAME_SIZE );
+    snprintf(level_dirname, MAX_FILENAME_SIZE, "level-%d/", level_num );
+    
+    // ACTUAL RESOURCES
+   // char *pac_starting_tile = "pac_starting_tile";
+    char path_to_thing[ MAX_FILENAME_SIZE ];
+    strcpy( path_to_thing, level_dirname );
+    //char *pac_starting_tile_path = strcat( path_to_thing, pac_starting_tile  );
+
+}
 
 void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
     char *filename_config = "res/texture_atlases";
@@ -67,7 +100,8 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
     }
 }
 
-void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {    
+void load_animations_from_config_file( AnimatedSprite **animated_sprites ) { 
+
     int num_animated_sprites = 0;
 
     char *filename_config = "res/animated_sprites";
@@ -138,14 +172,14 @@ void load_render_xx_from_config_file( RenderClipFromTextureAtlas **render_clips 
         if( current_line[ 0 ] == '#') { // COMMENT
             continue;
         }
-        int texture_atlas_id = -1;
+        //int texture_atlas_id = -1;
         int animation_id = -1;
 
         int values[ 2 ];
 
         int line_idx = 0;
 
-        for( int i = 0; i < 2; i++ ) {
+        for( int i = 0; i < 1; i++ ) {
             values[ i ] = strtol( current_line + line_idx , NULL, 10 );
 
             while( current_line[ line_idx ] != ' ' && current_line[ line_idx ] != '\n') {
@@ -154,10 +188,10 @@ void load_render_xx_from_config_file( RenderClipFromTextureAtlas **render_clips 
             line_idx++;
         }
 
-        texture_atlas_id = values[ 0 ];
-        animation_id = values[ 1 ];
+        //texture_atlas_id = values[ 0 ];
+        animation_id = values[ 0 ];
 
-        render_clips[ num_render_clips ] = init_render_clip( texture_atlas_id, animation_id );
+        render_clips[ num_render_clips ] = init_render_clip( 0, animation_id );
         num_render_clips++;
     }
 }

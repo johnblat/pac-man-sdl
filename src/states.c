@@ -26,10 +26,10 @@ void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_t
     } 
 }
 
-void vulnerable_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture ) {
+void vulnerable_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture ) {
     //uint8_t vulnerable_texture_atlas_id = 3;
-    uint8_t vulnerable_animation_id = 3;
-    render_texture->animation_id = vulnerable_animation_id;
+    uint8_t vulnerable_texture_atlas_id = 3;
+    animated_sprites[ actor_id ]->texture_atlas_id = vulnerable_texture_atlas_id;
     actors[ actor_id ]->direction = opposite_directions[ actors[ actor_id ]->direction ];
     actors[ actor_id ]->next_tile = actors[ actor_id ]->current_tile;
     actors[ actor_id ]->speed_multp = 0.4f;
@@ -101,9 +101,13 @@ void vulnerable_process( Actor *actor, TileMap *tm ) {
     }
 }
 
-void normal_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) {
+void normal_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) {
     // set texture atlas id to the id
-    render_texture->animation_id = render_texture->default_animation_id;
+    //render_texture->animation_id = render_texture->default_animation_id;
+    animated_sprites[ actor_id ] ->num_frames_col = 8;
+    animated_sprites[ actor_id ]->current_anim_row = 4;
+    animated_sprites[ actor_id ]->accumulator = 0.0f;
+    animated_sprites[ actor_id ]->texture_atlas_id = animated_sprites[ actor_id ]->default_texture_atlas_id;
     actors[ actor_id ]->next_tile =  actors[ actor_id ]->current_tile;
      actors[ actor_id ]->speed_multp = 0.8f;
 
@@ -191,9 +195,9 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
 }
 
 void go_to_pen_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t id ) {
-    //uint8_t texture_atlas_id = 6;
-    uint8_t animation_id = 4;
-    render_texture->animation_id = animation_id;
+    //uint8_t texture_atlas_id = 4;
+    //uint8_t animation_id = 4;
+    //render_texture->animation_id = animation_id;
     actors[ actor_id ]->next_tile = actors[ actor_id ]->current_tile;
     actors[ actor_id ]->target_tile = ghost_pen_tile;
     actors[ actor_id ]->speed_multp = 1.6f;

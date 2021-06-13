@@ -15,6 +15,7 @@ void tile_wrap( SDL_Point *tile ) {
         tile->x = TILE_COLS - 1;
 }
 
+
 void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, TileMap *tm ) {
 
     // don't allow changing direciton if pacman is more than half of the tile
@@ -280,7 +281,7 @@ void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
 }
 
 void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
-    Vector_f velocity = { 0, 0 };
+    
 
     if( pacmonster->direction == DIR_UP ) {
         pacmonster->next_tile.x = pacmonster->current_tile.x;
@@ -291,23 +292,23 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
 
         // set velocity
         if ( pacmonster->world_center_point.x == tile_grid_point_to_world_point( pacmonster->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 0;
-            velocity.y = -1;
+            pacmonster->velocity.x = 0;
+            pacmonster->velocity.y = -1;
         } 
         else if( pacmonster->world_center_point.x < tile_grid_point_to_world_point( pacmonster->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 0.7071068;
-            velocity.y = -0.7071068;
+            pacmonster->velocity.x = 0.7071068;
+            pacmonster->velocity.y = -0.7071068;
         }
         else if( pacmonster->world_center_point.x >tile_grid_point_to_world_point( pacmonster->current_tile).x  + ( TILE_SIZE / 2 )){
-            velocity.x = -0.7071068;
-            velocity.y = -0.7071068;
+           pacmonster->velocity.x = -0.7071068;
+        pacmonster->velocity.y = -0.7071068;
             
         }
 
-        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
-        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp  * delta_time;
+        pacmonster->velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        pacmonster->velocity.y *= pacmonster->base_speed * pacmonster->speed_multp  * delta_time;
         // move
-        move(pacmonster, velocity );
+        move(pacmonster, pacmonster->velocity );
 
         // collision
 
@@ -320,7 +321,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->world_top_sensor.x < target_tile_rect.x + TILE_SIZE ) {
             // target tile is a wall
             if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x' ) {
-                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                Vector_f reversed_velocity = { -pacmonster->velocity.x, -pacmonster->velocity.y };
                 move(pacmonster, reversed_velocity );
             }
         }
@@ -335,21 +336,21 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
 
         // set velocity
         if ( pacmonster->world_center_point.x == tile_grid_point_to_world_point( pacmonster->current_tile).x  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 0;
-            velocity.y = 1;
+            pacmonster->velocity.x = 0;
+            pacmonster->velocity.y = 1;
         } 
         else if( pacmonster->world_center_point.x < tile_grid_point_to_world_point( pacmonster->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 0.7071068;
-            velocity.y = 0.7071068;
+            pacmonster->velocity.x = 0.7071068;
+            pacmonster->velocity.y = 0.7071068;
         }
         else if( pacmonster->world_center_point.x >tile_grid_point_to_world_point( pacmonster->current_tile).x  + ( TILE_SIZE / 2 )){
-            velocity.x = -0.7071068;
-            velocity.y = 0.7071068;
+            pacmonster->velocity.x = -0.7071068;
+            pacmonster->velocity.y = 0.7071068;
         }
-        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
-        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        pacmonster->velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        pacmonster->velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
-        move(pacmonster, velocity );
+        move(pacmonster, pacmonster->velocity );
 
         // collision
 
@@ -362,7 +363,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->world_bottom_sensor.x < target_tile_rect.x + TILE_SIZE ) {
             // target tile is a wall
             if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x') {
-                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                Vector_f reversed_velocity = { -pacmonster->velocity.x, -pacmonster->velocity.y };
                 move(pacmonster, reversed_velocity );
             }
         }
@@ -377,22 +378,22 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
 
         // set velocity
         if ( pacmonster->world_center_point.y == tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = -1;
-            velocity.y = 0;
+            pacmonster->velocity.x = -1;
+            pacmonster->velocity.y = 0;
         } 
         else if( pacmonster->world_center_point.y < tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = -0.7071068;
-            velocity.y = 0.7071068;
+            pacmonster->velocity.x = -0.7071068;
+            pacmonster->velocity.y = 0.7071068;
         }
         else if( pacmonster->world_center_point.y >tile_grid_point_to_world_point( pacmonster->current_tile).y  + ( TILE_SIZE / 2 )){
-            velocity.x = -0.7071068;
-            velocity.y = -0.7071068;
+            pacmonster->velocity.x = -0.7071068;
+            pacmonster->velocity.y = -0.7071068;
         }
 
-        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
-        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        pacmonster->velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        pacmonster->velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
-        move(pacmonster, velocity );
+        move(pacmonster, pacmonster->velocity );
 
         // collision
 
@@ -405,7 +406,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->world_left_sensor.y < target_tile_rect.y + TILE_SIZE ) {
             // target tile is a wall
             if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x' ) {
-                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                Vector_f reversed_velocity = { -pacmonster->velocity.x, -pacmonster->velocity.y };
                 move(pacmonster, reversed_velocity );
             }
         }
@@ -421,22 +422,22 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
 
         // set velocity
         if ( pacmonster->world_center_point.y == tile_grid_point_to_world_point( pacmonster->current_tile).y  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 1;
-            velocity.y = 0;
+            pacmonster->velocity.x = 1;
+            pacmonster->velocity.y = 0;
         } 
         else if( pacmonster->world_center_point.y < tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
-            velocity.x = 0.7071068;
-            velocity.y = 0.7071068;
+            pacmonster->velocity.x = 0.7071068;
+            pacmonster->velocity.y = 0.7071068;
         }
         else if( pacmonster->world_center_point.y >tile_grid_point_to_world_point( pacmonster->current_tile ).y  + ( TILE_SIZE / 2 )){
-            velocity.x = 0.7071068;
-            velocity.y = -0.7071068;
+            pacmonster->velocity.x = 0.7071068;
+            pacmonster->velocity.y = -0.7071068;
         }
 
-        velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
-        velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        pacmonster->velocity.x *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
+        pacmonster->velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
-        move(pacmonster, velocity );
+        move(pacmonster, pacmonster->velocity );
 
         // collision
 
@@ -449,7 +450,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         && pacmonster->world_right_sensor.y < target_tile_rect.y + TILE_SIZE ) {
             // target tile is a wall
             if ( tm->tm_walls[ pacmonster->next_tile.y ][ pacmonster->next_tile.x ] == 'x') {
-                Vector_f reversed_velocity = { -velocity.x, -velocity.y };
+                Vector_f reversed_velocity = { -pacmonster->velocity.x, -pacmonster->velocity.y };
                 move(pacmonster, reversed_velocity );
             }
         }

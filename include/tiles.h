@@ -40,6 +40,7 @@ typedef struct TwoDimensionalArrayIndex {
 
 extern const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX;
 extern const SDL_Point TILE_NONE;
+extern const int MAX_SLOW_TILES;
 
 typedef struct TileMap {
     /** The screen position where the tilemap begins
@@ -88,6 +89,11 @@ typedef struct TileMap {
      * actors can only enter through bottom. IOW, if their direction is DIR_UP
      */
     SDL_Point one_way_tile;
+
+    /**
+     * Contains coordinates of tiles that are slow moving for ghosts
+     */
+    SDL_Point tm_slow_tiles[21];
 
 } TileMap;
 
