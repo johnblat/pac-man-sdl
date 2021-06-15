@@ -13,7 +13,8 @@ extern SDL_Point ghost_pen_tile;
 typedef enum {
     STATE_NORMAL,
     STATE_VULNERABLE,
-    STATE_GO_TO_PEN
+    STATE_GO_TO_PEN,
+    STATE_LEAVE_PEN
 } GhostState;
 
 /**
@@ -40,7 +41,6 @@ void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_t
 
 void vulnerable_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture );
 
-
 void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm );
 
 void vulnerable_process( Actor *actor, TileMap *tm );
@@ -51,8 +51,11 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm );
 
 void go_to_pen_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t id );
 
-
 void go_to_pen_process( Actor *actor, TileMap *tm );
+
+void leave_pen_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id );
+
+void leave_pen_process( Actor **actors, uint8_t actor_id, TileMap *tm );
 
 void states_machine_process( Actor **actors, GhostState *ghost_states, TileMap *tm );
 

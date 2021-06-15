@@ -329,11 +329,13 @@ int main( int argc, char *argv[] ) {
                     // ghost is in pen
                     
                     if( points_equal(actors[ i ]->current_tile, ghost_pen_tile ) && actors[ i ]->world_center_point.y >= ghost_pen_center_point.y) {
-                        actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
-                        actors[ i ]->next_tile = actors[ i ]->current_tile;
-                        ghost_states[ i ] = STATE_NORMAL;
-                        normal_enter( actors, animations, i , render_clips[ i ], i );
-                        actors[ i ]->next_tile.y -=3; // makes sure that they go out of pen
+                        // actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
+                        // actors[ i ]->next_tile = actors[ i ]->current_tile;
+                        // ghost_states[ i ] = STATE_NORMAL;
+                        // normal_enter( actors, animations, i , render_clips[ i ], i );
+                        // actors[ i ]->next_tile.y -=3; // makes sure that they go out of 
+                        ghost_states[ i ] = STATE_LEAVE_PEN;
+                        leave_pen_enter( actors, animations, i );
                     }
                     break;
 
@@ -361,6 +363,13 @@ int main( int argc, char *argv[] ) {
                         
                     // }
                     break;
+                case STATE_LEAVE_PEN:
+                    if( points_equal( actors[ i ]->current_tile, actors[ i ]->target_tile ) ) {
+                        ghost_states[ i ] = STATE_NORMAL;
+                        normal_enter( actors, animations, i, render_clips[ i ], i );
+                    }
+                    
+                    break;
             }
         }
 
@@ -373,7 +382,7 @@ int main( int argc, char *argv[] ) {
 
             for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
 
-                if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN ) {
+                if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN && ghost_states[ ghost_state_idx ] != STATE_LEAVE_PEN ) {
 
                     ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
                     vulnerable_enter( actors, animations, ghost_state_idx, render_clips[ ghost_state_idx ] );

@@ -113,6 +113,32 @@ void normal_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t ac
 
 }
 
+void leave_pen_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id ) {
+    animated_sprites[ actor_id ] ->num_frames_col = 8;
+    animated_sprites[ actor_id ]->current_anim_row = 4;
+    animated_sprites[ actor_id ]->accumulator = 0.0f;
+    animated_sprites[ actor_id ]->texture_atlas_id = animated_sprites[ actor_id ]->default_texture_atlas_id;
+    actors[ actor_id ]->next_tile =  actors[ actor_id ]->current_tile;
+    actors[ actor_id ]->next_tile.y -= 3;
+    actors[ actor_id ]->speed_multp = 0.8f;
+
+    actors[ actor_id ]->target_tile.x = actors[ actor_id ]->current_tile.x;
+    actors[ actor_id ]->target_tile.y = actors[ actor_id ]->current_tile.y - 3;
+    
+    actors[ actor_id ]->direction = DIR_UP;
+}
+
+void leave_pen_process( Actor **actors, uint8_t actor_id , TileMap *tm ) {
+    actors[ actor_id ]->speed_multp = 0.85f;
+    for( int j = 0; j < MAX_SLOW_TILES; j++ ) {
+        if ( points_equal( actors[ actor_id ]->current_tile, tm->tm_slow_tiles[ j ] ) ) {
+            actors[ actor_id ]->speed_multp = 0.5f;
+            break;
+        }
+    }
+
+}
+
 void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
     SDL_Point home_tiles[ 5 ] = { shadow_home_tile, shadow_home_tile, ambush_home_tile, moody_home_tile, pokey_home_tile };
          
@@ -229,6 +255,9 @@ void states_machine_process( Actor **actors, GhostState *ghost_states, TileMap *
                 break;
             case STATE_GO_TO_PEN:
                 go_to_pen_process( actors[ i ], tm );
+                break;
+            case STATE_LEAVE_PEN:
+                leave_pen_process( actors, i, tm );
                 break;
         }
     }
