@@ -301,7 +301,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         }
         else if( pacmonster->world_center_point.x >tile_grid_point_to_world_point( pacmonster->current_tile).x  + ( TILE_SIZE / 2 )){
            pacmonster->velocity.x = -0.7071068;
-        pacmonster->velocity.y = -0.7071068;
+            pacmonster->velocity.y = -0.7071068;
             
         }
 
@@ -309,6 +309,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         pacmonster->velocity.y *= pacmonster->base_speed * pacmonster->speed_multp  * delta_time;
         // move
         move(pacmonster, pacmonster->velocity );
+        
+        // make sure pacman doesn't pass centerpt
+        if( pacmonster->velocity.x > 0 ) {
+            if( pacmonster->world_center_point.x > tile_grid_point_to_world_point(pacmonster->current_tile).x + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_center_point.x = tile_grid_point_to_world_point(pacmonster->current_tile).x ;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
+        else if( pacmonster->velocity.x < 0 ) {
+            if( pacmonster->world_center_point.x < tile_grid_point_to_world_point(pacmonster->current_tile).x + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_position.x = tile_grid_point_to_world_point(pacmonster->current_tile).x;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
 
         // collision
 
@@ -351,6 +365,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         pacmonster->velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
         move(pacmonster, pacmonster->velocity );
+
+        // make sure pacman doesn't pass centerpt
+        if( pacmonster->velocity.x > 0 ) {
+            if( pacmonster->world_center_point.x > tile_grid_point_to_world_point(pacmonster->current_tile).x + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_position.x = tile_grid_point_to_world_point(pacmonster->current_tile).x ;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
+        else if( pacmonster->velocity.x < 0 ) {
+            if( pacmonster->world_center_point.x < tile_grid_point_to_world_point(pacmonster->current_tile).x + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_position.x = tile_grid_point_to_world_point(pacmonster->current_tile).x;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
 
         // collision
 
@@ -395,6 +423,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         // move
         move(pacmonster, pacmonster->velocity );
 
+        // make sure pacman doesn't pass centerpt
+        if( pacmonster->velocity.y > 0 ) {
+            if( pacmonster->world_center_point.y > tile_grid_point_to_world_point(pacmonster->current_tile).y + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_position.y = tile_grid_point_to_world_point(pacmonster->current_tile).y ;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
+        else if( pacmonster->velocity.y < 0 ) {
+            if( pacmonster->world_center_point.y < tile_grid_point_to_world_point(pacmonster->current_tile).y + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_position.y = tile_grid_point_to_world_point(pacmonster->current_tile).y ;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
+
         // collision
 
         SDL_Point target_tile_screen_position = tile_grid_point_to_world_point( pacmonster->next_tile);
@@ -438,6 +480,20 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         pacmonster->velocity.y *= pacmonster->base_speed * pacmonster->speed_multp * delta_time;
         // move
         move(pacmonster, pacmonster->velocity );
+
+        // make sure pacman doesn't pass centerpt
+        if( pacmonster->velocity.y > 0 ) {
+            if( pacmonster->world_center_point.y > tile_grid_point_to_world_point(pacmonster->current_tile).y + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_position.y = tile_grid_point_to_world_point(pacmonster->current_tile).y;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
+        else if( pacmonster->velocity.y < 0 ) {
+            if( pacmonster->world_center_point.y < tile_grid_point_to_world_point(pacmonster->current_tile).y + (TILE_SIZE * 0.5 ) ) {
+                pacmonster->world_position.y = tile_grid_point_to_world_point(pacmonster->current_tile).y;
+                actor_align_world_data_based_on_world_position( pacmonster );
+            }
+        }
 
         // collision
 
