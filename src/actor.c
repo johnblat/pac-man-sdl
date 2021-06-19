@@ -76,12 +76,15 @@ void actor_align_world_data_based_on_world_position( Actor *actor ) {
 }
 
 
-void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score, SDL_Renderer *renderer ) {
+void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer ) {
     if( dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] == 'x') {
         // get rid of dot marker
         dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] = ' ';
+
+        unsigned int n = *num_dots - 1;
+        *num_dots = n;
         
-        score->score_number += 10;
+        score->score_number += 20;
         
         snprintf( score->score_text, 32, "Score : %d", score->score_number );
         SDL_Surface *score_surface = TTF_RenderText_Solid( score->font, score->score_text, score->score_color );

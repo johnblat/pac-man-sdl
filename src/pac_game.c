@@ -50,6 +50,9 @@ int main( int argc, char *argv[] ) {
     float ghost_vulnerable_timer = 0.0f;
     // GHOST BEHAVIOR TIMER FOR CURRENT GLOBAL GHOST MODE
     float ghost_mode_timer = 0.0f;
+    // used to track progress in level
+    unsigned int num_dots = 0;
+
 
     
     // initialize the ghost states
@@ -101,13 +104,31 @@ int main( int argc, char *argv[] ) {
 
     load_render_xx_from_config_file( render_clips );
 
+    load_ghost_mode_times_from_config_file( g_scatter_chase_period_seconds, NUM_SCATTER_CHASE_PERIODS );
+
 
     // INIT TILEMAP
     tm_init_and_load_texture( renderer, &tilemap );
     tilemap.one_way_tile.x = ghost_pen_tile.x;
     tilemap.one_way_tile.y = ghost_pen_tile.y - 2;
 
+    // calculate number of dots
+    for( int row = 0; row < TILE_ROWS; row++ ) {
+        for(int col =0; col < TILE_COLS; col++ ) {
+            if( tilemap.tm_dots[ row ][ col ] == 'x' ) {
+                num_dots++;
+            }
+        }
+    }
+
     try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
+
+    // add power pellets to number of dotss
+    for( int i = 0; i < 4; i++ ) {
+        if( !points_equal( tilemap.tm_power_pellet_tiles[i], TILE_NONE ) ) {
+            num_dots++;
+        }
+    }
 
     // INIT PACMONSTER
     SDL_Point pac_starting_tile;
@@ -271,7 +292,7 @@ int main( int argc, char *argv[] ) {
 
         inc_animations( animations, 8, delta_time); 
         
-        pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &score, renderer );
+        pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &num_dots, &score, renderer );
 
 
         // VULNERABLE TIMER
@@ -303,9 +324,9 @@ int main( int argc, char *argv[] ) {
                         ghost_states[ i ] = STATE_GO_TO_PEN;
                         uint8_t texture_atlas_id = 4;
                         animations[ i ]->texture_atlas_id = texture_atlas_id;
-                        animations[ i ] ->num_frames_col = 0;
-                        animations[ i ]->current_anim_row = 0;
-                        animations[ i ]->accumulator = 0.0f;
+                        //animations[ i ] ->num_frames_col = 0;
+                        //animations[ i ]->current_anim_row = 0;
+                        //animations[ i ]->accumulator = 0.0f;
                         actors[ i ]->next_tile = actors[ i ]->current_tile;
                         actors[ i ]->target_tile = ghost_pen_tile;
                         actors[ i ]->speed_multp = 1.6f;
@@ -379,6 +400,7 @@ int main( int argc, char *argv[] ) {
         if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
 
             tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
+            num_dots--;
 
             for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
 
@@ -408,14 +430,10 @@ int main( int argc, char *argv[] ) {
         // hardcoded ids! uh oh!
         // we really just want to do this on all animations that have more than 1 row. It must have 4 rows for ghosts because they can move in 4 directions
         // When pac-man animations are complete, he will have 8 rows because he can move in 8 directions ( he cuts corners diaganolly )
-        if( ghost_states[ 1 ] !=  STATE_GO_TO_PEN )
-            set_animation_row( animations[ 1 ], actors[ 1 ] );
-        if( ghost_states[ 3 ] !=  STATE_GO_TO_PEN )
-            set_animation_row( animations[ 3 ], actors[ 3 ] );
-        if( ghost_states[ 2 ] !=  STATE_GO_TO_PEN )
-            set_animation_row( animations[ 2 ], actors[ 2 ] );
-        if( ghost_states[ 4 ] !=  STATE_GO_TO_PEN )
-            set_animation_row( animations[ 4 ], actors[ 4 ] );
+        set_animation_row( animations[ 1 ], actors[ 1 ] );
+        set_animation_row( animations[ 3 ], actors[ 3 ] );
+        set_animation_row( animations[ 2 ], actors[ 2 ] );
+        set_animation_row( animations[ 4 ], actors[ 4 ] );
 
         // pacman animation row
         if( actors[ 0 ]->velocity.x > 0 && actors[ 0 ]->velocity.y == 0 ) { // right
@@ -526,11 +544,14 @@ int main( int argc, char *argv[] ) {
             }
         }
 
-        SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
+        
 
         SDL_Rect black_bar = {0,0, 1920, TILE_SIZE * 2};
         SDL_SetRenderDrawColor( renderer, 0,0,0,255 );
         SDL_RenderFillRect( renderer, &black_bar);
+
+        SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
+
         // DEBUG
         if ( g_show_debug_info ) {
             //grid
