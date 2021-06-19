@@ -34,7 +34,7 @@ const int  MAX_SLOW_TILES = 21;
 void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm) {
     // LOAD the texture
     SDL_Surface *surface;
-    surface = IMG_Load("res/img/tileset-level-2.png");
+    surface = IMG_Load("res/img/tileset-final-maybe.png");
     tm->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
     SDL_FreeSurface( surface );
 
