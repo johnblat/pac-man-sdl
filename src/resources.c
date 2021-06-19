@@ -152,6 +152,44 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {
     }
 }
 
+void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_periods ) {
+    char *filename_config = "res/ghost_mode_times";
+    FILE *f;
+    f = fopen( filename_config, "r");
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file %s\n", filename_config );
+    }
+
+    for( int i = 0; i < num_periods; i++ ) {
+        ghost_mode_times[ i ] = 0;
+    }
+
+    char current_line[ 256 ];
+    memset( current_line, '\0', 256 );
+    while( fgets( current_line, 256, f ) != NULL ) {
+        if( current_line[ 0 ] == '#') {
+            continue;
+        }
+
+        //int line_idx = 0;
+        char *end_ptr = NULL;
+        char *val_ptr = current_line;
+        for( int i = 0; i< num_periods; i++ ) {
+            ghost_mode_times[ i ] = strtol( val_ptr, &end_ptr, 10 );
+            if( end_ptr == NULL ) {
+                break;
+            }
+            val_ptr = end_ptr + 1;
+            // while( line[ line_idx ] != ' ' && line[ line_idx ] != '\n' ) {
+            //     line_idx++;
+            // }
+        }
+        
+    }
+    
+
+}
+
 void load_render_xx_from_config_file( RenderClipFromTextureAtlas **render_clips ) {
 
     int num_render_clips = 0;
