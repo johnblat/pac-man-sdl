@@ -34,7 +34,7 @@ const int  MAX_SLOW_TILES = 21;
 void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm) {
     // LOAD the texture
     SDL_Surface *surface;
-    surface = IMG_Load("res/img/tileset-final-maybe.png");
+    surface = IMG_Load("res/img/tileset-pink.png");
     tm->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
     SDL_FreeSurface( surface );
 
@@ -75,15 +75,15 @@ void tm_init_and_load_texture( SDL_Renderer *renderer, TileMap *tm) {
         
     // load the texture indexes to use for each tile in the tilemap
     
-    try_load_resource_from_file( tm->tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
-    try_load_resource_from_file( tm->tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
-    try_load_resource_from_file( tm->tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+    //try_load_resource_from_file( tm->tm_texture_atlas_indexes, "res/tile_texture_map", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+    //try_load_resource_from_file( tm->tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
+    //try_load_resource_from_file( tm->tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
     
-    for( int i = 0; i < MAX_SLOW_TILES; i++ ) {
-        tm->tm_slow_tiles[ i ].x = -1;
-        tm->tm_slow_tiles[ i ].y = -1;
-    }
-    try_load_resource_from_file( tm->tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
+    // for( int i = 0; i < MAX_SLOW_TILES; i++ ) {
+    //     tm->tm_slow_tiles[ i ].x = -1;
+    //     tm->tm_slow_tiles[ i ].y = -1;
+    // }
+    //try_load_resource_from_file( tm->tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
     
     // Space for any UI elements at the top of the screen
     tm->tm_screen_position.x = 0;

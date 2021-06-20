@@ -261,7 +261,7 @@ int main( int argc, char *argv[] ) {
             }
             if ( event.type == SDL_KEYDOWN ) {
                 if ( event.key.keysym.sym == SDLK_SPACE ) {
-                    save_resource_to_file( tilemap.tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+                    save_resource_to_file( tilemap.tm_texture_atlas_indexes, "res/tile_texture_map", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
                 }
             }
             if ( event.type == SDL_MOUSEBUTTONDOWN ) {

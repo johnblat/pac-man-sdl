@@ -2,11 +2,11 @@
 #
 # texture_filename num_rows num_cols
 #
-res/img/pacman-full-1.png 8 10
+res/img/pacman-full-2.png 10 10
 res/img/blinky-full.png 4 8
 res/img/clyde-full.png 4 8
 res/img/vulnerable-full.png 4 8 
-res/img/go_to_pen_eyes.png 1 1
+res/img/go-to-pen-eyes-full.png 4 8
 res/img/power_pellet_anim.png 1 6
 res/img/inky-full.png 4 8
 res/img/pinky-full.png 4 8

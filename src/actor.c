@@ -75,6 +75,32 @@ void actor_align_world_data_based_on_world_position( Actor *actor ) {
     actor->world_right_sensor.y = actor->world_position.y + ( TILE_SIZE / 2 );
 }
 
+void actor_reset_data( Actor *actor, SDL_Point initial_tile ) {
+    actor->world_position.x = initial_tile.x * TILE_SIZE;
+    actor->world_position.y = initial_tile.y * TILE_SIZE;
+
+    actor->world_center_point.x = ( int ) actor->world_position.x + ( ACTOR_SIZE / 2 );
+    actor->world_center_point.y = ( int ) actor->world_position.y + ( ACTOR_SIZE / 2 );
+
+    actor->world_top_sensor.x = actor->world_position.x + ( ACTOR_SIZE / 2 );
+    actor->world_top_sensor.y = actor->world_position.y;
+
+    actor->world_bottom_sensor.x = actor->world_position.x + ( ACTOR_SIZE / 2 );
+    actor->world_bottom_sensor.y = actor->world_position.y + ACTOR_SIZE;
+
+    actor->world_left_sensor.x = actor->world_position.x;
+    actor->world_left_sensor.y = actor->world_position.y + ( ACTOR_SIZE / 2 );
+
+    actor->world_right_sensor.x = actor->world_position.x + ACTOR_SIZE;
+    actor->world_right_sensor.y = actor->world_position.y + ( ACTOR_SIZE / 2 );    
+
+    actor->direction = DIR_NONE;
+
+    actor->current_tile = initial_tile;
+    actor->next_tile = actor->current_tile;
+    actor->next_tile = actor->current_tile;
+}
+
 
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer ) {
     if( dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] == 'x') {

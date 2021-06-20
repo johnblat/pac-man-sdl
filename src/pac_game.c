@@ -18,7 +18,91 @@ SDL_bool g_show_debug_info = SDL_TRUE;
 
 SDL_Color pac_color = {200,150,0};
 
+// used to track progress in level
+unsigned int gNumDots = 0;
 
+void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer, Actor **actors, AnimatedSprite **animatedSprites, GhostState *ghostStates ) {
+    gCurrentLevel++;
+
+    if( gCurrentLevel > gNumLevels ) {
+        printf("GAME OVER\n");
+        exit( EXIT_SUCCESS );
+    }
+
+    load_current_level_off_disk( levelConfig, tilemap, renderer );
+
+    // pacman
+    actor_reset_data( actors[ 0 ], levelConfig->pacStartingTile );
+    
+    //ghosts
+    // INIT GHOST
+    SDL_Point ghost_pen_tile;
+    //try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
+    ghost_pen_tile = levelConfig->ghostPenTile;
+    // doing this in case need more ghosts in future. don't want to harder hard code their exact starting positions. Can define their offsets in a config file
+    SDL_Point pinky_from_pen = {0, 0};
+    SDL_Point blinky_from_pen = {0, -3};
+    SDL_Point inky_from_pen = { -1, 0 };
+    SDL_Point clyde_from_pen = {1, 0};
+
+    SDL_Point blinky_tile;
+    blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
+    blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
+    actor_reset_data( actors[ 1 ], blinky_tile );
+
+    SDL_Point pinky_tile;
+    pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
+    pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
+    actor_reset_data( actors[ 2 ], pinky_tile );
+
+    SDL_Point inky_tile;
+    inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
+    inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
+    actor_reset_data( actors[ 3 ], inky_tile );
+
+    SDL_Point clyde_tile;
+    clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
+    clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
+    actor_reset_data( actors[ 4 ], clyde_tile );
+
+    animatedSprites[ 1 ]->texture_atlas_id = animatedSprites[ 1 ]->default_texture_atlas_id;
+    animatedSprites[ 2 ]->texture_atlas_id = animatedSprites[ 2 ]->default_texture_atlas_id;
+    animatedSprites[ 3 ]->texture_atlas_id = animatedSprites[ 3 ]->default_texture_atlas_id;
+    animatedSprites[ 4 ]->texture_atlas_id = animatedSprites[ 4 ]->default_texture_atlas_id;
+
+    ghostStates[ 1 ] = STATE_NORMAL;
+    ghostStates[ 2 ] = STATE_NORMAL;
+    ghostStates[ 3 ] = STATE_NORMAL;
+    ghostStates[ 4 ] = STATE_NORMAL;
+
+    // calculate number of dots
+    gNumDots = 0;
+
+    for( int row = 0; row < TILE_ROWS; row++ ) {
+        for(int col =0; col < TILE_COLS; col++ ) {
+            if( tilemap->tm_dots[ row ][ col ] == 'x' ) {
+                gNumDots++;
+            }
+        }
+    }
+
+    //try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
+
+    // add power pellets to number of dotss
+    for( int i = 0; i < 4; i++ ) {
+        if( !points_equal( tilemap->tm_power_pellet_tiles[i], TILE_NONE ) ) {
+            gNumDots++;
+        }
+    }
+
+    // SDL_DestroyTexture( tilemap->tm_texture_atlas );
+    // SDL_Surface *surface;
+    // surface = IMG_Load("res/level2/tileset.png");
+    // tilemap->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
+    // SDL_FreeSurface( surface );
+
+
+}
 
 void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_screen_position, SDL_Point *points ) {
     points[ starting_index ].x = center_point.x + tilemap_screen_position.x;
@@ -50,9 +134,21 @@ int main( int argc, char *argv[] ) {
     float ghost_vulnerable_timer = 0.0f;
     // GHOST BEHAVIOR TIMER FOR CURRENT GLOBAL GHOST MODE
     float ghost_mode_timer = 0.0f;
-    // used to track progress in level
-    unsigned int num_dots = 0;
+    
 
+    int numLevels = determine_number_of_levels_from_dirs();
+    printf("Num levels %d\n", numLevels);
+
+    gCurrentLevel++;
+
+    SDL_Point zero = {0, 0};
+    LevelConfig levelConfig;
+    levelConfig.scatterChasePeriodSeconds = g_scatter_chase_period_seconds;
+    levelConfig.numScatterChasePeriods = NUM_SCATTER_CHASE_PERIODS;
+    levelConfig.ghostPenTile = zero;
+    levelConfig.pacStartingTile = zero;
+
+    tilemap.tm_texture_atlas = NULL; // initializing texture atlas pointer in tilemap 
 
     
     // initialize the ghost states
@@ -96,6 +192,8 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
+    load_current_level_off_disk( &levelConfig, &tilemap, renderer);
+
     // INIT TEXTURE ATLASES
 
     load_global_texture_atlases_from_config_file( renderer );
@@ -104,11 +202,11 @@ int main( int argc, char *argv[] ) {
 
     load_render_xx_from_config_file( render_clips );
 
-    load_ghost_mode_times_from_config_file( g_scatter_chase_period_seconds, NUM_SCATTER_CHASE_PERIODS );
+    //load_ghost_mode_times_from_config_file( g_scatter_chase_period_seconds, NUM_SCATTER_CHASE_PERIODS, "res/ghost_mode_times" );
 
 
     // INIT TILEMAP
-    tm_init_and_load_texture( renderer, &tilemap );
+    //tm_init_and_load_texture( renderer, &tilemap );
     tilemap.one_way_tile.x = ghost_pen_tile.x;
     tilemap.one_way_tile.y = ghost_pen_tile.y - 2;
 
@@ -116,23 +214,24 @@ int main( int argc, char *argv[] ) {
     for( int row = 0; row < TILE_ROWS; row++ ) {
         for(int col =0; col < TILE_COLS; col++ ) {
             if( tilemap.tm_dots[ row ][ col ] == 'x' ) {
-                num_dots++;
+                gNumDots++;
             }
         }
     }
 
-    try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
+    //try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
 
     // add power pellets to number of dotss
     for( int i = 0; i < 4; i++ ) {
         if( !points_equal( tilemap.tm_power_pellet_tiles[i], TILE_NONE ) ) {
-            num_dots++;
+            gNumDots++;
         }
     }
 
     // INIT PACMONSTER
     SDL_Point pac_starting_tile;
-    try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
+    //try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
+    pac_starting_tile = levelConfig.pacStartingTile;
 
     // read in file
     SDL_RWops *read_context = SDL_RWFromFile("res/default_pac_speed", "r");
@@ -151,7 +250,8 @@ int main( int argc, char *argv[] ) {
 
     // INIT GHOST
     SDL_Point ghost_pen_tile;
-    try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
+    //try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
+    ghost_pen_tile = levelConfig.ghostPenTile;
     // doing this in case need more ghosts in future. don't want to harder hard code their exact starting positions. Can define their offsets in a config file
     SDL_Point pinky_from_pen = {0, 0};
     SDL_Point blinky_from_pen = {0, -3};
@@ -249,6 +349,11 @@ int main( int argc, char *argv[] ) {
         }
         if(quit) break;
 
+        // NEXT LEVEL?
+        if( gNumDots <= 0 ) {
+            level_advance( &levelConfig, &tilemap, renderer, actors, animations, ghost_states );
+        }
+
         // KEYBOARD STATE
 
         const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
@@ -283,6 +388,10 @@ int main( int argc, char *argv[] ) {
                 tilemap.tm_screen_position.x-=4;
             }
         }
+        if( current_key_states[ SDL_SCANCODE_COMMA ] ) {
+            SDL_Delay(500);
+            level_advance( &levelConfig, &tilemap, renderer, actors, animations, ghost_states );
+        }
 
         // UPDATE SIMULATION
 
@@ -292,7 +401,7 @@ int main( int argc, char *argv[] ) {
 
         inc_animations( animations, 8, delta_time); 
         
-        pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &num_dots, &score, renderer );
+        pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &gNumDots, &score, renderer );
 
 
         // VULNERABLE TIMER
@@ -400,7 +509,7 @@ int main( int argc, char *argv[] ) {
         if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
 
             tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-            num_dots--;
+            gNumDots--;
 
             for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
 

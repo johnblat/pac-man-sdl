@@ -1,0 +1,3 @@
+# number of seconds for each ghost period
+# scatter, chase, scatter, chase, ...
+7, 20, 7, 20, 5, 20, 5, 0

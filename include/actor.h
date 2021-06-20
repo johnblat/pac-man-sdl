@@ -68,6 +68,9 @@ typedef struct Actor {
 
 Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset, float base_speed, float speed_multp ) ;
 
+// set current_tile and then call this to reset everything as if its initialization
+void actor_reset_data_based_on_current_tile( Actor *actor, SDL_Point initial_tile );
+
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer );
 
 void actor_align_world_data_based_on_world_position( Actor *actor );

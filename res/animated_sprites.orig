@@ -3,21 +3,21 @@
 # texture_atlas_id fps num_anims(rows) num_frames(cols)
 #
 #pacman
-0 48 8 10
+0 24 8 10
 #blinky
 1 24 4 8
-# pinky
-7 24 4 8
-# inky
-6 24 4 8
-#clyde
-2 24 4 8
+#powerpellet
+5 12 1 6
 #vuln
 3 24 4 8
 #go_pen
-4 24 4 8
-#powerpellet
-5 12 1 6
+4 1 1 1
+#clyde
+6 24 4 8
+# another blinky
+7 24 4 8
+# another clyde
+2 24 4 8
 # more vulnerable ones
 3 24 4 8
 3 24 4 8

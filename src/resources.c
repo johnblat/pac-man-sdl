@@ -11,35 +11,148 @@
 
 const int MAX_FILENAME_SIZE = 64;
 
-int g_current_level = 0;
+unsigned int gCurrentLevel = 0;
+unsigned int gNumLevels = 0; 
 
 int determine_number_of_levels_from_dirs( ) {
-    int num_levels = 0;
-    DIR *res_dir = opendir("res");
+    // int num_levels = 0;
+    DIR *res_dir = opendir("res/levels");
     struct dirent *d;
     char *first_five_chars = "level";
     while( ( d = readdir( res_dir ) ) != NULL ) {
         if( strncmp( first_five_chars, d->d_name, 5 ) == 0 ) {
-            num_levels++;
+            gNumLevels++;
         }
 
     } 
-    return num_levels;
+    return gNumLevels;
 }
 
-void load_level_off_disk( int level_num, int num_levels ) {
-    if( level_num > num_levels ) {
-        fprintf( stderr, "Could not load level because requested level number greater than %d. Max is %d\n", num_levels, level_num );
+static void build_resource_file_path(char *fullResourcePath, char *fullLevelDir, char *resourceFileName ) {
+    memset( fullResourcePath, '\0', MAX_FILENAME_SIZE );
+    strncat( fullResourcePath, fullLevelDir, MAX_FILENAME_SIZE );
+    strncat( fullResourcePath, resourceFileName, MAX_FILENAME_SIZE );
+}
+
+void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer ) { 
+    if( gCurrentLevel > gNumLevels ) {
+        fprintf( stderr, "Could not load level because requested level number greater than %d. Max is %d\n", gNumLevels, gCurrentLevel );
     }
+
+
+    // zero out resources
+    // initialize textured tiles
+    for( int row = 0; row < TILE_ROWS; ++row ) {
+        for ( int col = 0; col < TILE_COLS; ++col ) {
+            tilemap->tm_texture_atlas_indexes[ row ][ col ] = EMPTY_TILE_TEXTURE_ATLAS_INDEX;
+        }
+    }
+
+    // initialize dots
+    for( int row = 0; row < TILE_ROWS; row++ ){
+        for( int col = 0; col < TILE_COLS; col++ ) {
+            tilemap->tm_dots[ row ][ col ] = ' ';
+        }
+    }
+
+    // initialize wall
+    for( int row = 0; row < TILE_ROWS; row++ ) {
+        for( int col = 0; col < TILE_COLS; col++ ) {
+            tilemap->tm_walls[ row ][ col ] = ' ';
+        }
+    }
+
+    // initialize dots normalized positions
+    for( int row = 0; row < TILE_ROWS; row++ ) {
+        for( int col = 0; col < TILE_COLS; col++ ) {
+            tilemap->tm_dot_particles[ row ][ col ].position.x = ( TILE_SIZE / 2) - DOT_RADIUS;
+            tilemap->tm_dot_particles[ row ][ col ].position.y = (  (  col + row ) ) % ( ( TILE_SIZE - DOT_SIZE - DOT_PADDING - DOT_PADDING  ) * 2 ) + DOT_PADDING;
+            if ( tilemap->tm_dot_particles[ row ][ col ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING ) {
+                int a  = tilemap->tm_dot_particles[ row ][ col ].position.y - ( TILE_SIZE - DOT_SIZE - DOT_PADDING );
+                tilemap->tm_dot_particles[ row ][ col ].position.y = ( TILE_SIZE - DOT_SIZE - DOT_PADDING ) - a;
+            }
+            tilemap->tm_dot_particles[ row ][ col ].velocity.x = 0.0f;
+            tilemap->tm_dot_particles[ row ][ col ].velocity.y = DOT_SPEED;
+        }
+    }
+
+    // initialize slow tiles
+    for( int i = 0; i < MAX_SLOW_TILES; i++ ) {
+        tilemap->tm_slow_tiles[ i ].x = -1;
+        tilemap->tm_slow_tiles[ i ].y = -1;
+    }
+
+    // initialize screen position
+    tilemap->tm_screen_position.x = 0;
+    tilemap->tm_screen_position.y = TILE_SIZE * 2; 
+
+    char *res_level_dir = "res/levels/";
     char level_dirname[ MAX_FILENAME_SIZE ];
     memset( level_dirname, '\0', MAX_FILENAME_SIZE );
-    snprintf(level_dirname, MAX_FILENAME_SIZE, "level-%d/", level_num );
-    
-    // ACTUAL RESOURCES
-   // char *pac_starting_tile = "pac_starting_tile";
-    char path_to_thing[ MAX_FILENAME_SIZE ];
-    strcpy( path_to_thing, level_dirname );
-    //char *pac_starting_tile_path = strcat( path_to_thing, pac_starting_tile  );
+    snprintf(level_dirname, MAX_FILENAME_SIZE, "level%d/", gCurrentLevel );
+    char fullLevelDir[ MAX_FILENAME_SIZE ];
+    memset( fullLevelDir, '\0', MAX_FILENAME_SIZE );
+    strncat(fullLevelDir, res_level_dir, 11 );
+    strncat(fullLevelDir, level_dirname, MAX_FILENAME_SIZE );
+
+    // construct paths for each resource file
+
+    char *ghostModeTimesFileName = "ghost_mode_times";
+    char *ghostPenTileFileName = "ghost_pen_tile";
+    char *pacStartingTileFileName = "pac_starting_tile";
+    char *dotsFileName = "dots";
+    char *powerPelletsFileName = "power_pellets";
+    char *slowTilesFileName = "slow_tiles";
+    char *tileTextureMapFileName = "tile_texture_map";
+    char *wallsFileName = "walls";
+    char *tilesetFileName = "tileset.png";
+
+    char fullResourcePath[ MAX_FILENAME_SIZE ];
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, ghostModeTimesFileName );
+
+    load_ghost_mode_times_from_config_file( levelConfig->scatterChasePeriodSeconds, levelConfig->numScatterChasePeriods, fullResourcePath );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, ghostPenTileFileName );
+
+    try_load_resource_from_file( &levelConfig->ghostPenTile, fullResourcePath, sizeof(SDL_Point), 1 );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, pacStartingTileFileName );
+
+    try_load_resource_from_file( &levelConfig->pacStartingTile, fullResourcePath, sizeof( SDL_Point ), 1 );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, dotsFileName );
+
+    try_load_resource_from_file( tilemap->tm_dots, fullResourcePath, sizeof( char ) , TOTAL_NUMBER_OF_TILES );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, powerPelletsFileName );
+
+    try_load_resource_from_file( tilemap->tm_power_pellet_tiles, fullResourcePath, sizeof( SDL_Point ), 4 );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, slowTilesFileName );
+
+    try_load_resource_from_file( tilemap->tm_slow_tiles , fullResourcePath, sizeof( SDL_Point ), MAX_SLOW_TILES );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, tileTextureMapFileName );
+
+    try_load_resource_from_file( tilemap->tm_texture_atlas_indexes, fullResourcePath, sizeof(TwoDimensionalArrayIndex), TOTAL_NUMBER_OF_TILES );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, wallsFileName );
+
+    try_load_resource_from_file( tilemap->tm_walls, fullResourcePath, sizeof( char ), TOTAL_NUMBER_OF_TILES );
+
+    SDL_Surface *surface;
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, tilesetFileName );
+
+    surface = IMG_Load(fullResourcePath);
+    if( tilemap->tm_texture_atlas != NULL ) {
+        SDL_DestroyTexture( tilemap->tm_texture_atlas );
+        tilemap->tm_texture_atlas = NULL;
+    }
+    tilemap->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
+    SDL_FreeSurface( surface );
+
 
 }
 
@@ -152,8 +265,8 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {
     }
 }
 
-void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_periods ) {
-    char *filename_config = "res/ghost_mode_times";
+void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_periods, char *filename_config ) {
+    //char *filename_config = "res/ghost_mode_times";
     FILE *f;
     f = fopen( filename_config, "r");
     if( f == NULL ) {
