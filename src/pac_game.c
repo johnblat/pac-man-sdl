@@ -399,7 +399,7 @@ int main( int argc, char *argv[] ) {
        
         pac_try_move( actors[ 0 ], &tilemap, delta_time );
 
-        inc_animations( animations, 8, delta_time); 
+        inc_animations( animations, 6 , delta_time); 
         
         pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &gNumDots, &score, renderer );
 
@@ -774,7 +774,7 @@ int main( int argc, char *argv[] ) {
         free(actors[ i ]);
         actors[ i ] = NULL;
     }
-    for( int i = 0; i < 8; i++ ) {
+    for( int i = 0; i < 5; i++ ) {
         free(animations[ i ]);
         animations[ i ] = NULL;
         //animations[ i ]->texture_atlas_id = -1;
