@@ -22,6 +22,8 @@ static void build_resource_file_path( );
 
 int determine_number_of_levels_from_dirs( );
 
+void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap );
+
 void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer) ;
 
 void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer );
