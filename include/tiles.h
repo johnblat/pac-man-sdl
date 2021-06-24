@@ -16,10 +16,10 @@
 #define TILE_ROWS ( SCREEN_HEIGHT / ( TILE_SIZE ) - 2 )
 #define TOTAL_NUMBER_OF_TILES ( TILE_ROWS * TILE_COLS )
 
-#define DOT_SIZE  6 
+#define DOT_SIZE  8 
 #define DOT_RADIUS  ( DOT_SIZE / 2 )
 #define DOT_PADDING 15
-#define DOT_SPEED  12
+#define DOT_SPEED  35
 
 /**
  * This is used even for dots that are not on the screen
