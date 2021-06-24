@@ -12,14 +12,43 @@
 #include "constants.h"
 #include "tiles.h"
 #include "render.h"
+#include "interpolation.h"
 
 
 SDL_bool g_show_debug_info = SDL_TRUE;
 
 SDL_Color pac_color = {200,150,0};
+SDL_Color white = {200,200,255};
 
 // used to track progress in level
-unsigned int gNumDots = 0;
+unsigned int g_NumDots = 0;
+
+uint8_t g_NumGhostsEaten = 0;
+unsigned int g_GhostPointValues[] = { 400, 800, 1600, 3200 };
+
+float gPacSlowTimer = 0.0f;
+
+float g_PacDashTimer = 0.0f;
+float g_PacChargeTimer = 0.0f;
+
+float g_PAC_DASH_SPEED_MULTR = 3.0f;
+float g_PAC_DASH_TIME_MAX = 0.5f;
+
+typedef struct {
+    float remainingTime;
+    char message[ 8 ];
+    SDL_Point world_position;
+    SDL_Color color;
+    SDL_Texture *messageTexture;
+    SDL_Rect render_dest_rect;
+    TTF_Font *font;
+    Lerp l;
+
+} TimedMessage;
+
+#define g_NumTimedMessages 4
+TimedMessage g_TimedMessages[ g_NumTimedMessages ];
+Blink g_ScoreBlinks[g_NumTimedMessages ];
 
 void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer, Actor **actors, AnimatedSprite **animatedSprites, GhostState *ghostStates ) {
     gCurrentLevel++;
@@ -76,12 +105,12 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
     ghostStates[ 4 ] = STATE_NORMAL;
 
     // calculate number of dots
-    gNumDots = 0;
+    g_NumDots = 0;
 
     for( int row = 0; row < TILE_ROWS; row++ ) {
         for(int col =0; col < TILE_COLS; col++ ) {
             if( tilemap->tm_dots[ row ][ col ] == 'x' ) {
-                gNumDots++;
+                g_NumDots++;
             }
         }
     }
@@ -91,7 +120,7 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
     // add power pellets to number of dotss
     for( int i = 0; i < 4; i++ ) {
         if( !points_equal( tilemap->tm_power_pellet_tiles[i], TILE_NONE ) ) {
-            gNumDots++;
+            g_NumDots++;
         }
     }
 
@@ -210,11 +239,24 @@ int main( int argc, char *argv[] ) {
     tilemap.one_way_tile.x = ghost_pen_tile.x;
     tilemap.one_way_tile.y = ghost_pen_tile.y - 2;
 
+    // init messages
+    for( int i = 0; i < g_NumTimedMessages; i++ ) {
+        g_TimedMessages[ i ].color = white;
+        g_TimedMessages[ i ].font = font;
+        g_TimedMessages[ i ].remainingTime = 0.0f;
+        g_TimedMessages[ i ].world_position.x = -1;
+        g_TimedMessages[ i ].world_position.y = -1;
+    }
+
+    for( int i = 0; i < g_NumTimedMessages; i ++ ) {
+        g_ScoreBlinks[ i ] = blinkInit( 0.033, 0, 255 );
+    }
+
     // calculate number of dots
     for( int row = 0; row < TILE_ROWS; row++ ) {
         for(int col =0; col < TILE_COLS; col++ ) {
             if( tilemap.tm_dots[ row ][ col ] == 'x' ) {
-                gNumDots++;
+                g_NumDots++;
             }
         }
     }
@@ -224,7 +266,7 @@ int main( int argc, char *argv[] ) {
     // add power pellets to number of dotss
     for( int i = 0; i < 4; i++ ) {
         if( !points_equal( tilemap.tm_power_pellet_tiles[i], TILE_NONE ) ) {
-            gNumDots++;
+            g_NumDots++;
         }
     }
 
@@ -318,7 +360,8 @@ int main( int argc, char *argv[] ) {
     // delta time - frame rate independent movement
     float max_delta_time = 1 / 60.0;
     float previous_frame_ticks = SDL_GetTicks() / 1000.0;
-
+    SDL_bool charge_button_up = SDL_FALSE;
+    SDL_bool charge_button_down = SDL_FALSE;
     while (!quit) {
 
         // semi-fixed timestep
@@ -328,6 +371,7 @@ int main( int argc, char *argv[] ) {
         // adjust for any pauses, debugging breaks, etc
         delta_time = delta_time < max_delta_time ?  delta_time : max_delta_time;
 
+        
         // EVENTS
         while (SDL_PollEvent( &event ) != 0 ) {
             if( event.type == SDL_QUIT ) {
@@ -345,12 +389,22 @@ int main( int argc, char *argv[] ) {
                     }
                     
                 }
+                if( event.key.keysym.sym == SDLK_z ) {
+                    charge_button_down = SDL_TRUE;
+                    charge_button_up = SDL_FALSE;
+                }
+            }
+            if( event.type == SDL_KEYUP ) {
+                if( event.key.keysym.sym == SDLK_z ) {
+                    charge_button_up = SDL_TRUE;
+                    charge_button_down = SDL_FALSE;
+                }
             }
         }
         if(quit) break;
 
         // NEXT LEVEL?
-        if( gNumDots <= 0 ) {
+        if( g_NumDots <= 0 ) {
             level_advance( &levelConfig, &tilemap, renderer, actors, animations, ghost_states );
         }
 
@@ -392,17 +446,51 @@ int main( int argc, char *argv[] ) {
             SDL_Delay(500);
             level_advance( &levelConfig, &tilemap, renderer, actors, animations, ghost_states );
         }
+        // if( current_key_states[ SDL_SCANCODE_Z ] ) {
+        //     g_PacSpeedTimer = 0.33f;
+        // }
+        if( charge_button_down ) {
+            g_PacChargeTimer += delta_time;
+        }
+        else if( charge_button_up && g_PacChargeTimer > 0.0f ) {
+            g_PacDashTimer = g_PacChargeTimer > g_PAC_DASH_TIME_MAX ? g_PAC_DASH_TIME_MAX : g_PacChargeTimer;
+            g_PacChargeTimer = 0.0f;
+        }
 
         // UPDATE SIMULATION
 
+        
+
         pac_try_set_direction( actors[ 0 ], current_key_states, &tilemap);
+
+        actors[ 0 ]->speed_multp = 1.0f;
+        if( gPacSlowTimer > 0 ) {
+            actors[ 0 ]->speed_multp = 0.6f;
+            gPacSlowTimer -= delta_time;
+        }
+        if( g_PacDashTimer > 0 ) {
+            actors[ 0 ]->speed_multp = g_PAC_DASH_SPEED_MULTR;
+            g_PacDashTimer -= delta_time;
+            SDL_SetTextureAlphaMod( g_texture_atlases[ 0 ].texture, 150 );
+        }
+        else {
+            SDL_SetTextureAlphaMod( g_texture_atlases[ 0 ].texture, 255 );
+        }
+        if( g_PacChargeTimer > 0 ) {
+            actors[ 0 ]->speed_multp = 0.4f;
+        }
        
         pac_try_move( actors[ 0 ], &tilemap, delta_time );
 
         inc_animations( animations, 6 , delta_time); 
         
-        pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &gNumDots, &score, renderer );
+        // slow down pacman if in pac-pellet-tile
 
+        if( tilemap.tm_dots[ actors[ 0 ]->current_tile.y ][ actors[ 0 ]->current_tile.x ] == 'x' ) {
+            gPacSlowTimer = 0.075f;
+        }
+
+        pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &g_NumDots, &score, renderer );
 
         // VULNERABLE TIMER
         for( int i = 1; i < 5; ++i ) {
@@ -419,6 +507,7 @@ int main( int argc, char *argv[] ) {
                     // return all ghosts that are still vulnerable to normal
                     // when the timer runs out
                     if (ghost_vulnerable_timer <= 0.0f ) {
+                        g_NumGhostsEaten = 0;
                         for( int i = 1; i < 5; ++i ) {
                             if( ghost_states[ i ] == STATE_VULNERABLE ) {
                                 ghost_states[ i ] = STATE_NORMAL;
@@ -430,16 +519,35 @@ int main( int argc, char *argv[] ) {
                     // eat ghost if pacman touches
                     if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
                     && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y ) {
+                        score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
+                        g_NumGhostsEaten++;
                         ghost_states[ i ] = STATE_GO_TO_PEN;
                         uint8_t texture_atlas_id = 4;
                         animations[ i ]->texture_atlas_id = texture_atlas_id;
-                        //animations[ i ] ->num_frames_col = 0;
-                        //animations[ i ]->current_anim_row = 0;
-                        //animations[ i ]->accumulator = 0.0f;
                         actors[ i ]->next_tile = actors[ i ]->current_tile;
                         actors[ i ]->target_tile = ghost_pen_tile;
                         actors[ i ]->speed_multp = 1.6f;
-                        //go_to_pen_enter( actors, i, render_clips[ i ], i);
+
+                        // show message
+                        for( int i = 0; i < g_NumTimedMessages; i++ ) {
+                            if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
+                                g_TimedMessages[ i ].remainingTime = 0.85f;
+                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( actors[ 0 ]->current_tile );
+                                snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
+                                g_TimedMessages[ i ].color = white;
+                                SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
+                                g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( renderer, msgSurface );
+                                g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).x;
+                                g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).y;
+                                g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
+                                g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
+                                SDL_FreeSurface( msgSurface );
+                                g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
+
+                                break;
+
+                            }
+                        }
                     }
 
                     // pacman eats power pellet
@@ -507,9 +615,10 @@ int main( int argc, char *argv[] ) {
         for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
         // pac-man eats power pellet
         if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
-
+            score.score_number += 20;
+            g_NumGhostsEaten = 0;
             tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-            gNumDots--;
+            g_NumDots--;
 
             for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
 
@@ -602,23 +711,25 @@ int main( int argc, char *argv[] ) {
             g_current_scatter_chase_period++;
         }
 
+        
         /**********
          * UPDATE DOTS ANIMATION
          * **********/
-
+        int top_bound = DOT_PADDING;
+        int bottom_bound = TILE_SIZE - DOT_PADDING;
         for( int r = 0; r < TILE_ROWS; ++r ) {
             for( int c = 0; c < TILE_COLS; ++c ) {
                 
-                tilemap.tm_dot_particles[ r ][ c ].position.y += tilemap.tm_dot_particles[ r ][ c ].velocity.y * delta_time ;
+                tilemap.tm_dot_particles[ r ][ c ].position.y += tilemap.tm_dot_particles[ r ][ c ].velocity.y * DOT_SPEED * delta_time ;
 
-                if ( tilemap.tm_dot_particles[ r ][ c ].position.y < DOT_PADDING ) {
-                    tilemap.tm_dot_particles[ r ][ c ].position.y = DOT_PADDING;
-                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = DOT_SPEED;
+                if ( tilemap.tm_dot_particles[ r ][ c ].position.y < top_bound ) {
+                    tilemap.tm_dot_particles[ r ][ c ].position.y = top_bound;
+                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = 1;
                 }
-                if ( tilemap.tm_dot_particles[ r ][ c ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING) {
-                    tilemap.tm_dot_particles[ r ][ c ].position.y = TILE_SIZE - DOT_SIZE - DOT_PADDING;
+                if ( tilemap.tm_dot_particles[ r ][ c ].position.y > bottom_bound) {
+                    tilemap.tm_dot_particles[ r ][ c ].position.y = bottom_bound;
                     
-                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = -DOT_SPEED;
+                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = -1;
                 }
             }
         }
@@ -660,6 +771,41 @@ int main( int argc, char *argv[] ) {
         SDL_RenderFillRect( renderer, &black_bar);
 
         SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
+
+        /****
+         * ANY MESSAGES
+         **/
+        for(int i = 0; i < g_NumTimedMessages; i++ ) {
+            if( g_TimedMessages[ i ].remainingTime > 0.0f ) {
+                
+                if( g_TimedMessages[ i ].l.remainingTime > 0.0f ) {
+                    
+                    
+                    blinkProcess( &g_ScoreBlinks[ i ], delta_time );
+                    interpolate( &g_TimedMessages[ i ].l, delta_time );
+                    g_TimedMessages[ i ].world_position.y = g_TimedMessages[ i ].l.value;
+                    g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point( g_TimedMessages[ i ].world_position, tilemap.tm_screen_position ).y;
+                }
+                else {
+                    g_ScoreBlinks[ i ].current_value_idx = 1;
+                }
+                
+
+                SDL_SetTextureAlphaMod( g_TimedMessages[ i ].messageTexture, g_ScoreBlinks[ i ].values[ g_ScoreBlinks->current_value_idx ] );
+                SDL_RenderCopy( renderer, g_TimedMessages[ i ].messageTexture, NULL, &g_TimedMessages[ i ].render_dest_rect);
+                g_TimedMessages[ i ].remainingTime -= delta_time;
+                if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
+                    SDL_DestroyTexture( g_TimedMessages[ i ].messageTexture );
+                    g_TimedMessages[ i ].messageTexture = NULL;
+                }
+            }
+        }
+
+        if( charge_button_down ) {
+            SDL_SetRenderDrawColor( renderer, 255,255,255,255);
+            SDL_Rect rect_holding = { 600, 0, TILE_SIZE, TILE_SIZE };
+            SDL_RenderDrawRect( renderer, &rect_holding );
+        }
 
         // DEBUG
         if ( g_show_debug_info ) {
