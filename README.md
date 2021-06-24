@@ -11,8 +11,10 @@ Inspired by Pac-Man Arrangment.
 Controls
 --------
 
-Arrow Keys to move
-
+- Arrow Keys to move
+- Hold Z to charge dash
+    - Release to dash
+- Press B to disable Debug Visuals
 
 
 Editing and Modifying
@@ -32,20 +34,22 @@ Scopes:
 Scope: Level
 
 **Controls**
-S: **S**ave
-L: **L**oad
-W: **W**all placement mode
-T: **T**ile placement mode
-G: **G**host Pen placement mode
-P: **P**ac-Man Starting tile placement mode
-D: Pac-**D**ot placement mode
-E: Power Pellet (**E**nergizer pellet) placement mode. Max 4.
-V: **V**ery Slow tile placement mode ( Ghosts move slow on these tiles ). Max 20
-Arrow keys: Move map
-LMB: Select tile from tile selection panel in Tile Mode. Place object on tilemap ( depends on mode ).
-RMB: Remove object from tilemap ( depends on mode ).
+
+- S: **S**ave
+- L: **L**oad
+- W: **W**all placement mode
+- T: **T**ile placement mode
+- G: **G**host Pen placement mode
+- P: **P**ac-Man Starting tile placement mode
+- D: Pac-**D**ot placement mode
+- E: Power Pellet (**E**nergizer pellet) placement mode. Max 4.
+- V: **V**ery Slow tile placement mode ( Ghosts move slow on these tiles ). Max 20
+- Arrow keys: Move map
+- LMB: Select tile from tile selection panel in Tile Mode. Place object on tilemap ( depends on mode ).
+- RMB: Remove object from tilemap ( depends on mode ).
 
 **Level Selection**
+
 Edit the `res/tilemap_editor_level` file to contain the level number to edit. Whatever number is in this file is the level that the tilemap editor will edit upon launching. To edit a different level, close the program, edit the file, save, and then relaunch. 
 
 Create the corresponsding `res/levels/level#` directory of the level to edit if the level does not exist yet. Substitute `#` for the level number
