@@ -10,15 +10,6 @@
  * Keeps track of sprite based animation. Meaning each frame is drawn out
  */
 
-// typedef struct AnimatedSprite {
-//     //uint8_t actor_id;
-//     //SDL_bool playing;
-//     uint8_t texture_atlas_id;
-//     float frame_interval;
-//     float accumulator;
-//     uint8_t current_frame;
-//     uint8_t num_frames;
-// } AnimatedSprite;
 
 typedef struct AnimatedSprite {
     uint8_t texture_atlas_id;
@@ -33,10 +24,6 @@ typedef struct AnimatedSprite {
 } AnimatedSprite;
 
 
-
-// typedef struct AnimationRow {
-
-// }
 
 AnimatedSprite *init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim );
 

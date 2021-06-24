@@ -111,26 +111,6 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
         }
     }
 
-    // int top_bound = DOT_PADDING;
-    // int bottom_bound = TILE_SIZE - DOT_PADDING;
-    // int num_dot_positions = TILE_SIZE - DOT_PADDING * 2;
-    // initialize dots normalized positions
-    //int sign = -1;
-    // for( int row = 0; row < TILE_ROWS; row++ ) {
-    //     for( int col = 0; col < TILE_COLS; col++ ) {
-    //         tilemap->tm_dot_particles[ row ][ col ].position.x = ( TILE_SIZE / 2) - DOT_RADIUS;
-    //         tilemap->tm_dot_particles[ row ][ col ].position.y = (  (  col + row ) ) % ( ( TILE_SIZE - DOT_SIZE - DOT_PADDING - DOT_PADDING  ) * 2 ) + DOT_PADDING;
-    //         if ( tilemap->tm_dot_particles[ row ][ col ].position.y > TILE_SIZE - DOT_SIZE - DOT_PADDING ) {
-    //             int a  = tilemap->tm_dot_particles[ row ][ col ].position.y - ( TILE_SIZE - DOT_SIZE - DOT_PADDING );
-    //             tilemap->tm_dot_particles[ row ][ col ].position.y = ( TILE_SIZE - DOT_SIZE - DOT_PADDING ) - a;
-    //         }
-    //         if( col % ( num_dot_positions - 1 ) == 0 ) {
-    //             sign *= -1; // start moving in other dir
-    //         }
-    //         tilemap->tm_dot_particles[ row ][ col ].velocity.x = 0.0f;
-    //         tilemap->tm_dot_particles[ row ][ col ].velocity.y = DOT_SPEED * sign;
-    //     }
-    // }
 
     int innerSign = 1;
     int outerSign = 1;
