@@ -264,7 +264,18 @@ int main( int argc, char *argv[] ) {
     int left_button_pressed = 0;
     int right_button_pressed = 0;
 
+    // delta time - frame rate independent movement
+    float max_delta_time = 1 / 60.0;
+    float previous_frame_ticks = SDL_GetTicks() / 1000.0;
+
     while (!quit) {
+        // semi-fixed timestep
+        float current_frame_ticks = SDL_GetTicks() / 1000.0;
+        float delta_time = current_frame_ticks - previous_frame_ticks;
+        previous_frame_ticks = current_frame_ticks;
+        // adjust for any pauses, debugging breaks, etc
+        delta_time = delta_time < max_delta_time ?  delta_time : max_delta_time;
+
         while (SDL_PollEvent( &event ) != 0 ) {
             if( event.type == SDL_QUIT ) {
                 quit = 1;
@@ -511,6 +522,28 @@ int main( int argc, char *argv[] ) {
             
         }
 
+        /**********
+         * UPDATE DOTS ANIMATION
+         * **********/
+        int top_bound = DOT_PADDING;
+        int bottom_bound = TILE_SIZE - DOT_PADDING;
+        for( int r = 0; r < TILE_ROWS; ++r ) {
+            for( int c = 0; c < TILE_COLS; ++c ) {
+                
+                tilemap.tm_dot_particles[ r ][ c ].position.y += tilemap.tm_dot_particles[ r ][ c ].velocity.y * DOT_SPEED * delta_time ;
+
+                if ( tilemap.tm_dot_particles[ r ][ c ].position.y < top_bound ) {
+                    tilemap.tm_dot_particles[ r ][ c ].position.y = top_bound;
+                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = 1;
+                }
+                if ( tilemap.tm_dot_particles[ r ][ c ].position.y > bottom_bound) {
+                    tilemap.tm_dot_particles[ r ][ c ].position.y = bottom_bound;
+                    
+                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = -1;
+                }
+            }
+        }
+
         SDL_SetRenderDrawColor( renderer, 0,0,0,255);
         SDL_RenderClear( renderer );
 
@@ -549,7 +582,7 @@ int main( int argc, char *argv[] ) {
         SDL_RenderFillRect( renderer, &pen_rect );
 
         // render walls - no need to render normally because won't see it during actual game.
-        if( current_mode == WALL_MODE ) {
+         
             SDL_SetRenderDrawColor( renderer, 255, 80, 50, 60 );
             for( int row = 0; row < TILE_ROWS; ++row ) {
                 for( int col = 0; col < TILE_COLS; ++col ) {
@@ -567,7 +600,7 @@ int main( int argc, char *argv[] ) {
                     }
                 }
             } 
-        }
+        
         render_tile_selection_panel( renderer, &tile_selection_panel, selected_texture_atlas_index );
         
         
@@ -575,6 +608,7 @@ int main( int argc, char *argv[] ) {
         SDL_SetRenderDrawColor( renderer, 50,50,50,255);
         render_grid( renderer, TILE_SIZE, tilemap.tm_screen_position.x, tilemap.tm_screen_position.y, SCREEN_WIDTH, SCREEN_HEIGHT );
 
+        
 
         // draw line down the middle
         SDL_SetRenderDrawColor( renderer, 255,255,255,255);
