@@ -8,7 +8,7 @@
 
 void actor_set_current_tile( Actor *actor);
 
-void pac_try_set_direction( Actor *pacmonster, const uint8_t *current_key_states, TileMap *tm );
+void pac_try_set_direction( Actor *pacmonster, unsigned int gameControllerMask, TileMap *tm );
 
 void move( Actor *actor, Vector_f velocity ) ;
 

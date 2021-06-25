@@ -16,9 +16,9 @@ Mix_Chunk *g_GhostEatenGroovySound = NULL;
 Mix_Chunk *g_GhostEatenSounds[4];
 
 typedef enum {
-    GHOST_SOUND_CHANNEL,
-    GHOST_VULN_CHANNEL,
-    PAC_CHOMP_CHANNEL
+    GHOST_SOUND_CHANNEL = 7,// = 20,
+    GHOST_VULN_CHANNEL = 6,// = 21,
+    PAC_CHOMP_CHANNEL = 22
 } SoundChannel;
 
 #endif

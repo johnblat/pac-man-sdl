@@ -3,6 +3,7 @@
 #include "tiles.h"
 #include "comparisons.h"
 #include "jb_types.h"
+#include "input.h"
 
 void tile_wrap( SDL_Point *tile ) {
     if( tile->y >= TILE_ROWS ) 
@@ -16,10 +17,10 @@ void tile_wrap( SDL_Point *tile ) {
 }
 
 
-void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, TileMap *tm ) {
+void pac_try_set_direction( Actor *pacmonster, unsigned int gameControllerMask, TileMap *tm ) {
 
     // don't allow changing direciton if pacman is more than half of the tile
-    if( current_key_states[ SDL_SCANCODE_UP ] ) {
+    if( gameControllerMask & g_GAMEPAD_UP ) {
         SDL_Point tile_above = { pacmonster->current_tile.x, pacmonster->current_tile.y - 1 };
 
         tile_wrap( &tile_above );
@@ -43,7 +44,7 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
         }
     }
 
-    if( current_key_states[ SDL_SCANCODE_DOWN ] ) {
+    if( gameControllerMask & g_GAMEPAD_DOWN  ) {
         SDL_Point tile_below = { pacmonster->current_tile.x, pacmonster->current_tile.y + 1 };
 
         tile_wrap( &tile_below );
@@ -70,7 +71,7 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
         }
     }
 
-    if( current_key_states[ SDL_SCANCODE_LEFT ] ) {
+    if( gameControllerMask & g_GAMEPAD_LEFT  ) {
         SDL_Point tile_to_left = { pacmonster->current_tile.x - 1, pacmonster->current_tile.y  };
 
         tile_wrap( &tile_to_left );
@@ -97,7 +98,7 @@ void pac_try_set_direction( Actor *pacmonster, const Uint8 *current_key_states, 
         }
     }
 
-    if( current_key_states[ SDL_SCANCODE_RIGHT ] ) {
+    if( gameControllerMask & g_GAMEPAD_RIGHT ) {
         SDL_Point tile_to_right = { pacmonster->current_tile.x + 1, pacmonster->current_tile.y };
 
         tile_wrap( &tile_to_right );

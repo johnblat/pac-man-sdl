@@ -106,9 +106,9 @@ void actor_reset_data( Actor *actor, SDL_Point initial_tile ) {
 
 void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer ) {
     if( dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] == 'x') {
-        if( !Mix_Playing( PAC_CHOMP_CHANNEL ) ) {
-            Mix_PlayChannel( PAC_CHOMP_CHANNEL, g_PacChompSound, 0 );
-        }
+        //if( !Mix_Playing( PAC_CHOMP_CHANNEL ) ) {
+            Mix_PlayChannel( -1, g_PacChompSound, 0 );
+       // }
         // get rid of dot marker
         dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] = ' ';
 

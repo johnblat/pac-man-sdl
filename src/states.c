@@ -148,7 +148,7 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
 
     // play sound
     if( !Mix_Playing( GHOST_SOUND_CHANNEL ) ) {
-        Mix_PlayChannel( GHOST_SOUND_CHANNEL, g_GhostSound, 0 );
+        Mix_PlayChannel( GHOST_SOUND_CHANNEL, g_GhostSound, -1 );
     }
     SDL_Point home_tiles[ 5 ] = { shadow_home_tile, shadow_home_tile, ambush_home_tile, moody_home_tile, pokey_home_tile };
          

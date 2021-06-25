@@ -2,6 +2,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_gamecontroller.h>
 #include <stdio.h>
 #include "actor.h"
 #include "movement.h"
@@ -15,6 +16,7 @@
 #include "render.h"
 #include "interpolation.h"
 #include "sounds.h"
+#include "input.h"
 
 
 
@@ -34,8 +36,11 @@ float gPacSlowTimer = 0.0f;
 float g_PacDashTimer = 0.0f;
 float g_PacChargeTimer = 0.0f;
 
-float g_PAC_DASH_SPEED_MULTR = 3.0f;
-float g_PAC_DASH_TIME_MAX = 0.5f;
+float g_PAC_DASH_SPEED_MULTR = 2.5f;
+float g_PAC_DASH_TIME_MAX = 0.75f;
+
+
+
 
 typedef struct {
     float remainingTime;
@@ -224,6 +229,25 @@ int main( int argc, char *argv[] ) {
     if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 ) {
         fprintf( stderr, "SDL_mixer could not initialize: %s\n", Mix_GetError());
     }
+
+    // game controller
+    if( SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) < 0 ) {
+        fprintf( stderr, "Error %s\n ", SDL_GetError() );
+        exit( EXIT_FAILURE );
+    }
+
+    g_NumJoysticks = SDL_NumJoysticks();
+    for( int i = 0; i <g_NumJoysticks; i++ ) {
+        if( SDL_IsGameController( i ) ) {
+            g_NumGamepads++;
+        }
+    }
+
+    if( g_NumGamepads > 0 ) {
+        g_GameController = SDL_GameControllerOpen( 0 );
+        SDL_GameControllerEventState( SDL_ENABLE );
+    }
+    // end game controller
 
     //Load music
     g_Music = Mix_LoadMUS( "res/sounds/Scruffy - World 0 & 1 (Pac-Man Arrangement) - arranged by Scruffy.ogg" );
@@ -425,6 +449,8 @@ int main( int argc, char *argv[] ) {
     float previous_frame_ticks = SDL_GetTicks() / 1000.0;
     SDL_bool charge_button_up = SDL_FALSE;
     SDL_bool charge_button_down = SDL_FALSE;
+
+    g_GameControllerButtonMask = 0b00000; // reset
     while (!quit) {
 
         // semi-fixed timestep
@@ -437,6 +463,8 @@ int main( int argc, char *argv[] ) {
         
         // EVENTS
         while (SDL_PollEvent( &event ) != 0 ) {
+            //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
+            
             if( event.type == SDL_QUIT ) {
                 quit = 1;
             }
@@ -463,6 +491,44 @@ int main( int argc, char *argv[] ) {
                     charge_button_down = SDL_FALSE;
                 }
             }
+            if( event.type == SDL_CONTROLLERBUTTONDOWN ) {
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
+                    g_GameControllerButtonMask |= g_GAMEPAD_UP;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT ) {
+                    g_GameControllerButtonMask |= g_GAMEPAD_LEFT;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) {
+                    g_GameControllerButtonMask |= g_GAMEPAD_RIGHT;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN ) {
+                    g_GameControllerButtonMask |= g_GAMEPAD_DOWN;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
+                    g_GameControllerButtonMask |= g_GAMEPAD_ACTION;
+                    charge_button_down = SDL_TRUE;
+                    charge_button_up = SDL_FALSE;
+                }
+            }
+            if( event.type == SDL_CONTROLLERBUTTONUP ) {
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
+                    g_GameControllerButtonMask ^= g_GAMEPAD_UP;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT ) {
+                    g_GameControllerButtonMask ^= g_GAMEPAD_LEFT;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) {
+                    g_GameControllerButtonMask ^= g_GAMEPAD_RIGHT;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN ) {
+                    g_GameControllerButtonMask ^= g_GAMEPAD_DOWN;
+                }
+                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
+                    g_GameControllerButtonMask ^= g_GAMEPAD_ACTION;
+                    charge_button_up = SDL_TRUE;
+                    charge_button_down = SDL_FALSE;
+                }
+            }
         }
         if(quit) break;
 
@@ -474,7 +540,8 @@ int main( int argc, char *argv[] ) {
         // KEYBOARD STATE
 
         const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
-
+        //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
+        
         // adjust tilemap
         if( current_key_states[ SDL_SCANCODE_S ] ) {
             tilemap.tm_screen_position.y++;
@@ -524,7 +591,7 @@ int main( int argc, char *argv[] ) {
 
         
 
-        pac_try_set_direction( actors[ 0 ], current_key_states, &tilemap);
+        pac_try_set_direction( actors[ 0 ], g_GameControllerButtonMask, &tilemap);
 
         actors[ 0 ]->speed_multp = 1.0f;
         if( gPacSlowTimer > 0 ) {
@@ -582,6 +649,7 @@ int main( int argc, char *argv[] ) {
                     // eat ghost if pacman touches
                     if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
                     && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y ) {
+                        Mix_PlayChannel( -1, g_PacChompSound, 0 );
                         Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
                         score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
                         g_NumGhostsEaten++;
@@ -702,6 +770,34 @@ int main( int argc, char *argv[] ) {
          * PROCESS STATES
          * ******************/
         states_machine_process( actors, ghost_states, &tilemap );
+
+        //if no ghosts normal, then stop playing ghost sound
+        int any_ghosts_nomral = 0;
+        for( int i = 1; i < 5 ; i++ ) {
+            if( ghost_states[ i ] == STATE_NORMAL ) {
+                any_ghosts_nomral = 1;
+                break;
+            }
+        }
+        if( !any_ghosts_nomral ) {
+            if(Mix_Playing( GHOST_SOUND_CHANNEL ) ) {
+                Mix_HaltChannel( GHOST_SOUND_CHANNEL );
+            }
+        }
+
+        int any_ghosts_vuln = 0;
+        for( int i = 1; i < 5 ; i++ ) {
+            if( ghost_states[ i ] == STATE_VULNERABLE ) {
+                any_ghosts_vuln = 1;
+                break;
+            }
+        }
+        if( !any_ghosts_vuln ) {
+            if(Mix_Playing( GHOST_VULN_CHANNEL ) ) {
+                Mix_HaltChannel( GHOST_VULN_CHANNEL );
+            }
+        }
+
 
         /********************
          * MOVE GHOSTS
