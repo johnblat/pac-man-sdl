@@ -6,6 +6,8 @@
 #include "comparisons.h"
 #include "tiles.h"
 #include "states.h"
+#include <SDL2/SDL_mixer.h>
+#include "sounds.h"
 
 
 SDL_Point ghost_pen_tile = {22, 11};
@@ -96,6 +98,9 @@ void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm ) {
 }
 
 void vulnerable_process( Actor *actor, TileMap *tm ) {
+    if( !Mix_Playing( GHOST_VULN_CHANNEL ) ) {
+        Mix_PlayChannel( GHOST_VULN_CHANNEL, g_GhostVulnerableSound, 0 );
+    }
     if( points_equal( actor->next_tile, actor->current_tile ) ) {
         set_vulnerable_direction_and_next_tile( actor, tm );    
     }
@@ -140,6 +145,11 @@ void leave_pen_process( Actor **actors, uint8_t actor_id , TileMap *tm ) {
 }
 
 void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
+
+    // play sound
+    if( !Mix_Playing( GHOST_SOUND_CHANNEL ) ) {
+        Mix_PlayChannel( GHOST_SOUND_CHANNEL, g_GhostSound, 0 );
+    }
     SDL_Point home_tiles[ 5 ] = { shadow_home_tile, shadow_home_tile, ambush_home_tile, moody_home_tile, pokey_home_tile };
          
     // probably won't really help, but can do a lookup in hash table to get this out of a O(n^2)

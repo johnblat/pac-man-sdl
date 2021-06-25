@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdio.h>
 #include "actor.h"
 #include "movement.h"
@@ -13,6 +14,8 @@
 #include "tiles.h"
 #include "render.h"
 #include "interpolation.h"
+#include "sounds.h"
+
 
 
 SDL_bool g_show_debug_info = SDL_TRUE;
@@ -208,12 +211,72 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    if( SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND) < 0 ){
+        fprintf( stderr, "Error %s\n ", SDL_GetError() );
+        exit( EXIT_FAILURE );
+    }
 
     if (! ( IMG_Init( IMG_INIT_PNG ) & IMG_INIT_PNG ) ) {
         fprintf( stderr, "Error %s\n ", IMG_GetError() );
         exit( EXIT_FAILURE );
     }
+
+    if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 ) {
+        fprintf( stderr, "SDL_mixer could not initialize: %s\n", Mix_GetError());
+    }
+
+    //Load music
+    g_Music = Mix_LoadMUS( "res/sounds/Scruffy - World 0 & 1 (Pac-Man Arrangement) - arranged by Scruffy.ogg" );
+    if( g_Music == NULL )
+    {
+        printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() );
+    }
+
+    g_GhostSound = Mix_LoadWAV("res/sounds/ghost.wav");
+    if( g_GhostSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+
+    g_GhostVulnerableSound = Mix_LoadWAV("res/sounds/vulnerable.wav");
+    if( g_GhostVulnerableSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+
+    g_PacChompSound = Mix_LoadWAV("res/sounds/chomp.wav");
+    if( g_PacChompSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+
+    g_GhostEatenYeahSound = Mix_LoadWAV("res/sounds/yeah.wav");
+    if( g_GhostEatenYeahSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+
+    g_GhostEatenSweetSound = Mix_LoadWAV("res/sounds/sweet.wav");
+    if( g_GhostEatenSweetSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+
+    g_GhostEatenCoolSound = Mix_LoadWAV("res/sounds/cool.wav");
+    if( g_GhostEatenCoolSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+
+    g_GhostEatenGroovySound = Mix_LoadWAV("res/sounds/groovy.wav");
+    if( g_GhostEatenGroovySound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+
+   // Mix_VolumeChunk( g_GhostEatenGroovySound, 100 );
+
+    g_GhostEatenSounds[ 0 ] = g_GhostEatenYeahSound;
+    g_GhostEatenSounds[ 1 ] = g_GhostEatenSweetSound;
+    g_GhostEatenSounds[ 2 ] = g_GhostEatenCoolSound;
+    g_GhostEatenSounds[ 3 ] = g_GhostEatenGroovySound;
+
+    Mix_VolumeMusic( 50 );
+
+    Mix_PlayMusic(g_Music, -1 );
     
     font = TTF_OpenFont("res/gomarice_no_continue.ttf", 30 );
     if ( font == NULL ) {
@@ -236,8 +299,8 @@ int main( int argc, char *argv[] ) {
 
     // INIT TILEMAP
     //tm_init_and_load_texture( renderer, &tilemap );
-    tilemap.one_way_tile.x = ghost_pen_tile.x;
-    tilemap.one_way_tile.y = ghost_pen_tile.y - 2;
+    tilemap.one_way_tile.x = levelConfig.ghostPenTile.x;
+    tilemap.one_way_tile.y = levelConfig.ghostPenTile.y - 2;
 
     // init messages
     for( int i = 0; i < g_NumTimedMessages; i++ ) {
@@ -519,6 +582,7 @@ int main( int argc, char *argv[] ) {
                     // eat ghost if pacman touches
                     if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
                     && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y ) {
+                        Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
                         score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
                         g_NumGhostsEaten++;
                         ghost_states[ i ] = STATE_GO_TO_PEN;
