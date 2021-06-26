@@ -12,6 +12,7 @@ Mix_Chunk *g_GhostEatenYeahSound = NULL;
 Mix_Chunk *g_GhostEatenSweetSound = NULL;
 Mix_Chunk *g_GhostEatenCoolSound = NULL;
 Mix_Chunk *g_GhostEatenGroovySound = NULL;
+Mix_Chunk *g_PacDieOhNoSound = NULL;
 
 Mix_Chunk *g_GhostEatenSounds[4];
 
