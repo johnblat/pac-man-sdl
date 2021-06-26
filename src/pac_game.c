@@ -123,8 +123,6 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
         }
     }
 
-    //try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
-
     // add power pellets to number of dotss
     for( int i = 0; i < 4; i++ ) {
         if( !points_equal( tilemap->tm_power_pellet_tiles[i], TILE_NONE ) ) {
@@ -132,11 +130,51 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
         }
     }
 
-    // SDL_DestroyTexture( tilemap->tm_texture_atlas );
-    // SDL_Surface *surface;
-    // surface = IMG_Load("res/level2/tileset.png");
-    // tilemap->tm_texture_atlas = SDL_CreateTextureFromSurface( renderer, surface );
-    // SDL_FreeSurface( surface );
+    actors[ 0 ]->world_position.x = levelConfig->pacStartingTile.x * TILE_SIZE;
+    actors[ 0 ]->world_position.y = levelConfig->pacStartingTile.y * TILE_SIZE;
+    
+
+    actors[0]->world_center_point.x = ( int ) actors[0]->world_position.x + ( TILE_SIZE / 2 );
+    actors[0]->world_center_point.y = ( int ) actors[0]->world_position.y + ( TILE_SIZE / 2 );
+
+    actors[0]->current_tile.x = ( ( actors[0]->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
+    actors[0]->current_tile.y = ( ( ( actors[0]->world_position.y + TILE_SIZE / 2 ) ) / TILE_SIZE ) ;
+
+    actors[0]->world_top_sensor.x = actors[0]->world_position.x + ( TILE_SIZE / 2 );
+    actors[0]->world_top_sensor.y = actors[0]->world_position.y;
+
+    actors[0]->world_bottom_sensor.x = actors[0]->world_position.x + ( TILE_SIZE / 2 );
+    actors[0]->world_bottom_sensor.y = actors[0]->world_position.y + TILE_SIZE;
+
+    actors[0]->world_left_sensor.x = actors[0]->world_position.x;
+    actors[0]->world_left_sensor.y = actors[0]->world_position.y + ( TILE_SIZE / 2 );
+
+    actors[0]->world_right_sensor.x = actors[0]->world_position.x + TILE_SIZE;
+    actors[0]->world_right_sensor.y = actors[0]->world_position.y + ( TILE_SIZE / 2 );
+
+    actors[ 5 ]->world_position.x = levelConfig->pacStartingTile.x * TILE_SIZE;
+    actors[ 5 ]->world_position.y = levelConfig->pacStartingTile.y * TILE_SIZE;
+
+    actors[5]->world_center_point.x = ( int ) actors[5]->world_position.x + ( TILE_SIZE / 2 );
+    actors[5]->world_center_point.y = ( int ) actors[5]->world_position.y + ( TILE_SIZE / 2 );
+
+    actors[5]->current_tile.x = ( ( actors[5]->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
+    actors[5]->current_tile.y = ( ( ( actors[5]->world_position.y + TILE_SIZE / 2 ) ) / TILE_SIZE ) ;
+
+    actors[5]->world_top_sensor.x = actors[5]->world_position.x + ( TILE_SIZE / 2 );
+    actors[5]->world_top_sensor.y = actors[5]->world_position.y;
+
+    actors[5]->world_bottom_sensor.x = actors[5]->world_position.x + ( TILE_SIZE / 2 );
+    actors[5]->world_bottom_sensor.y = actors[5]->world_position.y + TILE_SIZE;
+
+    actors[5]->world_left_sensor.x = actors[5]->world_position.x;
+    actors[5]->world_left_sensor.y = actors[5]->world_position.y + ( TILE_SIZE / 2 );
+
+    actors[5]->world_right_sensor.x = actors[5]->world_position.x + TILE_SIZE;
+    actors[5]->world_right_sensor.y = actors[5]->world_position.y + ( TILE_SIZE / 2 );
+
+
+
 
 
 }
@@ -777,16 +815,6 @@ int main( int argc, char *argv[] ) {
                         }
                     }
 
-                    // pacman eats power pellet
-                    // for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
-                    //     // pac-man eats power pellet
-                    //     if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
-
-                    //         tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-                    //         ghost_vulnerable_timer = 20.0f;                        
-                    //     }
-                        
-                    // }
                     
                     break;
                     
@@ -806,27 +834,7 @@ int main( int argc, char *argv[] ) {
 
                 
                 case STATE_NORMAL :
-                    // NOTE: I change my mind that this isn't necessarily bad since it does what it needs to
-                    // one option might be an event system. but might be even more overkill
-                    // for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
-                    //     // pac-man eats power pellet
-                    //     if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
 
-                    //         tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-
-                    //         for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
-
-                    //             if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN ) {
-
-                    //                 ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
-                    //                 vulnerable_enter( actors, ghost_state_idx, render_clips[ ghost_state_idx ] );
-                    //             }
-                                
-                    //         }   
-                    //         ghost_vulnerable_timer = 20.0f;                        
-                    //     }
-                        
-                    // }
                     break;
                 case STATE_LEAVE_PEN:
                     if( points_equal( actors[ i ]->current_tile, actors[ i ]->target_tile ) ) {
@@ -1206,6 +1214,21 @@ int main( int argc, char *argv[] ) {
     SDL_DestroyWindow( window );
     TTF_CloseFont( font );
 
+    Mix_FreeChunk(g_GhostSound);
+    Mix_FreeChunk(g_GhostVulnerableSound);
+    Mix_FreeChunk(g_PacChompSound);
+    Mix_FreeChunk(g_GhostEatenYeahSound);
+    Mix_FreeChunk(g_GhostEatenSweetSound);
+    Mix_FreeChunk(g_GhostEatenCoolSound);
+    Mix_FreeChunk(g_GhostEatenGroovySound);
+    Mix_FreeChunk(g_PacDieOhNoSound);
+
+
+    Mix_FreeMusic(g_Music);
+
+    Mix_CloseAudio();
+    Mix_Quit();
+
 /**
  *    This reduces noise if you're running the program through a memory
  *  profiler like valgrind. It won't complain about un-freed memory.
@@ -1213,16 +1236,16 @@ int main( int argc, char *argv[] ) {
  * the program ends, even though your program will automatically free it upon
  * exit anyway
     */
-    for( int i = 0; i < 5; i++ ) {
+    for( int i = 0; i < 6; i++ ) {
         free(actors[ i ]);
         actors[ i ] = NULL;
     }
-    for( int i = 0; i < 5; i++ ) {
+    for( int i = 0; i < 6; i++ ) {
         free(animations[ i ]);
         animations[ i ] = NULL;
         //animations[ i ]->texture_atlas_id = -1;
     }
-    for( int i = 0; i < 9; i++ ){
+    for( int i = 0; i < 10; i++ ){
         free(render_clips[ i ]);
         render_clips[ i ] = NULL;
         //render_clips[ i ]->animation_id = -1;
