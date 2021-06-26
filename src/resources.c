@@ -25,6 +25,7 @@ int determine_number_of_levels_from_dirs( ) {
         }
 
     } 
+    closedir(res_dir);
     return gNumLevels;
 }
 
@@ -54,7 +55,7 @@ void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
     char *slowTilesFileName = "slow_tiles";
     char *tileTextureMapFileName = "tile_texture_map";
     char *wallsFileName = "walls";
-    char *tilesetFileName = "tileset.png";
+    //char *tilesetFileName = "tileset.png";
 
     char fullResourcePath[ MAX_FILENAME_SIZE ];
 
@@ -116,7 +117,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     int outerSign = 1;
     int top_bound = DOT_PADDING;
     int bottom_bound = TILE_SIZE - DOT_PADDING;
-    int num_dot_positions = TILE_SIZE - DOT_PADDING * 2;
+    //int num_dot_positions = TILE_SIZE - DOT_PADDING * 2;
     int startingyPos = top_bound;
     int yPos = top_bound;
     for( int row = 0; row < TILE_ROWS; row++ ) {
