@@ -43,6 +43,9 @@ Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset, float base_
 
     actor->world_right_sensor.x = actor->world_position.x + ACTOR_SIZE;
     actor->world_right_sensor.y = actor->world_position.y + ( ACTOR_SIZE / 2 );    
+    
+    actor->velocity.x = 0.0f;
+    actor->velocity.y = 0.0f;
 
     actor->direction = DIR_NONE;
 
