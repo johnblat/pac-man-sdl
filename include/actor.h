@@ -2,10 +2,7 @@
 #define PAC_H
 
 #include <SDL2/SDL.h>
-//#include <SDL2/SDL_image.h>
-//#include <SDL2/SDL_ttf.h>
-//#include <math.h>
-//#include "animation.h"
+
 #include "jb_types.h"
 #include "constants.h"
 #include "tiles.h"
@@ -47,19 +44,6 @@ typedef struct Actor {
     Vector_f    velocity;     // current velocity
 } Actor;
 
-// /*****************
-//  * MODES *********
-//  * *************/
-// const uint8_t NUM_SCATTER_CHASE_PERIODS = 9;
-// uint8_t g_current_scatter_chase_period = 0;
-// uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 7, 20, 7, 20, 5, 20, 5, 0 };
-//uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 2, 2, 2, 2, 2, 2, 2, 0 };
-// typedef enum {
-//     MODE_CHASE,     // use default behavior
-//     MODE_SCATTER,   // use scatter behavior
-// } GhostMode;
-
-// GhostMode g_current_ghost_mode = MODE_SCATTER;
 
 /******************
  * END MODES********
