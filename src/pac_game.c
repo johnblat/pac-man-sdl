@@ -1232,7 +1232,7 @@ int main( int argc, char *argv[] ) {
  *    This reduces noise if you're running the program through a memory
  *  profiler like valgrind. It won't complain about un-freed memory.
 */
-    */
+
     for( int i = 0; i < 6; i++ ) {
         free(actors[ i ]);
         actors[ i ] = NULL;
