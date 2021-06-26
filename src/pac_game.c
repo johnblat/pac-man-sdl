@@ -834,7 +834,6 @@ int main( int argc, char *argv[] ) {
 
                 
                 case STATE_NORMAL :
-
                     break;
                 case STATE_LEAVE_PEN:
                     if( points_equal( actors[ i ]->current_tile, actors[ i ]->target_tile ) ) {
@@ -1232,9 +1231,7 @@ int main( int argc, char *argv[] ) {
 /**
  *    This reduces noise if you're running the program through a memory
  *  profiler like valgrind. It won't complain about un-freed memory.
- * Plus, for some unknown reason, its conventional to free your memory before
- * the program ends, even though your program will automatically free it upon
- * exit anyway
+*/
     */
     for( int i = 0; i < 6; i++ ) {
         free(actors[ i ]);
