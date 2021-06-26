@@ -202,31 +202,61 @@ void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm ) {
 
     }
     // pacman dies
-    // if ( actors[ 0 ]->current_tile.x == actors[ ghost_id ]->current_tile.x 
-    // && actors[ 0 ]->current_tile.y == actors[ ghost_id ]->current_tile.y  ) {
-    //     actors[ 0 ]->position.x = TILE_SIZE * 22;
-    //     actors[ 0 ]->position.y =  TILE_SIZE * 15;
-    //     actors[ 0 ]->center_point.x = ( int ) actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
-    //     actors[ 0 ]->center_point.y = ( int ) actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
+    if ( actors[ 0 ]->current_tile.x == actors[ ghost_id ]->current_tile.x 
+    && actors[ 0 ]->current_tile.y == actors[ ghost_id ]->current_tile.y  ) {
+        Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
 
-    //     actors[ 0 ]->top_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
-    //     actors[ 0 ]->top_sensor.y = actors[ 0 ]->position.y;
+        actors[ 0 ]->world_position.x = TILE_SIZE * 23;
+        actors[ 0 ]->world_position.y =  TILE_SIZE * 15;
+        actors[ 0 ]->world_center_point.x = ( int ) actors[ 0 ]->world_position.x + ( ACTOR_SIZE / 2 );
+        actors[ 0 ]->world_center_point.y = ( int ) actors[ 0 ]->world_position.y + ( ACTOR_SIZE / 2 );
 
-    //     actors[ 0 ]->bottom_sensor.x = actors[ 0 ]->position.x + ( ACTOR_SIZE / 2 );
-    //     actors[ 0 ]->bottom_sensor.y = actors[ 0 ]->position.y + ACTOR_SIZE;
+        actors[ 0 ]->world_top_sensor.x = actors[ 0 ]->world_position.x + ( ACTOR_SIZE / 2 );
+        actors[ 0 ]->world_top_sensor.y = actors[ 0 ]->world_position.y;
 
-    //     actors[ 0 ]->left_sensor.x = actors[ 0 ]->position.x;
-    //     actors[ 0 ]->left_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );
+        actors[ 0 ]->world_bottom_sensor.x = actors[ 0 ]->world_position.x + ( ACTOR_SIZE / 2 );
+        actors[ 0 ]->world_bottom_sensor.y = actors[ 0 ]->world_position.y + ACTOR_SIZE;
 
-    //     actors[ 0 ]->right_sensor.x = actors[ 0 ]->position.x + ACTOR_SIZE;
-    //     actors[ 0 ]->right_sensor.y = actors[ 0 ]->position.y + ( ACTOR_SIZE / 2 );    
+        actors[ 0 ]->world_left_sensor.x = actors[ 0 ]->world_position.x;
+        actors[ 0 ]->world_left_sensor.y = actors[ 0 ]->world_position.y + ( ACTOR_SIZE / 2 );
 
-    //     actors[ 0 ]->direction = DIR_NONE;
+        actors[ 0 ]->world_right_sensor.x = actors[ 0 ]->world_position.x + ACTOR_SIZE;
+        actors[ 0 ]->world_right_sensor.y = actors[ 0 ]->world_position.y + ( ACTOR_SIZE / 2 );    
 
-    //     actor_set_current_tile( actors[ 0 ] );
-    //     actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
-    //     actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
-    //}
+        actors[ 0 ]->direction = DIR_NONE;
+
+        actor_set_current_tile( actors[ 0 ] );
+        actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
+        actors[ 0 ]->next_tile = actors[ 0 ]->current_tile;
+    }
+
+        if ( actors[ 5 ]->current_tile.x == actors[ ghost_id ]->current_tile.x 
+    && actors[ 5 ]->current_tile.y == actors[ ghost_id ]->current_tile.y  ) {
+        Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
+        
+        actors[ 5 ]->world_position.x = TILE_SIZE * 23;
+        actors[ 5 ]->world_position.y =  TILE_SIZE * 15;
+        actors[ 5 ]->world_center_point.x = ( int ) actors[ 5 ]->world_position.x + ( ACTOR_SIZE / 2 );
+        actors[ 5 ]->world_center_point.y = ( int ) actors[ 5 ]->world_position.y + ( ACTOR_SIZE / 2 );
+
+        actors[ 5 ]->world_top_sensor.x = actors[ 5 ]->world_position.x + ( ACTOR_SIZE / 2 );
+        actors[ 5 ]->world_top_sensor.y = actors[ 5 ]->world_position.y;
+
+        actors[ 5 ]->world_bottom_sensor.x = actors[ 5 ]->world_position.x + ( ACTOR_SIZE / 2 );
+        actors[ 5 ]->world_bottom_sensor.y = actors[ 5 ]->world_position.y + ACTOR_SIZE;
+
+        actors[ 5 ]->world_left_sensor.x = actors[ 5 ]->world_position.x;
+        actors[ 5 ]->world_left_sensor.y = actors[ 5 ]->world_position.y + ( ACTOR_SIZE / 2 );
+
+        actors[ 5 ]->world_right_sensor.x = actors[ 5 ]->world_position.x + ACTOR_SIZE;
+        actors[ 5 ]->world_right_sensor.y = actors[ 5 ]->world_position.y + ( ACTOR_SIZE / 2 );    
+
+        actors[ 5 ]->direction = DIR_NONE;
+
+        actor_set_current_tile( actors[ 5 ] );
+        actors[ 5 ]->next_tile = actors[ 5 ]->current_tile;
+        actors[ 5 ]->next_tile = actors[ 5 ]->current_tile;
+    }
     
 }
 
