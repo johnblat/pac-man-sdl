@@ -17,6 +17,15 @@ typedef enum {
     STATE_LEAVE_PEN
 } GhostState;
 
+typedef enum {
+    SHADOW_BEHAVIOR,
+    AMBUSH_BEHAVIOR,
+    MOODY_BEHAVIOR,
+    POKEY_BEHAVIOR
+} TargetingBehavior;
+
+
+
 /**
  * Will be global for all ghosts.
  * Will determine their more specific
@@ -37,25 +46,44 @@ typedef enum {
 extern GhostMode g_current_ghost_mode;
 
 
-void vulnerable_enter_all( Actor **ghosts, RenderClipFromTextureAtlas **render_textures );
+void vulnerable_enter_all( Entities *entities );
 
-void vulnerable_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture );
+void vulnerable_enter( Entities *entities, EntityId ghostId );
 
-void set_vulnerable_direction_and_next_tile( Actor *ghost, TileMap *tm );
+void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostId, TileMap *tm );
 
-void vulnerable_process( Actor *actor, TileMap *tm );
+/**
+ * Ghosts will basically wander aimlessly in the priority tiles. They will not choose targets.
+ */
+void vulnerable_process( Entities *entities, EntityId ghostId, TileMap *tm );
 
-void normal_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t texture_atlas_id ) ;
+void normal_enter( Entities *entities, EntityId ghostId ) ;
 
-void normal_process( Actor **actors, uint8_t ghost_id, TileMap *tm );
+/**
+ * If in chase mode, will target closest player and process using the entity's target behavior.
+ * If in scatter mode, will go to home tile assigned.
+ * 
+ * playerIds: list of players to target. Will target closest player. 
+ */
+void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers, TileMap *tm );
 
-void go_to_pen_enter( Actor **actors, uint8_t actor_id, RenderClipFromTextureAtlas *render_texture, uint8_t id );
+/**
+ * Sets the animation texture atlas to be the eyes
+ */
+void go_to_pen_enter( Entities *entities, EntityId ghostId );
 
-void go_to_pen_process( Actor *actor, TileMap *tm );
+/**
+ * Will target the ghost pen tile
+ */
+void go_to_pen_process( Entities *entities, EntityId ghostId, TileMap *tm );
 
-void leave_pen_enter( Actor **actors, AnimatedSprite **animated_sprites, uint8_t actor_id );
 
-void leave_pen_process( Actor **actors, uint8_t actor_id, TileMap *tm );
+void leave_pen_enter( Entities *entities, EntityId ghostId );
+
+/**
+ * Targets a few tiles above ghost pen
+ */
+void leave_pen_process( Entities *entities, EntityId ghostId, TileMap *tm );
 
 void states_machine_process( Actor **actors, GhostState *ghost_states, TileMap *tm );
 

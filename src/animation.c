@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "animation.h"
 #include "actor.h"
+#include "entity.h"
 
 AnimatedSprite *init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim ){
     AnimatedSprite *animation = (AnimatedSprite *) malloc(sizeof(AnimatedSprite));
@@ -20,16 +21,18 @@ float fps_to_frame_interval( int fps, int num_frames ) {
     return ( (float) num_frames / (float) fps ) / (float) num_frames ;
 }
 
-void inc_animations( AnimatedSprite **animations, uint8_t num_animations, float delta_time ) {
-    for( int i = 0; i < num_animations; ++i ) {
-
-        animations[ i ]->accumulator += delta_time;
-        if( animations[ i ]->accumulator > animations[ i ]->frame_interval ) {
-            animations[ i ]->accumulator = 0;
-            animations[ i ]->current_frame_col++;
+void animatedSpriteIncProcess( AnimatedSprite **animatedSprites, float delta_time ) {
+    for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
+        if( animatedSprites[ i ] == NULL ) {
+            continue;
         }
-        if( animations[ i ]->current_frame_col >= animations[ i ]->num_frames_col ) {
-            animations[ i ]->current_frame_col = 0;
+        animatedSprites[ i ]->accumulator += delta_time;
+        if( animatedSprites[ i ]->accumulator > animatedSprites[ i ]->frame_interval ) {
+            animatedSprites[ i ]->accumulator = 0;
+            animatedSprites[ i ]->current_frame_col++;
+        }
+        if( animatedSprites[ i ]->current_frame_col >= animatedSprites[ i ]->num_frames_col ) {
+            animatedSprites[ i ]->current_frame_col = 0;
         }
     } 
 }

@@ -19,7 +19,6 @@
 #include "input.h"
 
 
-
 SDL_bool g_show_debug_info = SDL_TRUE;
 
 SDL_Color pac_color = {200,150,0};
@@ -31,16 +30,9 @@ unsigned int g_NumDots = 0;
 uint8_t g_NumGhostsEaten = 0;
 unsigned int g_GhostPointValues[] = { 400, 800, 1600, 3200 };
 
-
-float g_PAC_DASH_SPEED_MULTR = 2.5f;
-float g_PAC_DASH_TIME_MAX = 0.75f;
-
 float g_PacSlowTimers[] = {0.0f, 0.0f};
 float g_PacChargeTimers[] = {0.0f, 0.0f};
 float g_PacDashTimers[] = {0.0f, 0.0f};
-
-
-
 
 typedef struct {
     float remainingTime;
@@ -196,13 +188,39 @@ void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_sc
     points[ starting_index + 4 ].y = center_point.y + tilemap_screen_position.y ;
 }
 
+
+
+
 int main( int argc, char *argv[] ) {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    Actor *actors[ 6 ]; 
-    AnimatedSprite *animations[ 13 ]; // pac-man, ghosts, power-pellets, eyes, etc
-    RenderClipFromTextureAtlas *render_clips[ 10 ]; // for render textures, 5 thru 9 only different is the Rect x and y 
-    GhostState ghost_states[ 5 ]; // 1 thru 5
+
+    Entities entities;
+
+    for( int i = 0; i < MAX_NUM_ENTITIES; i ++ ) { // 13 is num of entities rn
+        entities.positions        [ i ] = NULL;
+        entities.actors           [ i ] = NULL;
+        entities.animatedSprites  [ i ] = NULL;
+        entities.render_clips     [ i ] = NULL;
+        entities.ghostStates      [ i ] = NULL;
+        entities.targetingBehaviors       [ i ] = NULL;
+        entities.chargeTimers     [ i ] = NULL;
+        entities.dashTimers       [ i ] = NULL;
+        entities.slowTimers       [ i ] = NULL;
+        entities.inputMasks       [ i ] = NULL;
+    }
+    
+    // load everything for entity data from config
+
+    EntityId playerIds[ 2 ];
+    unsigned int numPlayers = 0;
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+        if( entities.inputMasks[ eid ] != NULL ) {
+            playerIds[ numPlayers ] = eid;
+            numPlayers++;
+        }
+    }
+
     TTF_Font *font; 
     TileMap tilemap;
     // TIMER USED FOR VULNERABILITY STATE
@@ -225,11 +243,6 @@ int main( int argc, char *argv[] ) {
 
     tilemap.tm_texture_atlas = NULL; // initializing texture atlas pointer in tilemap 
 
-    
-    // initialize the ghost states
-    for( int i = 1; i < 5; ++i ) {
-        ghost_states[ i ] = STATE_NORMAL;
-    }
 
     // Initializing stuff
     if( SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -365,9 +378,9 @@ int main( int argc, char *argv[] ) {
 
     load_global_texture_atlases_from_config_file( renderer );
 
-    load_animations_from_config_file( animations );
+    // load_animations_from_config_file( animations );
 
-    load_render_xx_from_config_file( render_clips );
+    // load_render_xx_from_config_file( render_clips );
 
     //load_ghost_mode_times_from_config_file( g_scatter_chase_period_seconds, NUM_SCATTER_CHASE_PERIODS, "res/ghost_mode_times" );
 
@@ -424,9 +437,9 @@ int main( int argc, char *argv[] ) {
     free( content );
     SDL_RWclose( read_context );
 
-    actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f );
-   // render_clips[ 0 ] = init_render_clip( 0, 0 );
-    actors[ 5 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f);
+//     actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f );
+//    // render_clips[ 0 ] = init_render_clip( 0, 0 );
+//     actors[ 5 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f);
     
 
     // INIT GHOST
@@ -527,11 +540,11 @@ int main( int argc, char *argv[] ) {
                     g_show_debug_info = !g_show_debug_info;
                 }
                 if (event.key.keysym.sym == SDLK_v ) {
-                    ghost_vulnerable_timer = 20.0f;
-                    for( int i = 1; i < 5; ++i ) {
-                        ghost_states[ i ] = STATE_VULNERABLE;
-                        vulnerable_enter( actors, animations, i, render_clips[ i ] );
-                    }
+                    // ghost_vulnerable_timer = 20.0f;
+                    // for( int i = 1; i < 5; ++i ) {
+                    //     ghost_states[ i ] = STATE_VULNERABLE;
+                    //     vulnerable_enter( actors, animations, i, render_clips[ i ] );
+                    // }
                     
                 }
                 if( event.key.keysym.sym == SDLK_z ) {
@@ -639,74 +652,15 @@ int main( int argc, char *argv[] ) {
             SDL_Delay(500);
             level_advance( &levelConfig, &tilemap, renderer, actors, animations, ghost_states );
         }
-        // if( current_key_states[ SDL_SCANCODE_Z ] ) {
-        //     g_PacSpeedTimer = 0.33f;
-        // }
-        // charge1 
-        if( g_InputMasks[ 0 ] & g_INPUT_ACTION ) {
-            g_PacChargeTimers[ 0 ] += delta_time;
-        }
-        else if( g_InputMasks[ 0 ] ^ g_INPUT_ACTION && g_PacChargeTimers[ 0 ] > 0.0f ) {
-            g_PacDashTimers[ 0 ] = g_PacChargeTimers[ 0 ] > g_PAC_DASH_TIME_MAX ? g_PAC_DASH_TIME_MAX : g_PacChargeTimers[ 0 ];
-            g_PacChargeTimers[ 0 ] = 0.0f;
-        }
-
-        // charge2
-        if( g_InputMasks[ 1 ] & g_INPUT_ACTION ) {
-            g_PacChargeTimers[ 1 ] += delta_time;
-        }
-        else if( g_InputMasks[ 1 ] ^ g_INPUT_ACTION && g_PacChargeTimers[ 1 ] > 0.0f ) {
-            g_PacDashTimers[ 1 ] = g_PacChargeTimers[ 1 ] > g_PAC_DASH_TIME_MAX ? g_PAC_DASH_TIME_MAX : g_PacChargeTimers[ 1 ];
-            g_PacChargeTimers[ 1 ] = 0.0f;
-        }
+        
 
         // UPDATE SIMULATION
 
-        
+        inputToTryMoveProcess( &entities, &tilemap, delta_time);
 
-        pac_try_set_direction( actors[ 0 ], g_InputMasks[ 0 ], &tilemap);
-        pac_try_set_direction( actors[ 5 ], g_InputMasks[ 1 ], &tilemap);
+        dashTimersProcess( &entities, delta_time );
 
-        // dash 1
-        actors[ 0 ]->speed_multp = 1.0f;
-        if( g_PacSlowTimers[ 0 ] > 0 ) {
-            actors[ 0 ]->speed_multp = 0.6f;
-            g_PacSlowTimers[ 0 ] -= delta_time;
-        }
-        if( g_PacDashTimers[0] > 0 ) {
-            actors[ 0 ]->speed_multp = g_PAC_DASH_SPEED_MULTR;
-            g_PacDashTimers[ 0 ] -= delta_time;
-            SDL_SetTextureAlphaMod( g_texture_atlases[ 0 ].texture, 150 );
-        }
-        else {
-            SDL_SetTextureAlphaMod( g_texture_atlases[ 0 ].texture, 255 );
-        }
-        if( g_PacChargeTimers[ 0 ] > 0 ) {
-            actors[ 0 ]->speed_multp = 0.4f;
-        }
-
-        // dash 2
-        actors[ 5 ]->speed_multp = 1.0f;
-        if( g_PacSlowTimers[ 1 ] > 0 ) {
-            actors[ 5 ]->speed_multp = 0.6f;
-            g_PacSlowTimers[ 1 ] -= delta_time;
-        }
-        if( g_PacDashTimers[1] > 0 ) {
-            actors[ 5 ]->speed_multp = g_PAC_DASH_SPEED_MULTR;
-            g_PacDashTimers[ 1 ] -= delta_time;
-            SDL_SetTextureAlphaMod( g_texture_atlases[ 8 ].texture, 150 );
-        }
-        else {
-            SDL_SetTextureAlphaMod( g_texture_atlases[ 8 ].texture, 255 );
-        }
-        if( g_PacChargeTimers[ 1 ] > 0 ) {
-            actors[ 5 ]->speed_multp = 0.4f;
-        }
-       
-        pac_try_move( actors[ 0 ], &tilemap, delta_time );
-        pac_try_move( actors[ 5 ], &tilemap, delta_time );
-
-        inc_animations( animations, 7 , delta_time); 
+        animatedSpriteIncProcess( entities.animatedSprites , delta_time); 
         
         // slow down pacman if in pac-pellet-tile
 
@@ -718,117 +672,77 @@ int main( int argc, char *argv[] ) {
             g_PacSlowTimers[ 1 ] = 0.075f;
         }
 
-        pac_collect_dot( actors[ 0 ], tilemap.tm_dots, &g_NumDots, &score, renderer );
-        pac_collect_dot( actors[ 5 ], tilemap.tm_dots, &g_NumDots, &score, renderer );
+        collectDotProcess( &entities, tilemap.tm_dots, &g_NumDots, &score, renderer );
 
-        // VULNERABLE TIMER
-        for( int i = 1; i < 5; ++i ) {
-            if( ghost_states[ i ] == STATE_VULNERABLE ) {
-                ghost_vulnerable_timer -= delta_time;
-                break;
-            }
-        }
         
         // CHECK STATE TRANSITIONS FOR GHOSTS
-        for(int i = 1; i < 5; ++i ) {
-            switch( ghost_states[ i ] ) {
+        for(int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+            if( *entities.ghostStates[ eid ] == NULL ) {
+                continue;
+            }
+            switch( *entities.ghostStates[ eid ] ) {
                 case STATE_VULNERABLE :
                     // return all ghosts that are still vulnerable to normal
                     // when the timer runs out
                     if (ghost_vulnerable_timer <= 0.0f ) {
                         g_NumGhostsEaten = 0;
                         for( int i = 1; i < 5; ++i ) {
-                            if( ghost_states[ i ] == STATE_VULNERABLE ) {
-                                ghost_states[ i ] = STATE_NORMAL;
-                                normal_enter( actors, animations, i , render_clips[ i ], i );
-                            }
-                        }
-                    }
-                    
-                    // eat ghost if pacman touches
-                    if ( actors[ 0 ]->current_tile.x == actors[ i ]->current_tile.x 
-                    && actors[ 0 ]->current_tile.y == actors[ i ]->current_tile.y ) {
-                        Mix_PlayChannel( -1, g_PacChompSound, 0 );
-                        Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
-                        score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
-                        g_NumGhostsEaten++;
-                        ghost_states[ i ] = STATE_GO_TO_PEN;
-                        uint8_t texture_atlas_id = 4;
-                        animations[ i ]->texture_atlas_id = texture_atlas_id;
-                        actors[ i ]->next_tile = actors[ i ]->current_tile;
-                        actors[ i ]->target_tile = ghost_pen_tile;
-                        actors[ i ]->speed_multp = 1.6f;
-
-                        // show message
-                        for( int i = 0; i < g_NumTimedMessages; i++ ) {
-                            if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
-                                g_TimedMessages[ i ].remainingTime = 0.85f;
-                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( actors[ 0 ]->current_tile );
-                                snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
-                                g_TimedMessages[ i ].color = white;
-                                SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
-                                g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( renderer, msgSurface );
-                                g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).x;
-                                g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).y;
-                                g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
-                                g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
-                                SDL_FreeSurface( msgSurface );
-                                g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
-
-                                break;
-
-                            }
-                        }
-                    }
-                    if ( actors[ 5 ]->current_tile.x == actors[ i ]->current_tile.x 
-                    && actors[ 5 ]->current_tile.y == actors[ i ]->current_tile.y ) {
-                        Mix_PlayChannel( -1, g_PacChompSound, 0 );
-                        Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
-                        score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
-                        g_NumGhostsEaten++;
-                        ghost_states[ i ] = STATE_GO_TO_PEN;
-                        uint8_t texture_atlas_id = 4;
-                        animations[ i ]->texture_atlas_id = texture_atlas_id;
-                        actors[ i ]->next_tile = actors[ i ]->current_tile;
-                        actors[ i ]->target_tile = ghost_pen_tile;
-                        actors[ i ]->speed_multp = 1.6f;
-
-                        // show message
-                        for( int i = 0; i < g_NumTimedMessages; i++ ) {
-                            if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
-                                g_TimedMessages[ i ].remainingTime = 0.85f;
-                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( actors[ 5 ]->current_tile );
-                                snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
-                                g_TimedMessages[ i ].color = white;
-                                SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
-                                g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( renderer, msgSurface );
-                                g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).x;
-                                g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).y;
-                                g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
-                                g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
-                                SDL_FreeSurface( msgSurface );
-                                g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
-
-                                break;
-
+                            if( *entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
+                                *entities.ghostStates[ eid ] = STATE_NORMAL;
+                                normal_enter( &entities, eid );
                             }
                         }
                     }
 
-                    
+                    EntityId playerId;
+                    for( int i = 0; i < numPlayers; ++i ) {
+                        playerId = playerIds[ i ];
+
+                        // eat ghost if pacman touches
+                        if ( entities.actors[ playerId ]->current_tile.x == entities.actors[ eid ]->current_tile.x 
+                        && actors[ 0 ]->current_tile.y == actors[ eid ]->current_tile.y ) {
+                            Mix_PlayChannel( -1, g_PacChompSound, 0 );
+                            Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
+                            score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
+                            g_NumGhostsEaten++;
+                            *entities.ghostStates[ eid ] = STATE_GO_TO_PEN;
+                            uint8_t texture_atlas_id = 4;
+                            entities.animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
+                            entities.actors[ eid ]->next_tile = actors[ eid ]->current_tile;
+                            entities.actors[ eid ]->target_tile = ghost_pen_tile;
+                            entities.actors[ eid ]->speed_multp = 1.6f;
+
+                            // show message
+                            for( int i = 0; i < g_NumTimedMessages; i++ ) {
+                                if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
+                                    g_TimedMessages[ i ].remainingTime = 0.85f;
+                                    g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( actors[ playerId ]->current_tile );
+                                    snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
+                                    g_TimedMessages[ i ].color = white;
+                                    SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
+                                    g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( renderer, msgSurface );
+                                    g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).x;
+                                    g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).y;
+                                    g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
+                                    g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
+                                    SDL_FreeSurface( msgSurface );
+                                    g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
+
+                                    break;
+
+                                }
+                            }
+                        }
+                    }
                     break;
                     
                 case STATE_GO_TO_PEN :
                     // ghost is in pen
                     
-                    if( points_equal(actors[ i ]->current_tile, ghost_pen_tile ) && actors[ i ]->world_center_point.y >= ghost_pen_center_point.y) {
-                        // actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
-                        // actors[ i ]->next_tile = actors[ i ]->current_tile;
-                        // ghost_states[ i ] = STATE_NORMAL;
-                        // normal_enter( actors, animations, i , render_clips[ i ], i );
-                        // actors[ i ]->next_tile.y -=3; // makes sure that they go out of 
-                        ghost_states[ i ] = STATE_LEAVE_PEN;
-                        leave_pen_enter( actors, animations, i );
+                    if( points_equal(entities.actors[ eid ]->current_tile, ghost_pen_tile ) && entities.actors[ eid ]->world_center_point.y >= ghost_pen_center_point.y) {
+
+                        *entities.ghostStates[ eid ] = STATE_LEAVE_PEN;
+                        leave_pen_enter( &entities, eid );
                     }
                     break;
 
@@ -836,9 +750,9 @@ int main( int argc, char *argv[] ) {
                 case STATE_NORMAL :
                     break;
                 case STATE_LEAVE_PEN:
-                    if( points_equal( actors[ i ]->current_tile, actors[ i ]->target_tile ) ) {
-                        ghost_states[ i ] = STATE_NORMAL;
-                        normal_enter( actors, animations, i, render_clips[ i ], i );
+                    if( points_equal( entities.actors[ eid ]->current_tile, entities.actors[ eid ]->target_tile ) ) {
+                        *entities.ghostStates[ eid ] = STATE_NORMAL;
+                        normal_enter( &entities, eid );
                     }
                     
                     break;
@@ -848,52 +762,44 @@ int main( int argc, char *argv[] ) {
         // pacman eats power pellet
         for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
         // pac-man eats power pellet
-            if ( points_equal( actors[ 0 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
-                score.score_number += 20;
-                g_NumGhostsEaten = 0;
-                tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-                g_NumDots--;
+            EntityId playerId;
+            for( int i = 0; i < numPlayers; ++i ) {
+                playerId = playerIds[ i ];
 
-                for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
+                if ( points_equal( actors[ playerId ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
+                    score.score_number += 20;
+                    g_NumGhostsEaten = 0;
+                    tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
+                    g_NumDots--;
 
-                    if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN && ghost_states[ ghost_state_idx ] != STATE_LEAVE_PEN ) {
+                    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                        if( entities.ghostStates[ eid ] == NULL ) {
+                            continue;
+                        }
+                        if ( *entities.ghostStates[ eid ] != STATE_GO_TO_PEN && *entities.ghostStates[ eid ] != STATE_LEAVE_PEN ) {
 
-                        ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
-                        vulnerable_enter( actors, animations, ghost_state_idx, render_clips[ ghost_state_idx ] );
-                    }
-                    
-                }   
-                ghost_vulnerable_timer = 20.0f;                        
+                            entities.ghostStates[ eid ] = STATE_VULNERABLE;
+                            vulnerable_enter( &entities, eid );
+                        }
+                        
+                    }   
+                    ghost_vulnerable_timer = 20.0f;                        
+                }
             }
-            if ( points_equal( actors[ 5 ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
-                score.score_number += 20;
-                g_NumGhostsEaten = 0;
-                tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-                g_NumDots--;
-
-                for( int ghost_state_idx = 1; ghost_state_idx < 5; ++ghost_state_idx ) {
-
-                    if ( ghost_states[ ghost_state_idx ] != STATE_GO_TO_PEN && ghost_states[ ghost_state_idx ] != STATE_LEAVE_PEN ) {
-
-                        ghost_states[ ghost_state_idx ] = STATE_VULNERABLE;
-                        vulnerable_enter( actors, animations, ghost_state_idx, render_clips[ ghost_state_idx ] );
-                    }
-                    
-                }   
-                ghost_vulnerable_timer = 20.0f;                        
-            }
+                
+            
         
     }
 
         /*******************
          * PROCESS STATES
          * ******************/
-        states_machine_process( actors, ghost_states, &tilemap );
+        //states_machine_process( actors, ghost_states, &tilemap );
 
         //if no ghosts normal, then stop playing ghost sound
         int any_ghosts_nomral = 0;
-        for( int i = 1; i < 5 ; i++ ) {
-            if( ghost_states[ i ] == STATE_NORMAL ) {
+        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+            if( entities.ghostStates[ eid ] == STATE_NORMAL ) {
                 any_ghosts_nomral = 1;
                 break;
             }
@@ -904,9 +810,13 @@ int main( int argc, char *argv[] ) {
             }
         }
 
+        // PROCESS GLOBAL GAME STATE FOR ANY GHOSTS VULNERABLE
         int any_ghosts_vuln = 0;
-        for( int i = 1; i < 5 ; i++ ) {
-            if( ghost_states[ i ] == STATE_VULNERABLE ) {
+        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+            if( entities.ghostStates[ eid ] == NULL ) {
+                continue;
+            }
+            if( entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
                 any_ghosts_vuln = 1;
                 break;
             }
@@ -915,6 +825,9 @@ int main( int argc, char *argv[] ) {
             if(Mix_Playing( GHOST_VULN_CHANNEL ) ) {
                 Mix_HaltChannel( GHOST_VULN_CHANNEL );
             }
+        }
+        else {
+            ghost_vulnerable_timer -= delta_time;
         }
 
 
@@ -927,61 +840,11 @@ int main( int argc, char *argv[] ) {
         // hardcoded ids! uh oh!
         // we really just want to do this on all animations that have more than 1 row. It must have 4 rows for ghosts because they can move in 4 directions
         // When pac-man animations are complete, he will have 8 rows because he can move in 8 directions ( he cuts corners diaganolly )
-        set_animation_row( animations[ 1 ], actors[ 1 ] );
-        set_animation_row( animations[ 3 ], actors[ 3 ] );
-        set_animation_row( animations[ 2 ], actors[ 2 ] );
-        set_animation_row( animations[ 4 ], actors[ 4 ] );
+        // set_animation_row( animations[ 1 ], actors[ 1 ] );
+        // set_animation_row( animations[ 3 ], actors[ 3 ] );
+        // set_animation_row( animations[ 2 ], actors[ 2 ] );
+        // set_animation_row( animations[ 4 ], actors[ 4 ] );
 
-        // pacman animation row
-        if( actors[ 0 ]->velocity.x > 0 && actors[ 0 ]->velocity.y == 0 ) { // right
-            animations[ 0 ]->current_anim_row = 0;
-        }
-        if( actors[ 0 ]->velocity.x < 0 && actors[ 0 ]->velocity.y == 0 ) { // left
-            animations[ 0 ]->current_anim_row = 1;
-        }
-        if( actors[ 0 ]->velocity.x == 0 && actors[ 0 ]->velocity.y > 0 ) { // down
-            animations[ 0 ]->current_anim_row = 2;
-        }
-        if( actors[ 0 ]->velocity.x == 0 && actors[ 0 ]->velocity.y < 0 ) { // up
-            animations[ 0 ]->current_anim_row = 3;
-        }
-        if( actors[ 0 ]->velocity.x > 0 && actors[ 0 ]->velocity.y < 0 ) { //  up-right
-            animations[ 0 ]->current_anim_row = 4;
-        }
-        if( actors[ 0 ]->velocity.x < 0 && actors[ 0 ]->velocity.y < 0 ) { // up-left
-            animations[ 0 ]->current_anim_row = 5;
-        }
-        if( actors[ 0 ]->velocity.x > 0 && actors[ 0 ]->velocity.y > 0 ) { // down-right
-            animations[ 0 ]->current_anim_row = 6;
-        }
-        if( actors[ 0 ]->velocity.x < 0 && actors[ 0 ]->velocity.y > 0 ) { // down-left
-            animations[ 0 ]->current_anim_row = 7;
-        }
-
-        if( actors[ 5 ]->velocity.x > 0 && actors[ 5 ]->velocity.y == 0 ) { // right
-            animations[ 5 ]->current_anim_row = 0;
-        }
-        if( actors[ 5 ]->velocity.x < 0 && actors[ 5 ]->velocity.y == 0 ) { // left
-            animations[ 5 ]->current_anim_row = 1;
-        }
-        if( actors[ 5 ]->velocity.x == 0 && actors[ 5 ]->velocity.y > 0 ) { // down
-            animations[ 5 ]->current_anim_row = 2;
-        }
-        if( actors[ 5 ]->velocity.x == 0 && actors[ 5 ]->velocity.y < 0 ) { // up
-            animations[ 5 ]->current_anim_row = 3;
-        }
-        if( actors[ 5 ]->velocity.x > 0 && actors[ 5 ]->velocity.y < 0 ) { //  up-right
-            animations[ 5 ]->current_anim_row = 4;
-        }
-        if( actors[ 5 ]->velocity.x < 0 && actors[ 5 ]->velocity.y < 0 ) { // up-left
-            animations[ 5 ]->current_anim_row = 5;
-        }
-        if( actors[ 5 ]->velocity.x > 0 && actors[ 5 ]->velocity.y > 0 ) { // down-right
-            animations[ 5 ]->current_anim_row = 6;
-        }
-        if( actors[ 5 ]->velocity.x < 0 && actors[ 5 ]->velocity.y > 0 ) { // down-left
-            animations[ 5 ]->current_anim_row = 7;
-        }
 
 
 
@@ -993,20 +856,20 @@ int main( int argc, char *argv[] ) {
         if( g_current_scatter_chase_period < NUM_SCATTER_CHASE_PERIODS && ghost_mode_timer > g_scatter_chase_period_seconds[ g_current_scatter_chase_period ] ) {
             if( g_current_ghost_mode == MODE_CHASE ) {
                 g_current_ghost_mode = MODE_SCATTER;
-                for( int i = 1; i < 5; ++i ) {
-                    if( ghost_states[ i ] == STATE_NORMAL ) {
-                        actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
-                        actors[ i ]->next_tile = actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
+                for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
+                    if( entities.ghostStates[ i ] == STATE_NORMAL ) {
+                        entities.actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
+                        entities.actors[ i ]->next_tile = entities.actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
                     }
                     
                 }
             }
             else {
                 g_current_ghost_mode = MODE_CHASE;
-                for( int i = 1; i < 5; ++i ) {
-                    if( ghost_states[ i ] == STATE_NORMAL ) {
-                        actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
-                        actors[ i ]->next_tile = actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
+                for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
+                    if( entities.ghostStates[ i ] == STATE_NORMAL ) {
+                        entities.actors[ i ]->direction = opposite_directions[ actors[ i ]->direction ];
+                        entities.actors[ i ]->next_tile = entities.actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
                     }
 
                 }
@@ -1041,7 +904,7 @@ int main( int argc, char *argv[] ) {
         /**********
          * RENDER
          * **********/
-        set_render_clip_values_based_on_actor_and_animation( render_clips, actors, tilemap.tm_screen_position, animations, 6 );
+        set_render_clip_values_based_on_actor_and_animation( entities.render_clips, entities.actors, tilemap.tm_screen_position, entities.animatedSprites, 6 );
         //set_render_texture_values_based_on_actor( actors, tilemap.tm_screen_position.x, tilemap.tm_screen_position.y,render_clips, 5 );
         for( int i = 0; i < 4; ++i ) {
             SDL_Point world_position = tile_grid_point_to_world_point( tilemap.tm_power_pellet_tiles[ i ] );

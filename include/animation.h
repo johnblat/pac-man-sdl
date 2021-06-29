@@ -29,7 +29,7 @@ AnimatedSprite *init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t n
 
 float fps_to_frame_interval( int fps, int num_frames );
 
-void inc_animations( AnimatedSprite **animations, uint8_t num_animations, float delta_time ) ;
+void animatedSpriteIncProcess( AnimatedSprite **animatedSprites, float delta_time ) ;
 
 void set_animation_row(AnimatedSprite *animated_sprite, Actor *actor ) ;
 

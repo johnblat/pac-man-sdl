@@ -9,6 +9,7 @@
 #include "jb_types.h"
 #include "constants.h"
 #include "tiles.h"
+#include "entity.h"
 #include "sounds.h"
 
 
@@ -107,32 +108,38 @@ void actor_reset_data( Actor *actor, SDL_Point initial_tile ) {
 }
 
 
-void pac_collect_dot( Actor *pacmonster, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer ) {
-    if( dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] == 'x') {
-        //if( !Mix_Playing( PAC_CHOMP_CHANNEL ) ) {
+void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+        if( entities->inputMasks[ eid ] == NULL ) {
+            continue; // only entities with input ability should collect dots
+        }
+        if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
+     
             Mix_PlayChannel( -1, g_PacChompSound, 0 );
-       // }
-        // get rid of dot marker
-        dots[ pacmonster->current_tile.y ][ pacmonster->current_tile.x ] = ' ';
 
-        unsigned int n = *num_dots - 1;
-        *num_dots = n;
-        
-        score->score_number += 20;
-        
-        snprintf( score->score_text, 32, "Score : %d", score->score_number );
-        SDL_Surface *score_surface = TTF_RenderText_Solid( score->font, score->score_text, score->score_color );
+            // get rid of dot marker
+            dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] = ' ';
 
-        SDL_DestroyTexture( score->score_texture );
-        score->score_texture = SDL_CreateTextureFromSurface( renderer, score_surface );
-        score->score_render_dst_rect.x = 10;
-        score->score_render_dst_rect.y = 10;
-        score->score_render_dst_rect.w = score_surface->w;
-        score->score_render_dst_rect.h = score_surface->h;
+            unsigned int n = *num_dots - 1;
+            *num_dots = n;
+            
+            score->score_number += 20;
+            
+            snprintf( score->score_text, 32, "Score : %d", score->score_number );
+            SDL_Surface *score_surface = TTF_RenderText_Solid( score->font, score->score_text, score->score_color );
 
-        SDL_FreeSurface( score_surface );
+            SDL_DestroyTexture( score->score_texture );
+            score->score_texture = SDL_CreateTextureFromSurface( renderer, score_surface );
+            score->score_render_dst_rect.x = 10;
+            score->score_render_dst_rect.y = 10;
+            score->score_render_dst_rect.w = score_surface->w;
+            score->score_render_dst_rect.h = score_surface->h;
 
+            SDL_FreeSurface( score_surface );
+
+        }
     }
+        
 
 }
 

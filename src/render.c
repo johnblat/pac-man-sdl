@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "render.h"
 #include "actor.h"
+#include "entity.h"
 #include <assert.h>
 #include "animation.h"
 
@@ -129,26 +130,29 @@ void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas 
 //     }
 // }
 
-void set_render_clip_values_based_on_actor_and_animation( RenderClipFromTextureAtlas **render_clips, Actor **actors, SDL_Point offset, AnimatedSprite **animated_sprites, int num ) {
-    for ( int i = 0; i < num; ++i ) {
-        uint8_t animation_id = render_clips[ i ]->animation_id;
-        uint8_t texture_atlas_id = animated_sprites[ animation_id ]->texture_atlas_id;
-        uint8_t current_col = animated_sprites[ animation_id ]->current_frame_col;
-        uint8_t current_row = animated_sprites[ animation_id ]->current_anim_row;
-        uint8_t num_cols = animated_sprites[ animation_id ]->num_frames_col; 
+void set_render_clip_values_based_on_positions_and_animation( Entities *entities, SDL_Point offset ) {
+    for ( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+        if( entities->animatedSprites[ eid ] == NULL || entities->positions[ eid ] == NULL || entities->render_clips[ eid ] == NULL ) {
+            continue;
+        }
+        uint8_t animation_id = entities->render_clips[ eid ]->animation_id;
+        uint8_t texture_atlas_id = entities->animatedSprites[ animation_id ]->texture_atlas_id;
+        uint8_t current_col = entities->animatedSprites[ animation_id ]->current_frame_col;
+        uint8_t current_row = entities->animatedSprites[ animation_id ]->current_anim_row;
+        uint8_t num_cols = entities->animatedSprites[ animation_id ]->num_frames_col; 
         uint8_t clip_idx = ( current_row * num_cols ) + current_col;
-        render_clips[ i ]->dest_rect.x =
+        entities->render_clips[ eid ]->dest_rect.x =
             offset.x
-            + actors[ i ]->world_position.x
+            + entities->positions[ eid ]->world_position.x
             - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].w - ACTOR_SIZE ) / 2;
-        render_clips[ i ]->dest_rect.y = 
+        entities->render_clips[ eid ]->dest_rect.y = 
             offset.y
-            + actors[ i ]->world_position.y 
+            + entities->positions[ eid ]->world_position.y 
             - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].h - ACTOR_SIZE ) / 2;
-        render_clips[ i ]->dest_rect.w = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].w;
-        render_clips[ i ]->dest_rect.h = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].h;
+        entities->render_clips[ eid ]->dest_rect.w = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].w;
+        entities->render_clips[ eid ]->dest_rect.h = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].h;
 
-        render_clips[ i ]->flip = SDL_FLIP_NONE;
+        entities->render_clips[ eid ]->flip = SDL_FLIP_NONE;
 
     }
 }

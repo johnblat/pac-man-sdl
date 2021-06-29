@@ -13,6 +13,7 @@ typedef struct LevelConfig {
     uint8_t numScatterChasePeriods;
     SDL_Point ghostPenTile;
     SDL_Point pacStartingTile;
+    float baseSpeed;
 } LevelConfig;
 
 unsigned int gCurrentLevel;
