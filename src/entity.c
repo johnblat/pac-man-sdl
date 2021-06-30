@@ -1,18 +1,21 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+#include "sounds.h"
 #include "stdio.h"
 #include "jb_types.h"
 #include "animation.h"
+#include "ghostStates.h"
 #include "states.h"
 #include "render.h"
 #include "targeting.h"
-#include "resources.h"
+#include "levelConfig.h"
 #include "actor.h"
 #include "entity.h"
 
 
 unsigned int g_NumEntities = 0;
 
-EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, RenderClipFromTextureAtlas *renderClip ) {
+EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite ) {
     EntityId entityId = g_NumEntities;
     g_NumEntities++;
 
@@ -20,7 +23,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
     entities->actors         [ entityId ] = ( Actor * )                 malloc( sizeof( Actor ) );
     entities->animatedSprites[ entityId ] = (AnimatedSprite * )         malloc( sizeof( Actor ) );
-    entities->render_clips   [ entityId ] = (RenderClipFromTextureAtlas *)malloc(sizeof(RenderClipFromTextureAtlas ) );
+    entities->renderDatas   [ entityId ] = (RenderData *)malloc(sizeof(RenderData ) );
     entities->chargeTimers   [ entityId ] = (float * )                  malloc(sizeof(float));
     entities->dashTimers     [ entityId ] = (float * )                  malloc(sizeof(float ) );
     entities->slowTimers     [ entityId ] = ( float * )malloc(sizeof(float ) );
@@ -66,7 +69,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->actors[ entityId ]->speed_multp = 1.0f;
 
     entities->animatedSprites[ entityId ] = animatedSprite;
-    entities->render_clips[ entityId ] = renderClip;
+    entities->renderDatas[ entityId ] = renderDataInit();
 
     *entities->chargeTimers[ entityId ] = 0.0f;
     *entities->dashTimers[ entityId ] = 0.0f;
@@ -77,7 +80,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     return entityId;
 }
 
-EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, RenderClipFromTextureAtlas *renderClip, TargetingBehavior targetingBehavior ) {
+EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, TargetingBehavior targetingBehavior ) {
     EntityId entityId = g_NumEntities;
     g_NumEntities++;
 
@@ -85,22 +88,22 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
     entities->actors         [ entityId ] = ( Actor * )                 malloc( sizeof( Actor ) );
     entities->animatedSprites[ entityId ] = (AnimatedSprite * )         malloc( sizeof( Actor ) );
-    entities->render_clips   [ entityId ] = (RenderClipFromTextureAtlas *)malloc(sizeof(RenderClipFromTextureAtlas ) );
+    entities->renderDatas   [ entityId ] = (RenderData *)malloc(sizeof(RenderData ) );
     entities->targetingBehaviors     [ entityId ] = (TargetingBehavior *)              malloc(sizeof(TargetingBehavior));
     entities->ghostStates[ entityId] = (GhostState *)malloc(sizeof(GhostState));
 
     //initialize
     // position
-    entities->positions[ entityId ]->current_tile = levelConfig->pacStartingTile;
-    entities->positions[ entityId ]->world_position.x = levelConfig->pacStartingTile.x * TILE_SIZE;
-    entities->positions[ entityId ]->world_position.y = levelConfig->pacStartingTile.y * TILE_SIZE;
+    entities->positions[ entityId ]->current_tile = levelConfig->ghostPenTile;
+    entities->positions[ entityId ]->world_position.x = levelConfig->ghostPenTile.x * TILE_SIZE;
+    entities->positions[ entityId ]->world_position.y = levelConfig->ghostPenTile.y * TILE_SIZE;
 
     entities->positions[ entityId ]->world_center_point.x = ( int ) entities->positions[ entityId ]->world_position.x + ( ACTOR_SIZE / 2 );
     entities->positions[ entityId ]->world_center_point.y = ( int ) entities->positions[ entityId ]->world_position.y + ( ACTOR_SIZE / 2 );
     //actor
-    entities->actors[ entityId ]->current_tile = levelConfig->pacStartingTile;
-    entities->actors[ entityId ]->world_position.x = levelConfig->pacStartingTile.x * TILE_SIZE;
-    entities->actors[ entityId ]->world_position.y = levelConfig->pacStartingTile.y * TILE_SIZE;
+    entities->actors[ entityId ]->current_tile = levelConfig->ghostPenTile;
+    entities->actors[ entityId ]->world_position.x = levelConfig->ghostPenTile.x * TILE_SIZE;
+    entities->actors[ entityId ]->world_position.y = levelConfig->ghostPenTile.y * TILE_SIZE;
 
     entities->actors[ entityId ]->world_center_point.x = ( int ) entities->actors[ entityId ]->world_position.x + ( ACTOR_SIZE / 2 );
     entities->actors[ entityId ]->world_center_point.y = ( int ) entities->actors[ entityId ]->world_position.y + ( ACTOR_SIZE / 2 );
@@ -117,18 +120,19 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->actors[ entityId ]->speed_multp = 0.85f;
 
     entities->animatedSprites[ entityId ] = animatedSprite;
-    entities->render_clips[ entityId ] = renderClip;
+    entities->renderDatas[ entityId ] = renderDataInit( );
 
-    entities->ghostStates[ entityId ] = STATE_NORMAL;
-    entities->targetingBehaviors[ entityId ]->targetingBehavior = targetingBehavior;
+    *entities->ghostStates[ entityId ] = STATE_LEAVE_PEN;
+    leave_pen_enter( entities, entityId );
+    *entities->targetingBehaviors[ entityId ] = targetingBehavior;
 
     return entityId;
 }
 
 void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime ) {
-    Actor *actors[ MAX_NUM_ENTITIES ] = entities->actors;
-    TargetingBehavior *targetingBehaviors[ MAX_NUM_ENTITIES ] = entities->targetingBehaviors;
-    GhostState *ghostStates[ MAX_NUM_ENTITIES ] = entities->ghostStates;
+    Actor **actors = entities->actors;
+    TargetingBehavior **targetingBehaviors = entities->targetingBehaviors;
+    GhostState **ghostStates = entities->ghostStates;
 
 
     for( int eid = 0; eid < g_NumEntities; eid++ ) {
@@ -158,5 +162,152 @@ void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPla
         
         set_animation_row( entities->animatedSprites[ eid ], entities->actors[ eid ] );
 
+        // moving the ghosts
+        // Vector_f velocity = { 0, 0 };
+        // if( actors[ eid ]->direction == DIR_UP ) {
+        //     // set velocity
+        //     if( actors[ eid ]->world_center_point.x >= tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) - 2 
+        //     && ( actors[ eid ]->world_center_point.x <= tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) + 2) ) {
+        //         actors[ eid ]->world_center_point.x = tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 );
+        //     }
+        //     if ( actors[ eid ]->world_center_point.x == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = 0;
+        //         velocity.y = -1;
+        //     } 
+        //     else if( actors[ eid ]->world_center_point.x < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = 1;
+        //         velocity.y = 0;
+        //     }
+        //     else if( actors[ eid ]->world_center_point.x > tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 )){
+        //         velocity.x = -1;
+        //         velocity.y = 0;
+        //     }
+        // }
+        // else if( actors[ eid ]->direction == DIR_DOWN ){
+        //     // set velocity
+        //     if ( actors[ eid ]->world_center_point.x == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = 0;
+        //         velocity.y = 1;
+                
+        //     } 
+        //     else if( actors[ eid ]->world_center_point.x < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = 1;
+        //         velocity.y = 0;
+
+        //     }
+        //     else if( actors[ eid ]->world_center_point.x >tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 )){
+        //         velocity.x = -1;
+        //         velocity.y = 0;
+
+        //     }
+        // } 
+        // else if( actors[ eid ]->direction == DIR_LEFT ) {
+        //     // set velocity
+        //     if ( actors[ eid ]->world_center_point.y == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = -1;
+        //         velocity.y = 0;
+
+        //     } 
+        //     else if( actors[ eid ]->world_center_point.y < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = 0;
+        //         velocity.y = 1;
+                
+        //     }
+        //     else if( actors[ eid ]->world_center_point.y >tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 )){
+        //         velocity.x = 0;
+        //         velocity.y = -1;
+
+        //     }
+        // }
+        // else if(actors[ eid ]->direction == DIR_RIGHT ) {
+        //     // set velocity
+        //     if ( actors[ eid ]->world_center_point.y == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = 1;
+        //         velocity.y = 0;
+
+        //     } 
+        //     else if( actors[ eid ]->world_center_point.y < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+        //         velocity.x = 0;
+        //         velocity.y = 1;
+
+        //     }
+        //     else if( actors[ eid ]->world_center_point.y >tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 )){
+        //         velocity.x = 0;
+        //         velocity.y = -1;
+
+        //     }
+        // }
+        // velocity.x *= actors[ eid ]->base_speed * actors[ eid ]->speed_multp * deltaTime;
+        // velocity.y *= actors[ eid ]->base_speed * actors[ eid ]->speed_multp * deltaTime;
+
+        // moveActor(actors[ eid ], velocity );
+
+        // // account for overshooting
+        // // note velocity will never be in x and y direction.
+        // if( velocity.x > 0 && !( actors[ eid ]->direction == DIR_RIGHT )) { // right
+        //     if( actors[ eid ]->world_center_point.x > tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
+        //         actors[ eid ]->world_position.x = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
+
+        //     }
+        // }
+        // else if( velocity.x < 0 && !( actors[ eid ]->direction == DIR_LEFT )) { // left
+        //     if( actors[ eid ]->world_center_point.x < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
+        //         actors[ eid ]->world_position.x = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
+
+        //     }
+        // }
+        // else if( velocity.y > 0 && !( actors[ eid ]->direction == DIR_DOWN )) { // down
+        //     if( actors[ eid ]->world_center_point.y > tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
+        //         actors[ eid ]->world_position.y = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
+
+        //     }
+        // }
+        // else if( velocity.y < 0 && !( actors[ eid ]->direction == DIR_UP )) { // up
+        //     if( actors[ eid ]->world_center_point.y < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
+        //         actors[ eid ]->world_position.y = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
+
+        //     }
+        // }
+
     }
+}
+
+
+void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+        if( entities->inputMasks[ eid ] == NULL ) {
+            continue; // only entities with input ability should collect dots
+        }
+        if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
+     
+            Mix_PlayChannel( -1, g_PacChompSound, 0 );
+
+            // get rid of dot marker
+            dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] = ' ';
+
+            unsigned int n = *num_dots - 1;
+            *num_dots = n;
+            
+            score->score_number += 20;
+            
+            snprintf( score->score_text, 32, "Score : %d", score->score_number );
+            SDL_Surface *score_surface = TTF_RenderText_Solid( score->font, score->score_text, score->score_color );
+
+            SDL_DestroyTexture( score->score_texture );
+            score->score_texture = SDL_CreateTextureFromSurface( renderer, score_surface );
+            score->score_render_dst_rect.x = 10;
+            score->score_render_dst_rect.y = 10;
+            score->score_render_dst_rect.w = score_surface->w;
+            score->score_render_dst_rect.h = score_surface->h;
+
+            SDL_FreeSurface( score_surface );
+
+        }
+    }
+        
+
 }

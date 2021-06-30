@@ -5,16 +5,11 @@
 #include <SDL2/SDL.h>
 #include <assert.h>
 #include "animation.h"
+#include "entity.h"
 #include "render.h"
 #include "tiles.h"
 
-typedef struct LevelConfig {
-    uint8_t *scatterChasePeriodSeconds;
-    uint8_t numScatterChasePeriods;
-    SDL_Point ghostPenTile;
-    SDL_Point pacStartingTile;
-    float baseSpeed;
-} LevelConfig;
+
 
 unsigned int gCurrentLevel;
 unsigned int gNumLevels;
@@ -22,6 +17,10 @@ unsigned int gNumLevels;
 static void build_resource_file_path( ); 
 
 int determine_number_of_levels_from_dirs( );
+
+void initializePlayersFromFiles( Entities *entities, LevelConfig *levelConfig, unsigned int numPlayers ) ;
+
+void initializeGhostsFromFile( Entities *entities, LevelConfig *levelConfig, const char *animatedSpritesFilename  );
 
 void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap );
 
@@ -31,7 +30,7 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer );
 
 void load_animations_from_config_file( AnimatedSprite **animated_sprites );
 
-void load_render_xx_from_config_file( RenderClipFromTextureAtlas **render_clips );
+void load_render_xx_from_config_file( RenderData **renderDatas );
 
 void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_periods, char *filename_config );
 /**

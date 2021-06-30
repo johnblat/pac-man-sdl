@@ -1,3 +1,4 @@
+#include "entity.h"
 #include "targeting.h"
 #include "actor.h"
 #include "render.h"
@@ -6,6 +7,7 @@
 #include "comparisons.h"
 #include "tiles.h"
 #include "states.h"
+#include "ghostStates.h"
 #include <SDL2/SDL_mixer.h>
 #include "sounds.h"
 #include "stdio.h"
@@ -108,7 +110,6 @@ void vulnerable_process( Entities *entities, EntityId ghostId, TileMap *tilemap 
 
 void normal_enter( Entities *entities, EntityId ghostId )  {
     // set texture atlas id to the id
-    //render_texture->animation_id = render_texture->default_animation_id;
     entities->animatedSprites[ ghostId ] ->num_frames_col = 8;
     entities->animatedSprites[ ghostId ]->current_anim_row = 4;
     entities->animatedSprites[ ghostId ]->accumulator = 0.0f;
@@ -121,13 +122,13 @@ void normal_enter( Entities *entities, EntityId ghostId )  {
 
 void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap ){
     Actor *ghostActor = entities->actors[ ghostId ];
-    TargetingBehavior *ghostTargetBehavior = entities->targetingBehaviors[ ghostId ];
+    //TargetingBehavior *ghostTargetBehavior = entities->targetingBehaviors[ ghostId ];
 
     // play sound
     if( !Mix_Playing( GHOST_SOUND_CHANNEL ) ) {
         Mix_PlayChannel( GHOST_SOUND_CHANNEL, g_GhostSound, -1 );
     }
-    SDL_Point home_tiles[ 5 ] = { shadow_home_tile, shadow_home_tile, ambush_home_tile, moody_home_tile, pokey_home_tile };
+    //SDL_Point home_tiles[ 5 ] = { shadow_home_tile, shadow_home_tile, ambush_home_tile, moody_home_tile, pokey_home_tile };
          
     // probably won't really help, but can do a lookup in hash table to get this out of a O(n^2)
     // may be useful if more ghosts or slow tiles are added in some circumstances
@@ -187,11 +188,12 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
                 case POKEY_BEHAVIOR:
                     homeTile = pokey_home_tile;
                     break;
-                set_scatter_target_tile( entities, ghostId, homeTile);
-                if( points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile ) ) {
-                    set_direction_and_next_tile_shortest_to_target( entities->actors[ ghostId ], tilemap, STATE_NORMAL );
-                }
+                
                 break;
+            }
+            set_scatter_target_tile( entities, ghostId, homeTile);
+            if( points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile ) ) {
+                set_direction_and_next_tile_shortest_to_target( entities->actors[ ghostId ], tilemap, STATE_NORMAL );
             }
     }
 

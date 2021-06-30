@@ -61,7 +61,7 @@ Actor *init_actor( SDL_Point initial_tile, SDL_Point tilemap_offset, float base_
 // set current_tile and then call this to reset everything as if its initialization
 void actor_reset_data( Actor *actor, SDL_Point initial_tile );
 
-void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer );
+
 
 void actor_align_world_data_based_on_world_position( Actor *actor );
 

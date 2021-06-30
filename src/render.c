@@ -3,6 +3,7 @@
 #include <SDL2/SDL_image.h>
 #include <stdio.h>
 #include "render.h"
+#include "renderProcessing.h"
 #include "actor.h"
 #include "entity.h"
 #include <assert.h>
@@ -15,7 +16,7 @@
 
 uint8_t num_texture_atlases = 0; 
 
-int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_rows, int num_cols ) {
+int addTextureAtlas( SDL_Renderer *renderer, const char *filename, int num_rows, int num_cols ) {
     if( num_texture_atlases >= MAX_TEXTURE_ATLASES ) {
         fprintf(stderr, "Can't add more texture atlases. Limit of %d reached\n", MAX_TEXTURE_ATLASES );
         return -1;
@@ -47,13 +48,7 @@ int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_row
             g_texture_atlases[ num_texture_atlases ].sprite_clips[ ( row * num_cols ) + col ].h = stride_rows;
         }
     }
-    
-    // for( int i = 0; i < num_sprites; ++i ) {
-    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].x = i * stride;
-    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].y = 0;
-    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].w = stride;
-    //     g_texture_atlases[ num_texture_atlases ].sprite_clips[ i ].h = stride;
-    // }
+
 
     SDL_FreeSurface( surface );
 
@@ -64,19 +59,9 @@ int add_texture_atlas( SDL_Renderer *renderer, const char *filename, int num_row
 }
 
 
-RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t animation_id ) {
+RenderData *renderDataInit( ) {
     
-    RenderClipFromTextureAtlas *render_clip = ( RenderClipFromTextureAtlas * ) malloc (sizeof(RenderClipFromTextureAtlas ));
-
-    if( texture_atlas_id >= num_texture_atlases)  {
-        fprintf(stderr, "Trying to assign texture atlas id %d that's more than the number of texture atlases created %d \n", texture_atlas_id, num_texture_atlases );
-        return NULL;
-    }
-    assert( texture_atlas_id < num_texture_atlases );
-
-    //render_clip->texture_atlas_id = texture_atlas_id;
-    render_clip->animation_id = animation_id;
-    render_clip->default_animation_id = animation_id;
+    RenderData *render_clip = ( RenderData * ) malloc (sizeof(RenderData ));
 
     render_clip->dest_rect.x = 0;
     render_clip->dest_rect.y = 0;
@@ -93,66 +78,50 @@ RenderClipFromTextureAtlas *init_render_clip( uint8_t texture_atlas_id, uint8_t 
     return render_clip;
 }
 
-void render_render_textures( SDL_Renderer *renderer, RenderClipFromTextureAtlas **render_clips, AnimatedSprite **animations, int number_render_textures ) {
-    for( int i = 0; i < number_render_textures; ++i ) {
-        uint8_t animation_id = render_clips[ i ]->animation_id;
-        uint8_t anim_frame_col = animations[ animation_id ]->current_frame_col;
-        uint8_t anim_row = animations[ animation_id ]->current_anim_row;
-        uint8_t num_frames_col = animations[ animation_id ]->num_frames_col;
+void renderDataForAnimatedSpriteProcess( SDL_Renderer *renderer, Entities *entities)  {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+        if( entities->renderDatas[ eid ] == NULL || entities->animatedSprites[ eid ] == NULL ) {
+            continue;
+        }
+        uint8_t anim_frame_col = entities->animatedSprites[ eid ]->current_frame_col;
+        uint8_t anim_row = entities->animatedSprites[ eid ]->current_anim_row;
+        uint8_t num_frames_col = entities->animatedSprites[ eid ]->num_frames_col;
         uint8_t clip_idx = (  ( anim_row * num_frames_col ) + anim_frame_col );
 
-        uint8_t texture_atlas_id = animations[ animation_id ]->texture_atlas_id;
+        uint8_t texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
         SDL_Rect src_rect = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx ];
+        SDL_Rect *dest_rect = &entities->renderDatas[ eid ]->dest_rect;
+        float rotation = entities->renderDatas[ eid ]->rotation;
+        SDL_RendererFlip flip = entities->renderDatas[ eid ]->flip;
         
-        SDL_RenderCopyEx( renderer, g_texture_atlases[ texture_atlas_id ].texture, &src_rect, &render_clips[ i ]->dest_rect, render_clips[ i ]->rotation, NULL, render_clips[ i ]->flip);
+
+        SDL_RenderCopyEx( renderer, g_texture_atlases[ texture_atlas_id ].texture, &src_rect, dest_rect, rotation, NULL, flip );
     }
 }
 
 
-// void set_render_texture_values_based_on_animation( AnimatedSprite **animations, RenderClipFromTextureAtlas **render_clips, int num ) {
-//     for( int i = 0; i < num ; ++i ){
-//         render_clips[ i ]->current_sprite_clip = animations[ render_clips[ i ]->animation_id ]->current_frame ;
-//     }
-// }
-
-// void set_render_texture_values_based_on_actor( Actor **actors, int offset_x, int offset_y, RenderClipFromTextureAtlas **render_clips, int num ) {
-//     for( int i = 0; i < num; ++i ) {
-//         // center the sprite around the actor size
-//         render_clips[ i ]->dest_rect.x = 
-//               offset_x  
-//             + actors[ i ]->world_position.x 
-//             - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w - ACTOR_SIZE ) / 2;
-//         render_clips[ i ]->dest_rect.y = offset_y + actors[ i ]->world_position.y - ( g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h  - ACTOR_SIZE ) / 2;
-//         render_clips[ i ]->dest_rect.w = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].w;
-//         render_clips[ i ]->dest_rect.h = g_texture_atlases[ render_clips[ i ]->texture_atlas_id ].sprite_clips[ render_clips[ i ]->current_sprite_clip ].h;
-
-//         render_clips[ i ]->flip = SDL_FLIP_NONE;
-//     }
-// }
-
 void set_render_clip_values_based_on_positions_and_animation( Entities *entities, SDL_Point offset ) {
     for ( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-        if( entities->animatedSprites[ eid ] == NULL || entities->positions[ eid ] == NULL || entities->render_clips[ eid ] == NULL ) {
+        if( entities->animatedSprites[ eid ] == NULL || entities->positions[ eid ] == NULL || entities->renderDatas[ eid ] == NULL ) {
             continue;
         }
-        uint8_t animation_id = entities->render_clips[ eid ]->animation_id;
-        uint8_t texture_atlas_id = entities->animatedSprites[ animation_id ]->texture_atlas_id;
-        uint8_t current_col = entities->animatedSprites[ animation_id ]->current_frame_col;
-        uint8_t current_row = entities->animatedSprites[ animation_id ]->current_anim_row;
-        uint8_t num_cols = entities->animatedSprites[ animation_id ]->num_frames_col; 
+        uint8_t texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
+        uint8_t current_col = entities->animatedSprites[ eid ]->current_frame_col;
+        uint8_t current_row = entities->animatedSprites[ eid ]->current_anim_row;
+        uint8_t num_cols = entities->animatedSprites[ eid ]->num_frames_col; 
         uint8_t clip_idx = ( current_row * num_cols ) + current_col;
-        entities->render_clips[ eid ]->dest_rect.x =
+        entities->renderDatas[ eid ]->dest_rect.x =
             offset.x
-            + entities->positions[ eid ]->world_position.x
+            + entities->actors[ eid ]->world_position.x
             - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].w - ACTOR_SIZE ) / 2;
-        entities->render_clips[ eid ]->dest_rect.y = 
+        entities->renderDatas[ eid ]->dest_rect.y = 
             offset.y
-            + entities->positions[ eid ]->world_position.y 
+            + entities->actors[ eid ]->world_position.y 
             - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].h - ACTOR_SIZE ) / 2;
-        entities->render_clips[ eid ]->dest_rect.w = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].w;
-        entities->render_clips[ eid ]->dest_rect.h = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].h;
+        entities->renderDatas[ eid ]->dest_rect.w = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].w;
+        entities->renderDatas[ eid ]->dest_rect.h = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].h;
 
-        entities->render_clips[ eid ]->flip = SDL_FLIP_NONE;
+        entities->renderDatas[ eid ]->flip = SDL_FLIP_NONE;
 
     }
 }

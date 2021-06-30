@@ -1,10 +1,10 @@
 #ifndef TARGETING_H
 #define TARGETING_H
 
+#include "entity.h"
 #include "actor.h"
 #include <inttypes.h>
 #include "tiles.h"
-#include "states.h"
 
 extern SDL_Point shadow_home_tile; 
 extern SDL_Point ambush_home_tile; 

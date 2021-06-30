@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include "actor.h"
 #include "entity.h"
+#include "movement.h"
 #include "tiles.h"
 #include "comparisons.h"
 #include "jb_types.h"
@@ -17,10 +18,119 @@ void tile_wrap( SDL_Point *tile ) {
         tile->x = TILE_COLS - 1;
 }
 
+static void trySetDirection( Entities *entities, EntityId entityId, TileMap *tilemap ) {
+    uint8_t **inputMasks = entities->inputMasks;
+    Actor **actors = entities->actors;
+
+    if( *inputMasks[ entityId ] & g_INPUT_UP ) {
+        SDL_Point tile_above = { actors[ entityId ]->current_tile.x, actors[ entityId ]->current_tile.y - 1 };
+
+        tile_wrap( &tile_above );
+        
+        SDL_Rect tile_above_rect = {tile_grid_point_to_world_point( tile_above ).x, tile_grid_point_to_world_point( tile_above ).y, TILE_SIZE, TILE_SIZE };
+
+        if( actors[ entityId ]->world_center_point.x > tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_RIGHT ) {
+            return;
+        }
+
+        if( actors[ entityId ]->world_center_point.x < tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_LEFT ) {
+            return;
+        }
+
+        if( tilemap->tm_walls[ tile_above.y ][ tile_above.x ] != 'x' ) 
+        {
+            actors[ entityId ]->direction = DIR_UP;
+        }
+        else {
+            return;
+        }
+    }
+
+    if( *inputMasks[ entityId ] & g_INPUT_DOWN  ) {
+        SDL_Point tile_below = { actors[ entityId ]->current_tile.x, actors[ entityId ]->current_tile.y + 1 };
+
+        tile_wrap( &tile_below );
+
+        SDL_Rect tile_below_rect = {tile_grid_point_to_world_point( tile_below ).x, tile_grid_point_to_world_point( tile_below ).y, TILE_SIZE, TILE_SIZE };
+
+        if( actors[ entityId ]->world_center_point.x > tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_RIGHT ) {
+            return;
+        }
+        if( actors[ entityId ]->world_center_point.x < tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_LEFT ) {
+            return;
+        }
+
+        if( points_equal( tile_below, tilemap->one_way_tile) ) {
+            return;
+        }
+
+        if(tilemap->tm_walls[ tile_below.y ][ tile_below.x ] != 'x' ) 
+        {
+            actors[ entityId ]->direction = DIR_DOWN;
+        }
+        else {
+            return;
+        }
+    }
+
+    if( *inputMasks[ entityId ] & g_INPUT_LEFT  ) {
+        SDL_Point tile_to_left = { actors[ entityId ]->current_tile.x - 1, actors[ entityId ]->current_tile.y  };
+
+        tile_wrap( &tile_to_left );
+
+        SDL_Rect tile_to_left_rect = {tile_grid_point_to_world_point( tile_to_left ).x, tile_grid_point_to_world_point( tile_to_left ).y, TILE_SIZE, TILE_SIZE };
+
+        if( actors[ entityId ]->world_center_point.y > tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_DOWN ) {
+            return;
+        }
+        if( actors[ entityId ]->world_center_point.y < tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_UP ) {
+            return;
+        }
+
+        if( points_equal( tile_to_left, tilemap->one_way_tile) ) {
+            return;
+        }
+
+        if(tilemap->tm_walls[ tile_to_left.y ][ tile_to_left.x ] != 'x'  ) 
+        {
+            actors[ entityId ]->direction = DIR_LEFT;
+        }
+        else {
+            return;
+        }
+    }
+
+    if( *inputMasks[ entityId ] & g_INPUT_RIGHT ) {
+        SDL_Point tile_to_right = { actors[ entityId ]->current_tile.x + 1, actors[ entityId ]->current_tile.y };
+
+        tile_wrap( &tile_to_right );
+
+        SDL_Rect tile_to_right_rect = {tile_grid_point_to_world_point( tile_to_right ).x, tile_grid_point_to_world_point( tile_to_right ).y, TILE_SIZE, TILE_SIZE };
+
+        if( actors[ entityId ]->world_center_point.y > tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_DOWN ) {
+            return;
+        }
+        if( actors[ entityId ]->world_center_point.y < tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_UP ) {
+            return;
+        }
+
+        if( points_equal( tile_to_right, tilemap->one_way_tile) ) {
+            return;
+        }
+
+        if(tilemap->tm_walls[ tile_to_right.y ][ tile_to_right.x ] != 'x'  ) 
+        {
+            actors[ entityId ]->direction = DIR_RIGHT;
+        }
+        else {
+            return;
+        }
+    }
+}
 
 void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTime ) {
-    uint8_t *inputMasks [ MAX_NUM_ENTITIES ] = entities->inputMasks;
-    Actor *actors [ MAX_NUM_ENTITIES ] = entities->actors;
+    uint8_t **inputMasks  = entities->inputMasks;
+    Actor **actors  = entities->actors;
 
     for( int i = 0; i < g_NumEntities; ++i  ) {
         // check if should not process
@@ -29,110 +139,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
         }
         // should process
         // don't allow changing direciton if pacman is more than half of the tile
-        if( *inputMasks[ i ] & g_INPUT_UP ) {
-            SDL_Point tile_above = { actors[ i ]->current_tile.x, actors[ i ]->current_tile.y - 1 };
-
-            tile_wrap( &tile_above );
-            
-            SDL_Rect tile_above_rect = {tile_grid_point_to_world_point( tile_above ).x, tile_grid_point_to_world_point( tile_above ).y, TILE_SIZE, TILE_SIZE };
-
-            if( actors[ i ]->world_center_point.x > tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_RIGHT ) {
-                return;
-            }
-
-            if( actors[ i ]->world_center_point.x < tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_LEFT ) {
-                return;
-            }
-
-            if(tilemap->tm_walls[ tile_above.y ][ tile_above.x ] != 'x' ) 
-            {
-                actors[ i ]->direction = DIR_UP;
-            }
-            else {
-                return;
-            }
-        }
-
-        if( *inputMasks[ i ] & g_INPUT_DOWN  ) {
-            SDL_Point tile_below = { actors[ i ]->current_tile.x, actors[ i ]->current_tile.y + 1 };
-
-            tile_wrap( &tile_below );
-
-            SDL_Rect tile_below_rect = {tile_grid_point_to_world_point( tile_below ).x, tile_grid_point_to_world_point( tile_below ).y, TILE_SIZE, TILE_SIZE };
-
-            if( actors[ i ]->world_center_point.x > tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_RIGHT ) {
-                return;
-            }
-            if( actors[ i ]->world_center_point.x < tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_LEFT ) {
-                return;
-            }
-
-            if( points_equal( tile_below, tilemap->one_way_tile) ) {
-                return;
-            }
-
-            if(tilemap->tm_walls[ tile_below.y ][ tile_below.x ] != 'x' ) 
-            {
-                actors[ i ]->direction = DIR_DOWN;
-            }
-            else {
-                return;
-            }
-        }
-
-        if( *inputMasks[ i ] & g_INPUT_LEFT  ) {
-            SDL_Point tile_to_left = { actors[ i ]->current_tile.x - 1, actors[ i ]->current_tile.y  };
-
-            tile_wrap( &tile_to_left );
-
-            SDL_Rect tile_to_left_rect = {tile_grid_point_to_world_point( tile_to_left ).x, tile_grid_point_to_world_point( tile_to_left ).y, TILE_SIZE, TILE_SIZE };
-
-            if( actors[ i ]->world_center_point.y > tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_DOWN ) {
-                return;
-            }
-            if( actors[ i ]->world_center_point.y < tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_UP ) {
-                return;
-            }
-
-            if( points_equal( tile_to_left, tilemap->one_way_tile) ) {
-                return;
-            }
-
-            if(tilemap->tm_walls[ tile_to_left.y ][ tile_to_left.x ] != 'x'  ) 
-            {
-                actors[ i ]->direction = DIR_LEFT;
-            }
-            else {
-                return;
-            }
-        }
-
-        if( *inputMasks[ i ] & g_INPUT_RIGHT ) {
-            SDL_Point tile_to_right = { actors[ i ]->current_tile.x + 1, actors[ i ]->current_tile.y };
-
-            tile_wrap( &tile_to_right );
-
-            SDL_Rect tile_to_right_rect = {tile_grid_point_to_world_point( tile_to_right ).x, tile_grid_point_to_world_point( tile_to_right ).y, TILE_SIZE, TILE_SIZE };
-
-            if( actors[ i ]->world_center_point.y > tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_DOWN ) {
-                return;
-            }
-            if( actors[ i ]->world_center_point.y < tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ i ]->direction == DIR_UP ) {
-                return;
-            }
-
-            if( points_equal( tile_to_right, tilemap->one_way_tile) ) {
-                return;
-            }
-
-            if(tilemap->tm_walls[ tile_to_right.y ][ tile_to_right.x ] != 'x'  ) 
-            {
-                actors[ i ]->direction = DIR_RIGHT;
-            }
-            else {
-                return;
-            }
-        }
+        trySetDirection( entities, i, tilemap );
 
         // try moving
 
@@ -398,7 +405,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
 
 
 void moveActors( Entities *entities ) {
-    Actor *actors[ MAX_NUM_ENTITIES ] = entities->actors;
+    Actor **actors = entities->actors;
     for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
         // skip if no actor
         if( actors[ i ] == NULL ) {
@@ -466,7 +473,7 @@ void dashTimersProcess( Entities *entities, float deltaTime ) {
             *entities->chargeTimers[ eid ] += deltaTime;
         }
         else if( *entities->inputMasks[ eid ] ^ g_INPUT_ACTION && *entities->chargeTimers[ eid ] > 0.0f ) {
-            *entities->chargeTimers[ eid ] = *entities->chargeTimers[ eid ] > g_PAC_DASH_TIME_MAX ? g_PAC_DASH_TIME_MAX : *entities->chargeTimers[ eid ];
+            *entities->dashTimers[ eid ] = *entities->chargeTimers[ eid ] > g_PAC_DASH_TIME_MAX ? g_PAC_DASH_TIME_MAX : *entities->chargeTimers[ eid ];
             *entities->chargeTimers[ eid ] = 0.0f;
         }
         
@@ -491,119 +498,119 @@ void dashTimersProcess( Entities *entities, float deltaTime ) {
 }
 
 
-void ghost_move( Actor **actors, TileMap *tm, float delta_time ) {
+void ghost_move( Actor **actors, EntityId ghostId, TileMap *tm, float delta_time ) {
 
-    for( int i = 1; i < 5; ++i ) {
+
         Vector_f velocity = { 0, 0 };
-        if( actors[ i ]->direction == DIR_UP ) {
+        if( actors[ ghostId ]->direction == DIR_UP ) {
             // set velocity
-            if( actors[ i ]->world_center_point.x >= tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) - 2 
-            && ( actors[ i ]->world_center_point.x <= tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) + 2) ) {
-                actors[ i ]->world_center_point.x = tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 );
+            if( actors[ ghostId ]->world_center_point.x >= tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 ) - 2 
+            && ( actors[ ghostId ]->world_center_point.x <= tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 ) + 2) ) {
+                actors[ ghostId ]->world_center_point.x = tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 );
             }
-            if ( actors[ i ]->world_center_point.x == tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+            if ( actors[ ghostId ]->world_center_point.x == tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = -1;
             } 
-            else if( actors[ i ]->world_center_point.x < tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+            else if( actors[ ghostId ]->world_center_point.x < tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
             }
-            else if( actors[ i ]->world_center_point.x > tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 )){
+            else if( actors[ ghostId ]->world_center_point.x > tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
             }
         }
-        else if( actors[ i ]->direction == DIR_DOWN ){
+        else if( actors[ ghostId ]->direction == DIR_DOWN ){
             // set velocity
-            if ( actors[ i ]->world_center_point.x == tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+            if ( actors[ ghostId ]->world_center_point.x == tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
                 
             } 
-            else if( actors[ i ]->world_center_point.x < tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
+            else if( actors[ ghostId ]->world_center_point.x < tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
 
             }
-            else if( actors[ i ]->world_center_point.x >tile_grid_point_to_world_point( actors[ i ]->current_tile ).x  + ( TILE_SIZE / 2 )){
+            else if( actors[ ghostId ]->world_center_point.x >tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
 
             }
         } 
-        else if( actors[ i ]->direction == DIR_LEFT ) {
+        else if( actors[ ghostId ]->direction == DIR_LEFT ) {
             // set velocity
-            if ( actors[ i ]->world_center_point.y == tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+            if ( actors[ ghostId ]->world_center_point.y == tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = -1;
                 velocity.y = 0;
 
             } 
-            else if( actors[ i ]->world_center_point.y < tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+            else if( actors[ ghostId ]->world_center_point.y < tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
                 
             }
-            else if( actors[ i ]->world_center_point.y >tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 )){
+            else if( actors[ ghostId ]->world_center_point.y >tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
 
             }
         }
-        else if(actors[ i ]->direction == DIR_RIGHT ) {
+        else if(actors[ ghostId ]->direction == DIR_RIGHT ) {
             // set velocity
-            if ( actors[ i ]->world_center_point.y == tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+            if ( actors[ ghostId ]->world_center_point.y == tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
 
             } 
-            else if( actors[ i ]->world_center_point.y < tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
+            else if( actors[ ghostId ]->world_center_point.y < tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
 
             }
-            else if( actors[ i ]->world_center_point.y >tile_grid_point_to_world_point( actors[ i ]->current_tile ).y  + ( TILE_SIZE / 2 )){
+            else if( actors[ ghostId ]->world_center_point.y >tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
 
             }
         }
-        velocity.x *= actors[ i ]->base_speed * actors[ i ]->speed_multp * delta_time;
-        velocity.y *= actors[ i ]->base_speed * actors[ i ]->speed_multp * delta_time;
+        velocity.x *= actors[ ghostId ]->base_speed * actors[ ghostId ]->speed_multp * delta_time;
+        velocity.y *= actors[ ghostId ]->base_speed * actors[ ghostId ]->speed_multp * delta_time;
 
-        moveActor(actors[ i ], velocity );
+        moveActor(actors[ ghostId ], velocity );
 
         // account for overshooting
         // note velocity will never be in x and y direction.
-        if( velocity.x > 0 && !( actors[ i ]->direction == DIR_RIGHT )) { // right
-            if( actors[ i ]->world_center_point.x > tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
-                actors[ i ]->world_position.x = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-                actor_align_world_data_based_on_world_position( actors[ i ] );
+        if( velocity.x > 0 && !( actors[ ghostId ]->direction == DIR_RIGHT )) { // right
+            if( actors[ ghostId ]->world_center_point.x > tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
+                actors[ ghostId ]->world_position.x = ( tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ ghostId ] );
 
             }
         }
-        else if( velocity.x < 0 && !( actors[ i ]->direction == DIR_LEFT )) { // left
-            if( actors[ i ]->world_center_point.x < tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
-                actors[ i ]->world_position.x = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-                actor_align_world_data_based_on_world_position( actors[ i ] );
+        else if( velocity.x < 0 && !( actors[ ghostId ]->direction == DIR_LEFT )) { // left
+            if( actors[ ghostId ]->world_center_point.x < tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
+                actors[ ghostId ]->world_position.x = ( tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ ghostId ] );
 
             }
         }
-        else if( velocity.y > 0 && !( actors[ i ]->direction == DIR_DOWN )) { // down
-            if( actors[ i ]->world_center_point.y > tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
-                actors[ i ]->world_position.y = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-                actor_align_world_data_based_on_world_position( actors[ i ] );
+        else if( velocity.y > 0 && !( actors[ ghostId ]->direction == DIR_DOWN )) { // down
+            if( actors[ ghostId ]->world_center_point.y > tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
+                actors[ ghostId ]->world_position.y = ( tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ ghostId ] );
 
             }
         }
-        else if( velocity.y < 0 && !( actors[ i ]->direction == DIR_UP )) { // up
-            if( actors[ i ]->world_center_point.y < tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
-                actors[ i ]->world_position.y = ( tile_grid_point_to_world_point( actors[ i ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-                actor_align_world_data_based_on_world_position( actors[ i ] );
+        else if( velocity.y < 0 && !( actors[ ghostId ]->direction == DIR_UP )) { // up
+            if( actors[ ghostId ]->world_center_point.y < tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
+                actors[ ghostId ]->world_position.y = ( tile_grid_point_to_world_point( actors[ ghostId ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
+                actor_align_world_data_based_on_world_position( actors[ ghostId ] );
 
             }
         }
-    }
+    
     
 }
 

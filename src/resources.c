@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "animation.h"
+#include "entity.h"
 #include "render.h"
 #include "resources.h"
 #include "tiles.h"
@@ -33,6 +34,101 @@ static void build_resource_file_path(char *fullResourcePath, char *fullLevelDir,
     memset( fullResourcePath, '\0', MAX_FILENAME_SIZE );
     strncat( fullResourcePath, fullLevelDir, MAX_FILENAME_SIZE );
     strncat( fullResourcePath, resourceFileName, MAX_FILENAME_SIZE );
+}
+
+void createGhostsFromFile( Entities *entities ) {
+
+}
+
+/**
+ * Needs to be called on game start.
+ * Further alterations to the player on level advancements should be handled elsewhere
+ * Player should not be removed and initialized again while game is active
+ * 
+ * NOTE: load_level_off_disk() should be called before this
+ */
+void initializePlayersFromFiles( Entities *entities, LevelConfig *levelConfig, unsigned int numPlayers ) {
+    // read in file
+    SDL_RWops *defaultSpeedReadContext = SDL_RWFromFile("res/default_pac_speed", "r");
+    unsigned long size = defaultSpeedReadContext->size(defaultSpeedReadContext);
+    char *content = (char *)malloc( size + 1 );
+    SDL_RWread( defaultSpeedReadContext, content, size, 1 );
+    content[ size ] = '\0';
+    float base_speed = strtol(content, NULL , 10);
+    free( content );
+    SDL_RWclose( defaultSpeedReadContext );
+
+    levelConfig->baseSpeed = base_speed;
+
+    char *playerSpritesFilename = "res/player_animated_sprites";
+    FILE *f = fopen( playerSpritesFilename, "r" );
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file %s\n", playerSpritesFilename );
+    }
+
+    char line[ 64 ];
+    for( int i = 0; i < numPlayers; i++ ) {
+        do {
+            fgets( line, 64, f );
+        } while( line[ 0 ] == '#');
+
+        unsigned int values[ 4 ];
+
+        unsigned int line_idx = 0;
+
+        for( int i = 0; i < 4; i++ ) {
+            values[ i ] = strtol( line + line_idx, NULL, 10 );
+
+            while( line[ line_idx ] != ' ' && line[ line_idx ] != '\n' ) {
+                line_idx++;
+            }
+            line_idx++;
+        }
+
+        AnimatedSprite *animatedSprite = init_animation( values[ 0 ], values[ 1 ], values[ 2 ], values[ 3 ] );
+
+        createPlayer( entities, levelConfig, animatedSprite );
+    }
+}
+
+/**
+ * Needs to be called on game start.
+ * If more ghosts are needed on a certain level this can be run again,
+ * however there should be some kind of teardown function if this is added
+ * 
+ * NOTE: levelConfig should be set by loading_level_off_disk() before calling this 
+ */
+void initializeGhostsFromFile( Entities *entities, LevelConfig *levelConfig, const char *animatedSpritesFilename  ) {
+
+    char *ghostSpritesFilename = "res/ghost_animated_sprites";
+    FILE *f = fopen( ghostSpritesFilename, "r" );
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file %s\n", ghostSpritesFilename );
+    }
+
+    char line[ 64 ];
+    for( int i = 0; i < 4; i++ ) { // 0 thru 4 will also be used for setting the targeting behavior. This will need to change if more ghosts are added with varying targeting behaviors
+        do {
+            fgets( line, 64, f );
+        } while( line[ 0 ] == '#');
+
+        unsigned int values[ 4 ];
+
+        unsigned int line_idx = 0;
+
+        for( int i = 0; i < 4; i++ ) {
+            values[ i ] = strtol( line + line_idx, NULL, 10 );
+
+            while( line[ line_idx ] != ' ' && line[ line_idx ] != '\n' ) {
+                line_idx++;
+            }
+            line_idx++;
+        }
+
+        AnimatedSprite *animatedSprite = init_animation( values[ 0 ], values[ 1 ], values[ 2 ], values[ 3 ] );
+
+        createGhost( entities, levelConfig, animatedSprite, i );
+    }
 }
 
 void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
@@ -286,7 +382,7 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
 
         int num_rows = numeric_values[ 0 ];
         int num_cols = numeric_values[ 1 ];
-        add_texture_atlas( renderer, filename_texture_atlas, num_rows, num_cols );
+        addTextureAtlas( renderer, filename_texture_atlas, num_rows, num_cols );
 
     }
 }
@@ -381,49 +477,49 @@ void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_
 
 }
 
-void load_render_xx_from_config_file( RenderClipFromTextureAtlas **render_clips ) {
+// void load_render_xx_from_config_file( RenderData **renderDatas ) {
 
-    int num_render_clips = 0;
+//     int num_render_clips = 0;
 
-    char *filename_config = "res/render_anims";
-    FILE *f;
-    f = fopen(filename_config, "r");
-    if( f == NULL ) {
-        fprintf(stderr, "Error opening file %s\n", filename_config );
-    }
+//     char *filename_config = "res/render_anims";
+//     FILE *f;
+//     f = fopen(filename_config, "r");
+//     if( f == NULL ) {
+//         fprintf(stderr, "Error opening file %s\n", filename_config );
+//     }
     
-    char current_line[ 256 ];
+//     char current_line[ 256 ];
 
-    /**
-     * Very specific and not general-purpose at all
-    */
-    while( fgets( current_line, 256, f ) != NULL ) {
-        if( current_line[ 0 ] == '#') { // COMMENT
-            continue;
-        }
-        //int texture_atlas_id = -1;
-        int animation_id = -1;
+//     /**
+//      * Very specific and not general-purpose at all
+//     */
+//     while( fgets( current_line, 256, f ) != NULL ) {
+//         if( current_line[ 0 ] == '#') { // COMMENT
+//             continue;
+//         }
+//         //int texture_atlas_id = -1;
+//         int animation_id = -1;
 
-        int values[ 2 ];
+//         int values[ 2 ];
 
-        int line_idx = 0;
+//         int line_idx = 0;
 
-        for( int i = 0; i < 1; i++ ) {
-            values[ i ] = strtol( current_line + line_idx , NULL, 10 );
+//         for( int i = 0; i < 1; i++ ) {
+//             values[ i ] = strtol( current_line + line_idx , NULL, 10 );
 
-            while( current_line[ line_idx ] != ' ' && current_line[ line_idx ] != '\n') {
-                line_idx++;
-            }
-            line_idx++;
-        }
+//             while( current_line[ line_idx ] != ' ' && current_line[ line_idx ] != '\n') {
+//                 line_idx++;
+//             }
+//             line_idx++;
+//         }
 
-        //texture_atlas_id = values[ 0 ];
-        animation_id = values[ 0 ];
+//         //texture_atlas_id = values[ 0 ];
+//         animation_id = values[ 0 ];
 
-        render_clips[ num_render_clips ] = init_render_clip( 0, animation_id );
-        num_render_clips++;
-    }
-}
+//         renderDatas[ num_render_clips ] = renderDataInit( 0, animation_id );
+//         num_render_clips++;
+//     }
+// }
 /**
  * FILE I/O FOR SAVING/LOADING
  */

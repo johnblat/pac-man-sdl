@@ -1,29 +1,10 @@
 #ifndef STATES_H
 #define STATES_H
 
-#include "targeting.h"
-#include "actor.h"
-#include "render.h"
-#include "targeting.h"
-#include "movement.h"
-#include "comparisons.h"
+#include "entity.h"
+#include "tiles.h"
 
 extern SDL_Point ghost_pen_tile;
-
-typedef enum {
-    STATE_NORMAL,
-    STATE_VULNERABLE,
-    STATE_GO_TO_PEN,
-    STATE_LEAVE_PEN
-} GhostState;
-
-typedef enum {
-    SHADOW_BEHAVIOR,
-    AMBUSH_BEHAVIOR,
-    MOODY_BEHAVIOR,
-    POKEY_BEHAVIOR
-} TargetingBehavior;
-
 
 
 /**
@@ -85,7 +66,7 @@ void leave_pen_enter( Entities *entities, EntityId ghostId );
  */
 void leave_pen_process( Entities *entities, EntityId ghostId, TileMap *tm );
 
-void states_machine_process( Actor **actors, GhostState *ghost_states, TileMap *tm );
+//void states_machine_process( Actor **actors, GhostState *ghost_states, TileMap *tm );
 
 
 #endif

@@ -19,4 +19,10 @@ unsigned int g_INPUT_RIGHT =             0b00100;
 unsigned int g_INPUT_DOWN =              0b00010;
 unsigned int g_INPUT_ACTION =            0b00001;
 
+// void GameControllersInputProcess( SDL_GameController **gameControllers, uint8_t *inputMasks ) {
+//     for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
+
+//     }
+// }
+
 #endif

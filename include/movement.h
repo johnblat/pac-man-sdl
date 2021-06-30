@@ -15,7 +15,9 @@ void dashTimersProcess( Entities *entities, float deltaTime );
 
 void moveActors( Entities *entities ) ;
 
-void ghost_move( Actor **actors, TileMap *tm, float delta_time ) ;
+void moveActor( Actor *actor, Vector_f vel );
+
+void ghost_move( Actor **actors, EntityId ghostId, TileMap *tm, float delta_time ) ;
 
 void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time );
 
