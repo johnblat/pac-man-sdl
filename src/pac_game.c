@@ -674,6 +674,15 @@ int main( int argc, char *argv[] ) {
         // slow down pacman if in pac-pellet-tile
         
         // TODO: FIX
+        // process eating dots slow timers
+        for( int eid = 0 ; eid < MAX_NUM_ENTITIES; eid++ ) {
+            if( entities.slowTimers[ eid ] == NULL ) {
+                continue;
+            }
+            if( tilemap.tm_dots[ entities.actors[ eid ]->current_tile.y ][ entities.actors[ eid ]->current_tile.x ] == 'x' ) {
+                *entities.slowTimers[ eid ] = 0.075f;
+            }
+        }
         // if( tilemap.tm_dots[ actors[ 0 ]->current_tile.y ][ actors[ 0 ]->current_tile.x ] == 'x' ) {
         //     g_PacSlowTimers[ 0 ] = 0.075f;
         // }
