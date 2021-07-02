@@ -15,3 +15,4 @@ buildMingw64
 toolchains
 build
 include/SDL2
+res/sounds/test
