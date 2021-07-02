@@ -61,7 +61,14 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
     load_current_level_off_disk( levelConfig, tilemap, renderer );
 
     // pacman
-    actor_reset_data( actors[ 0 ], levelConfig->pacStartingTile );
+    // reset players
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        if( entities->inputMasks[i] == NULL ) {
+            continue;
+        }
+        actor_reset_data( entities->actors[ i ], levelConfig->pacStartingTile );
+    }
+    
     
     //ghosts
     // INIT GHOST
@@ -69,40 +76,51 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
     //try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
     ghost_pen_tile = levelConfig->ghostPenTile;
     // doing this in case need more ghosts in future. don't want to harder hard code their exact starting positions. Can define their offsets in a config file
-    SDL_Point pinky_from_pen = {0, 0};
-    SDL_Point blinky_from_pen = {0, -3};
-    SDL_Point inky_from_pen = { -1, 0 };
-    SDL_Point clyde_from_pen = {1, 0};
+    // SDL_Point pinky_from_pen = {0, 0};
+    // SDL_Point blinky_from_pen = {0, -3};
+    // SDL_Point inky_from_pen = { -1, 0 };
+    // SDL_Point clyde_from_pen = {1, 0};
 
-    SDL_Point blinky_tile;
-    blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
-    blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
-    actor_reset_data( actors[ 1 ], blinky_tile );
+    // SDL_Point blinky_tile;
+    // blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
+    // blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
+    // actor_reset_data( actors[ 1 ], blinky_tile );
 
-    SDL_Point pinky_tile;
-    pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
-    pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
-    actor_reset_data( actors[ 2 ], pinky_tile );
+    // SDL_Point pinky_tile;
+    // pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
+    // pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
+    // actor_reset_data( actors[ 2 ], pinky_tile );
 
-    SDL_Point inky_tile;
-    inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
-    inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
-    actor_reset_data( actors[ 3 ], inky_tile );
+    // SDL_Point inky_tile;
+    // inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
+    // inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
+    // actor_reset_data( actors[ 3 ], inky_tile );
 
-    SDL_Point clyde_tile;
-    clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
-    clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
-    actor_reset_data( actors[ 4 ], clyde_tile );
+    // SDL_Point clyde_tile;
+    // clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
+    // clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
+    // actor_reset_data( actors[ 4 ], clyde_tile );
+    
+    // reset ghosts
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        if( entities->ghostStates[ i ] == NULL ) {
+            continue;
+        }
+        actor_reset_data( entities->actors[ i ], ghost_pen_tile );
+        entities->animatedSprites[i ]->texture_atlas_id = entities->animatedSprites[i]->default_texture_atlas_id;
+        *entities->ghostStates[ i ] = STATE_LEAVE_PEN;
+        leave_pen_enter( entities, i );
+    }
 
-    animatedSprites[ 1 ]->texture_atlas_id = animatedSprites[ 1 ]->default_texture_atlas_id;
-    animatedSprites[ 2 ]->texture_atlas_id = animatedSprites[ 2 ]->default_texture_atlas_id;
-    animatedSprites[ 3 ]->texture_atlas_id = animatedSprites[ 3 ]->default_texture_atlas_id;
-    animatedSprites[ 4 ]->texture_atlas_id = animatedSprites[ 4 ]->default_texture_atlas_id;
+    // animatedSprites[ 1 ]->texture_atlas_id = animatedSprites[ 1 ]->default_texture_atlas_id;
+    // animatedSprites[ 2 ]->texture_atlas_id = animatedSprites[ 2 ]->default_texture_atlas_id;
+    // animatedSprites[ 3 ]->texture_atlas_id = animatedSprites[ 3 ]->default_texture_atlas_id;
+    // animatedSprites[ 4 ]->texture_atlas_id = animatedSprites[ 4 ]->default_texture_atlas_id;
 
-    *ghostStates[ 1 ] = STATE_NORMAL;
-    *ghostStates[ 2 ] = STATE_NORMAL;
-    *ghostStates[ 3 ] = STATE_NORMAL;
-    *ghostStates[ 4 ] = STATE_NORMAL;
+    // *ghostStates[ 1 ] = STATE_NORMAL;
+    // *ghostStates[ 2 ] = STATE_NORMAL;
+    // *ghostStates[ 3 ] = STATE_NORMAL;
+    // *ghostStates[ 4 ] = STATE_NORMAL;
 
     // calculate number of dots
     g_NumDots = 0;
@@ -115,59 +133,31 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
         }
     }
 
-    // add power pellets to number of dotss
-    for( int i = 0; i < 4; i++ ) {
-        if( !points_equal( tilemap->tm_power_pellet_tiles[i], TILE_NONE ) ) {
-            g_NumDots++;
-        }
+    // add power pellets to number of dots
+    // set power pellets 
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+
     }
+    // for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+    //     if( !points_equal( tilemap->tm_power_pellet_tiles[i], TILE_NONE ) ) {
+    //         g_NumDots++;
+    //     }
+    // }
 
-    actors[ 0 ]->world_position.x = levelConfig->pacStartingTile.x * TILE_SIZE;
-    actors[ 0 ]->world_position.y = levelConfig->pacStartingTile.y * TILE_SIZE;
+    int ppIdx = 0; 
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] != POWER_PELLET_PICKUP ) {
+            continue;
+        }
+        
+        entities->actors[ eid ]->current_tile = levelConfig->powerPelletTiles[ ppIdx ];
+        entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
+        entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
+
+        g_NumDots++;
+        ppIdx++;
     
-
-    actors[0]->world_center_point.x = ( int ) actors[0]->world_position.x + ( TILE_SIZE / 2 );
-    actors[0]->world_center_point.y = ( int ) actors[0]->world_position.y + ( TILE_SIZE / 2 );
-
-    actors[0]->current_tile.x = ( ( actors[0]->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
-    actors[0]->current_tile.y = ( ( ( actors[0]->world_position.y + TILE_SIZE / 2 ) ) / TILE_SIZE ) ;
-
-    actors[0]->world_top_sensor.x = actors[0]->world_position.x + ( TILE_SIZE / 2 );
-    actors[0]->world_top_sensor.y = actors[0]->world_position.y;
-
-    actors[0]->world_bottom_sensor.x = actors[0]->world_position.x + ( TILE_SIZE / 2 );
-    actors[0]->world_bottom_sensor.y = actors[0]->world_position.y + TILE_SIZE;
-
-    actors[0]->world_left_sensor.x = actors[0]->world_position.x;
-    actors[0]->world_left_sensor.y = actors[0]->world_position.y + ( TILE_SIZE / 2 );
-
-    actors[0]->world_right_sensor.x = actors[0]->world_position.x + TILE_SIZE;
-    actors[0]->world_right_sensor.y = actors[0]->world_position.y + ( TILE_SIZE / 2 );
-
-    actors[ 5 ]->world_position.x = levelConfig->pacStartingTile.x * TILE_SIZE;
-    actors[ 5 ]->world_position.y = levelConfig->pacStartingTile.y * TILE_SIZE;
-
-    actors[5]->world_center_point.x = ( int ) actors[5]->world_position.x + ( TILE_SIZE / 2 );
-    actors[5]->world_center_point.y = ( int ) actors[5]->world_position.y + ( TILE_SIZE / 2 );
-
-    actors[5]->current_tile.x = ( ( actors[5]->world_position.x + TILE_SIZE / 2 ) / TILE_SIZE ) ;
-    actors[5]->current_tile.y = ( ( ( actors[5]->world_position.y + TILE_SIZE / 2 ) ) / TILE_SIZE ) ;
-
-    actors[5]->world_top_sensor.x = actors[5]->world_position.x + ( TILE_SIZE / 2 );
-    actors[5]->world_top_sensor.y = actors[5]->world_position.y;
-
-    actors[5]->world_bottom_sensor.x = actors[5]->world_position.x + ( TILE_SIZE / 2 );
-    actors[5]->world_bottom_sensor.y = actors[5]->world_position.y + TILE_SIZE;
-
-    actors[5]->world_left_sensor.x = actors[5]->world_position.x;
-    actors[5]->world_left_sensor.y = actors[5]->world_position.y + ( TILE_SIZE / 2 );
-
-    actors[5]->world_right_sensor.x = actors[5]->world_position.x + TILE_SIZE;
-    actors[5]->world_right_sensor.y = actors[5]->world_position.y + ( TILE_SIZE / 2 );
-
-
-
-
+    }
 
 }
 
@@ -414,8 +404,11 @@ int main( int argc, char *argv[] ) {
     //try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
 
     // add power pellets to number of dotss
-    for( int i = 0; i < 4; i++ ) {
-        if( !points_equal( tilemap.tm_power_pellet_tiles[i], TILE_NONE ) ) {
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        if( entities.pickupTypes[ i ] == NULL || *entities.pickupTypes[ i ] != POWER_PELLET_PICKUP ) {
+            continue;
+        }
+        if( !points_equal( entities.actors[ i ]->current_tile, TILE_NONE ) ) {
             g_NumDots++;
         }
     }
@@ -626,7 +619,7 @@ int main( int argc, char *argv[] ) {
 
         // NEXT LEVEL?
         if( g_NumDots <= 0 ) {
-            level_advance( &levelConfig, &tilemap, renderer, entities.actors, entities.animatedSprites, entities.ghostStates );
+            level_advance( &levelConfig, &tilemap, renderer, &entities );
         }
 
         // KEYBOARD STATE
@@ -666,7 +659,7 @@ int main( int argc, char *argv[] ) {
         }
         if( current_key_states[ SDL_SCANCODE_COMMA ] ) {
             SDL_Delay(500);
-            level_advance( &levelConfig, &tilemap, renderer, entities.actors, entities.animatedSprites, entities.ghostStates );
+            level_advance( &levelConfig, &tilemap, renderer, &entities );
         }
         
 
