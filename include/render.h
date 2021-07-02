@@ -5,7 +5,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "actor.h"
-#include "entity.h"
 #include "animation.h"
 
 /**

@@ -10,6 +10,7 @@ typedef struct LevelConfig {
     SDL_Point ghostPenTile;
     SDL_Point pacStartingTile;
     float baseSpeed;
+    SDL_Point powerPelletTiles[ 4 ];
 } LevelConfig;
 
 #endif

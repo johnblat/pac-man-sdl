@@ -129,6 +129,10 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     return entityId;
 }
 
+// EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, SDL_Point tile ) {
+
+// }
+
 void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime ) {
     Actor **actors = entities->actors;
     TargetingBehavior **targetingBehaviors = entities->targetingBehaviors;
@@ -162,118 +166,41 @@ void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPla
         
         set_animation_row( entities->animatedSprites[ eid ], entities->actors[ eid ] );
 
-        // moving the ghosts
-        // Vector_f velocity = { 0, 0 };
-        // if( actors[ eid ]->direction == DIR_UP ) {
-        //     // set velocity
-        //     if( actors[ eid ]->world_center_point.x >= tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) - 2 
-        //     && ( actors[ eid ]->world_center_point.x <= tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) + 2) ) {
-        //         actors[ eid ]->world_center_point.x = tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 );
-        //     }
-        //     if ( actors[ eid ]->world_center_point.x == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = 0;
-        //         velocity.y = -1;
-        //     } 
-        //     else if( actors[ eid ]->world_center_point.x < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = 1;
-        //         velocity.y = 0;
-        //     }
-        //     else if( actors[ eid ]->world_center_point.x > tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 )){
-        //         velocity.x = -1;
-        //         velocity.y = 0;
-        //     }
-        // }
-        // else if( actors[ eid ]->direction == DIR_DOWN ){
-        //     // set velocity
-        //     if ( actors[ eid ]->world_center_point.x == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = 0;
-        //         velocity.y = 1;
-                
-        //     } 
-        //     else if( actors[ eid ]->world_center_point.x < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = 1;
-        //         velocity.y = 0;
-
-        //     }
-        //     else if( actors[ eid ]->world_center_point.x >tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x  + ( TILE_SIZE / 2 )){
-        //         velocity.x = -1;
-        //         velocity.y = 0;
-
-        //     }
-        // } 
-        // else if( actors[ eid ]->direction == DIR_LEFT ) {
-        //     // set velocity
-        //     if ( actors[ eid ]->world_center_point.y == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = -1;
-        //         velocity.y = 0;
-
-        //     } 
-        //     else if( actors[ eid ]->world_center_point.y < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = 0;
-        //         velocity.y = 1;
-                
-        //     }
-        //     else if( actors[ eid ]->world_center_point.y >tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 )){
-        //         velocity.x = 0;
-        //         velocity.y = -1;
-
-        //     }
-        // }
-        // else if(actors[ eid ]->direction == DIR_RIGHT ) {
-        //     // set velocity
-        //     if ( actors[ eid ]->world_center_point.y == tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = 1;
-        //         velocity.y = 0;
-
-        //     } 
-        //     else if( actors[ eid ]->world_center_point.y < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 ) ) {
-        //         velocity.x = 0;
-        //         velocity.y = 1;
-
-        //     }
-        //     else if( actors[ eid ]->world_center_point.y >tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y  + ( TILE_SIZE / 2 )){
-        //         velocity.x = 0;
-        //         velocity.y = -1;
-
-        //     }
-        // }
-        // velocity.x *= actors[ eid ]->base_speed * actors[ eid ]->speed_multp * deltaTime;
-        // velocity.y *= actors[ eid ]->base_speed * actors[ eid ]->speed_multp * deltaTime;
-
-        // moveActor(actors[ eid ], velocity );
-
-        // // account for overshooting
-        // // note velocity will never be in x and y direction.
-        // if( velocity.x > 0 && !( actors[ eid ]->direction == DIR_RIGHT )) { // right
-        //     if( actors[ eid ]->world_center_point.x > tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
-        //         actors[ eid ]->world_position.x = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
-
-        //     }
-        // }
-        // else if( velocity.x < 0 && !( actors[ eid ]->direction == DIR_LEFT )) { // left
-        //     if( actors[ eid ]->world_center_point.x < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) {
-        //         actors[ eid ]->world_position.x = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).x + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
-
-        //     }
-        // }
-        // else if( velocity.y > 0 && !( actors[ eid ]->direction == DIR_DOWN )) { // down
-        //     if( actors[ eid ]->world_center_point.y > tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
-        //         actors[ eid ]->world_position.y = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
-
-        //     }
-        // }
-        // else if( velocity.y < 0 && !( actors[ eid ]->direction == DIR_UP )) { // up
-        //     if( actors[ eid ]->world_center_point.y < tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) {
-        //         actors[ eid ]->world_position.y = ( tile_grid_point_to_world_point( actors[ eid ]->current_tile ).y + ( TILE_SIZE / 2 ) ) - ( ACTOR_SIZE * 0.5 );
-        //         actor_align_world_data_based_on_world_position( actors[ eid ] );
-
-        //     }
-        // }
+        
 
     }
+}
+
+EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, SDL_Point tile ) {
+    EntityId entityId = g_NumEntities;
+    g_NumEntities++;
+
+    entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
+    entities->actors        [ entityId ] = (Actor * ) malloc(sizeof(Actor)); // should be deprecated
+    entities->animatedSprites[ entityId ] = (AnimatedSprite * )         malloc( sizeof( Actor ) );
+    entities->renderDatas   [ entityId ] = (RenderData *)malloc(sizeof(RenderData ) );
+    entities->pickupTypes   [ entityId ] = ( PickupType *) malloc( sizeof( PickupType ) );
+
+    entities->positions[ entityId ]->current_tile = tile;
+    entities->positions[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( tile ).x + TILE_SIZE/2;
+    entities->positions[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( tile ).y + TILE_SIZE/2;
+    entities->positions[ entityId ]->world_position.x = tile_grid_point_to_world_point( tile ).x;
+    entities->positions[ entityId ]->world_position.y = tile_grid_point_to_world_point( tile ).y;
+
+    entities->actors[ entityId ]->current_tile = tile;
+    entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( tile ).x + TILE_SIZE/2;
+    entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( tile ).y + TILE_SIZE/2;
+    entities->actors[ entityId ]->world_position.x = tile_grid_point_to_world_point( tile ).x;
+    entities->actors[ entityId ]->world_position.y = tile_grid_point_to_world_point( tile ).y;
+
+    entities->animatedSprites[ entityId ] = animatedSprite;
+
+    entities->renderDatas[ entityId ] = renderDataInit( );
+
+    *entities->pickupTypes [ entityId ] = POWER_PELLET_PICKUP;
+
+    return entityId;
+
 }
 
 

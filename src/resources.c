@@ -131,6 +131,15 @@ void initializeGhostsFromFile( Entities *entities, LevelConfig *levelConfig, con
     }
 }
 
+/**
+ * NOTE: Must call load_level_off_disk() first, then send levelConfig here
+ * Power pellets should be updated every level to get new tiles.
+ * This is really for setting the animated sprites
+ */
+void initializePowerPelletsFromFile( ) {
+
+}
+
 void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
 
     char *res_level_dir = "res/levels/";
@@ -166,7 +175,7 @@ void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
     save_resource_to_file( tilemap->tm_dots, fullResourcePath, sizeof( char ), TOTAL_NUMBER_OF_TILES );
 
     build_resource_file_path( fullResourcePath, fullLevelDir, powerPelletsFileName );
-    save_resource_to_file( tilemap->tm_power_pellet_tiles, fullResourcePath, sizeof( SDL_Point ), 4); 
+    save_resource_to_file( &levelConfig->powerPelletTiles, fullResourcePath, sizeof( SDL_Point ), 4); 
 
     build_resource_file_path( fullResourcePath, fullLevelDir, slowTilesFileName );
     save_resource_to_file( tilemap->tm_slow_tiles, fullResourcePath, sizeof( SDL_Point ), MAX_SLOW_TILES );
@@ -301,7 +310,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     try_load_resource_from_file( tilemap->tm_dots, fullResourcePath, sizeof( char ) , TOTAL_NUMBER_OF_TILES );
 
     build_resource_file_path( fullResourcePath, fullLevelDir, powerPelletsFileName );
-    try_load_resource_from_file( tilemap->tm_power_pellet_tiles, fullResourcePath, sizeof( SDL_Point ), 4 );
+    try_load_resource_from_file( levelConfig->powerPelletTiles, fullResourcePath, sizeof( SDL_Point ), 4 );
 
     build_resource_file_path( fullResourcePath, fullLevelDir, slowTilesFileName );
     try_load_resource_from_file( tilemap->tm_slow_tiles , fullResourcePath, sizeof( SDL_Point ), MAX_SLOW_TILES );

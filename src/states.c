@@ -13,7 +13,7 @@
 #include "stdio.h"
 
 
-SDL_Point ghost_pen_tile = {22, 11};
+SDL_Point ghost_pen_tile = {23, 11};
 
 uint8_t g_current_scatter_chase_period = 0;
 uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 7, 20, 7, 20, 5, 20, 5, 0 };

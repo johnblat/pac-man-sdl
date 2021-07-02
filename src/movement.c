@@ -491,7 +491,7 @@ void dashTimersProcess( Entities *entities, float deltaTime ) {
             SDL_SetTextureAlphaMod( g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id  ].texture, 255 );
         }
         if( *entities->chargeTimers[ eid ] > 0 ) {
-            entities->actors[ eid ]->speed_multp = 0.4f;
+            entities->actors[ eid ]->speed_multp = 0.6f;
         }
     }
         

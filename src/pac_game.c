@@ -32,9 +32,6 @@ unsigned int g_NumDots = 0;
 uint8_t g_NumGhostsEaten = 0;
 unsigned int g_GhostPointValues[] = { 400, 800, 1600, 3200 };
 
-float g_PacSlowTimers[] = {0.0f, 0.0f};
-float g_PacChargeTimers[] = {0.0f, 0.0f};
-float g_PacDashTimers[] = {0.0f, 0.0f};
 
 typedef struct {
     float remainingTime;
@@ -53,7 +50,7 @@ TimedMessage g_TimedMessages[ g_NumTimedMessages ];
 Blink g_ScoreBlinks[g_NumTimedMessages ];
 
 // TODO: FIX
-void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer, Actor **actors, AnimatedSprite **animatedSprites, GhostState **ghostStates ) {
+void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer, Entities *entities) {
     gCurrentLevel++;
 
     if( gCurrentLevel > gNumLevels ) {
@@ -357,7 +354,7 @@ int main( int argc, char *argv[] ) {
     g_GhostEatenSounds[ 2 ] = g_GhostEatenCoolSound;
     g_GhostEatenSounds[ 3 ] = g_GhostEatenGroovySound;
 
-    Mix_VolumeMusic( 50 );
+    Mix_VolumeMusic( 0 );
 
     Mix_PlayMusic(g_Music, -1 );
     
@@ -368,11 +365,17 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
+    // INIT TEXTURE ATLASES
+    load_global_texture_atlases_from_config_file( renderer );
+
     // setup first level data
     load_current_level_off_disk( &levelConfig, &tilemap, renderer);
 
-    // INIT TEXTURE ATLASES
-    load_global_texture_atlases_from_config_file( renderer );
+    
+    for( int i = 0; i < 4; i++ ) {
+        AnimatedSprite *powerPelletSprite = init_animation( 5, 12, 1, 6 );
+        createPowerPellet( &entities, powerPelletSprite, levelConfig.powerPelletTiles[ i ] );
+    }
 
     // load_animations_from_config_file( animations );
 
@@ -417,14 +420,10 @@ int main( int argc, char *argv[] ) {
         }
     }
 
-    // INIT PACMONSTER
-    // SDL_Point pac_starting_tile;
-    // //try_load_resource_from_file( &pac_starting_tile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
-    // pac_starting_tile = levelConfig.pacStartingTile;
-
+    // INIT Playwe
     initializePlayersFromFiles( &entities, &levelConfig, 2 );
     
-
+    // init ghosts
     initializeGhostsFromFile( &entities, &levelConfig, "res/ghost_animated_sprites");
 
     // load everything for entity data from config
@@ -704,12 +703,14 @@ int main( int argc, char *argv[] ) {
                     // when the timer runs out
                     if (ghost_vulnerable_timer <= 0.0f ) {
                         g_NumGhostsEaten = 0;
-                        for( int i = 1; i < 5; ++i ) {
-                            if( *entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
-                                *entities.ghostStates[ eid ] = STATE_NORMAL;
-                                normal_enter( &entities, eid );
-                            }
-                        }
+                        *entities.ghostStates[ eid ] = STATE_NORMAL;
+                        normal_enter( &entities, eid );
+                        // for( int i = 1; i < 5; ++i ) {
+                        //     if( *entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
+                        //         *entities.ghostStates[ eid ] = STATE_NORMAL;
+                        //         normal_enter( &entities, eid );
+                        //     }
+                        // }
                     }
 
                     EntityId playerId;
@@ -718,7 +719,7 @@ int main( int argc, char *argv[] ) {
 
                         // eat ghost if pacman touches
                         if ( entities.actors[ playerId ]->current_tile.x == entities.actors[ eid ]->current_tile.x 
-                        && entities.actors[ 0 ]->current_tile.y == entities.actors[ eid ]->current_tile.y ) {
+                        && entities.actors[ playerId ]->current_tile.y == entities.actors[ eid ]->current_tile.y ) {
                             Mix_PlayChannel( -1, g_PacChompSound, 0 );
                             Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
                             score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
@@ -779,13 +780,54 @@ int main( int argc, char *argv[] ) {
 
         // pacman eats power pellet
         // TODO: FIX
+
+        // process power pellet pickups
+        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+            if( entities.pickupTypes[ eid ] == NULL || *entities.pickupTypes[ eid] != POWER_PELLET_PICKUP ) { // its a power pellet pickup
+                continue;
+            }
+
+            for( int i = 0; i < numPlayers; i++ ) {
+                EntityId playerId = playerIds[ i ];
+                // player eats power pellet
+                if( points_equal( entities.actors[ eid ]->current_tile, entities.actors[ playerId ]->current_tile ) ) {
+                    score.score_number += 20;
+                    g_NumGhostsEaten = 0;
+                    // move it outside of the world area for now.
+                    // TODO: deactivate this somehow
+                    entities.actors[ eid ]->current_tile.x = -1;
+                    entities.actors[ eid ]->current_tile.y = -1;
+                    entities.actors[ eid ]->world_position.x = -100;
+                    entities.actors[ eid ]->world_position.y = -100;
+                    entities.actors[ eid ]->world_center_point.x = -100;
+                    entities.actors[ eid ]->world_center_point.y = -100;
+                    g_NumDots--;
+
+                    // make ghosts all vulnerable state
+                    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                        if( entities.ghostStates[ eid ] == NULL ) {
+                            continue;
+                        }
+                        if ( *entities.ghostStates[ eid ] != STATE_GO_TO_PEN && *entities.ghostStates[ eid ] != STATE_LEAVE_PEN ) {
+
+                            *entities.ghostStates[ eid ] = STATE_VULNERABLE;
+                            vulnerable_enter( &entities, eid );
+                        }
+                        
+                    }   
+                    ghost_vulnerable_timer = 20.0f;   
+                }
+            }
+
+        }
+
         // for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
         // // pac-man eats power pellet
         //     EntityId playerId;
         //     for( int i = 0; i < numPlayers; ++i ) {
         //         playerId = playerIds[ i ];
 
-        //         if ( points_equal( actors[ playerId ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
+        //         if ( points_equal( entities.actors[ playerId ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
         //             score.score_number += 20;
         //             g_NumGhostsEaten = 0;
         //             tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
@@ -808,7 +850,7 @@ int main( int argc, char *argv[] ) {
                 
             
         
-    //}
+        // }
 
         /*******************
          * PROCESS STATES

@@ -322,7 +322,7 @@ int main( int argc, char *argv[] ) {
                     try_load_resource_from_file( tilemap.tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
                     try_load_resource_from_file( tilemap.tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
                     try_load_resource_from_file( &levelConfig.pacStartingTile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
-                    try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
+                    try_load_resource_from_file( &levelConfig.powerPelletTiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
                     try_load_resource_from_file( &levelConfig.ghostPenTile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
                     try_load_resource_from_file( tilemap.tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
 
@@ -434,13 +434,13 @@ int main( int argc, char *argv[] ) {
                 SDL_bool tile_already_exists = SDL_FALSE;
                 for( int i = 0; i < 4; ++i ) {
                     // tile already exists
-                    if( points_equal( tilemap.tm_power_pellet_tiles[ i ], tile ) ) tile_already_exists = SDL_TRUE;
+                    if( points_equal( levelConfig.powerPelletTiles[i], tile ) ) tile_already_exists = SDL_TRUE;
                 }
 
                 if( !tile_already_exists ) {
                     for( int i = 0; i < 4; ++i ) {
-                        if( points_equal( tilemap.tm_power_pellet_tiles[ i ], poopy_point ) ) {
-                            tilemap.tm_power_pellet_tiles[ i ] = tile;
+                        if( points_equal( levelConfig.powerPelletTiles[ i ], poopy_point ) ) {
+                            levelConfig.powerPelletTiles[ i ] = tile;
                             break;
                         }
                     }
@@ -500,9 +500,9 @@ int main( int argc, char *argv[] ) {
             else if( current_mode == E_POWER_PELLET_PLACEMENT_MODE ) {
                 SDL_Point tile = screen_point_to_tile_grid_point( mouse_point, tilemap.tm_screen_position );
                 for( int i = 0 ; i < 4; ++i ) {
-                    if( points_equal( tilemap.tm_power_pellet_tiles[ i ], tile ) ) {
-                        tilemap.tm_power_pellet_tiles[ i ].x = -1;
-                        tilemap.tm_power_pellet_tiles[ i ].y = -1;
+                    if( points_equal( levelConfig.powerPelletTiles[ i ], tile ) ) {
+                        levelConfig.powerPelletTiles[ i ].x = -1;
+                        levelConfig.powerPelletTiles[ i ].y = -1;
                         num_power_pellets--;
                         break;
                     }
@@ -559,8 +559,8 @@ int main( int argc, char *argv[] ) {
         // render power pellets
         SDL_SetRenderDrawColor( renderer, 15, 250, 15, 150 );
         for( int i = 0; i < 4; ++i ) {
-            if( points_equal( tilemap.tm_power_pellet_tiles[ i ], poopy_point ) ) continue;
-            SDL_Point power_pellet_screen_point = tile_grid_point_to_screen_point( tilemap.tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
+            if( points_equal( levelConfig.powerPelletTiles[ i ], poopy_point ) ) continue;
+            SDL_Point power_pellet_screen_point = tile_grid_point_to_screen_point( levelConfig.powerPelletTiles[ i ], tilemap.tm_screen_position );
             SDL_Rect power_pellet_rect = { power_pellet_screen_point.x, power_pellet_screen_point.y, TILE_SIZE, TILE_SIZE };
             SDL_RenderFillRect( renderer, &power_pellet_rect );
         }

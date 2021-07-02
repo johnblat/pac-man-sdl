@@ -118,7 +118,7 @@ EntityId closestEntityToEntity( Entities *entities, EntityId entityId, EntityId 
 
     float closestDistance = 99999.9f;
     float currentDistance = 0.0f;
-    for( int i = 1; i < numEntities; i++ ) {
+    for( int i = 0; i < numEntities; i++ ) {
         currentEntityId = entityIds[ i ];
         currentDistance = distance( entities->actors[ entityId ]->world_center_point.x, entities->actors[ entityId ]->world_center_point.y, entities->actors[ currentEntityId ]->world_center_point.x, entities->actors[ currentEntityId ]->world_center_point.y );
         if( currentDistance < closestDistance ) {
