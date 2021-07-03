@@ -28,6 +28,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->dashTimers     [ entityId ] = (float * )                  malloc(sizeof(float ) );
     entities->slowTimers     [ entityId ] = ( float * )malloc(sizeof(float ) );
     entities->inputMasks     [ entityId ] = (uint8_t * ) malloc(sizeof( uint8_t ) );
+    entities->dashCooldownStocks[ entityId ] = (CooldownStock *)malloc( sizeof( CooldownStock ) );
 
     //initialize
     // position
