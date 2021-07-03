@@ -20,6 +20,28 @@
 #include "sounds.h"
 #include "input.h"
 
+typedef enum {
+    MAIN_MENU_GAME_STATE,
+    GAME_PLAYING_GAME_STATE,
+    EXIT_STATE
+} GameState;
+
+typedef enum {
+    GAME_PLAYING,
+    GAME_PAUSED
+} GamePlayingState;
+
+GameState gGameState = MAIN_MENU_GAME_STATE;
+GamePlayingState gGamePlayingState = GAME_PLAYING;
+
+// Main Menu
+char *gMainMenuText = "Press START to Play!";
+SDL_Texture *gMainMenuTextTexture = NULL;
+
+char *gPauseText = "PAUSED";
+SDL_Texture *gPauseTextTexture = NULL;
+
+// End Main Menu
 
 SDL_bool g_show_debug_info = SDL_TRUE;
 
@@ -50,12 +72,13 @@ TimedMessage g_TimedMessages[ g_NumTimedMessages ];
 Blink g_ScoreBlinks[g_NumTimedMessages ];
 
 // TODO: FIX
-void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer, Entities *entities) {
+// Returns SDL_TRUE if advanced to next level
+// Returns SDL_FALSE if no more levels to advance
+SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer, Entities *entities) {
     gCurrentLevel++;
 
     if( gCurrentLevel > gNumLevels ) {
-        printf("GAME OVER\n");
-        exit( EXIT_SUCCESS );
+        return SDL_TRUE;
     }
 
     load_current_level_off_disk( levelConfig, tilemap, renderer );
@@ -73,33 +96,8 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
     //ghosts
     // INIT GHOST
     SDL_Point ghost_pen_tile;
-    //try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
     ghost_pen_tile = levelConfig->ghostPenTile;
-    // doing this in case need more ghosts in future. don't want to harder hard code their exact starting positions. Can define their offsets in a config file
-    // SDL_Point pinky_from_pen = {0, 0};
-    // SDL_Point blinky_from_pen = {0, -3};
-    // SDL_Point inky_from_pen = { -1, 0 };
-    // SDL_Point clyde_from_pen = {1, 0};
 
-    // SDL_Point blinky_tile;
-    // blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
-    // blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
-    // actor_reset_data( actors[ 1 ], blinky_tile );
-
-    // SDL_Point pinky_tile;
-    // pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
-    // pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
-    // actor_reset_data( actors[ 2 ], pinky_tile );
-
-    // SDL_Point inky_tile;
-    // inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
-    // inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
-    // actor_reset_data( actors[ 3 ], inky_tile );
-
-    // SDL_Point clyde_tile;
-    // clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
-    // clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
-    // actor_reset_data( actors[ 4 ], clyde_tile );
     
     // reset ghosts
     for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
@@ -112,15 +110,6 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
         leave_pen_enter( entities, i );
     }
 
-    // animatedSprites[ 1 ]->texture_atlas_id = animatedSprites[ 1 ]->default_texture_atlas_id;
-    // animatedSprites[ 2 ]->texture_atlas_id = animatedSprites[ 2 ]->default_texture_atlas_id;
-    // animatedSprites[ 3 ]->texture_atlas_id = animatedSprites[ 3 ]->default_texture_atlas_id;
-    // animatedSprites[ 4 ]->texture_atlas_id = animatedSprites[ 4 ]->default_texture_atlas_id;
-
-    // *ghostStates[ 1 ] = STATE_NORMAL;
-    // *ghostStates[ 2 ] = STATE_NORMAL;
-    // *ghostStates[ 3 ] = STATE_NORMAL;
-    // *ghostStates[ 4 ] = STATE_NORMAL;
 
     // calculate number of dots
     g_NumDots = 0;
@@ -158,6 +147,8 @@ void level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *ren
         ppIdx++;
     
     }
+
+    return SDL_FALSE;
 
 }
 
@@ -369,15 +360,10 @@ int main( int argc, char *argv[] ) {
         createPowerPellet( &entities, powerPelletSprite, levelConfig.powerPelletTiles[ i ] );
     }
 
-    // load_animations_from_config_file( animations );
 
-    // load_render_xx_from_config_file( renderDatas );
-
-    //load_ghost_mode_times_from_config_file( g_scatter_chase_period_seconds, NUM_SCATTER_CHASE_PERIODS, "res/ghost_mode_times" );
 
 
     // INIT TILEMAP
-    //tm_init_and_load_texture( renderer, &tilemap );
     tilemap.one_way_tile.x = levelConfig.ghostPenTile.x;
     tilemap.one_way_tile.y = levelConfig.ghostPenTile.y - 2;
 
@@ -439,56 +425,7 @@ int main( int argc, char *argv[] ) {
         }
         entities.gameControllers[ playerIds[ i ] ] = g_GameControllers[ i ];
     }
-
-
-//     actors[ 0 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f );
-//    // renderDatas[ 0 ] = init_render_clip( 0, 0 );
-//     actors[ 5 ] = init_actor( pac_starting_tile, tilemap.tm_screen_position, base_speed, 1.0f);
     
-
-    // // INIT GHOST
-    // SDL_Point ghost_pen_tile;
-    // //try_load_resource_from_file( &ghost_pen_tile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
-    // ghost_pen_tile = levelConfig.ghostPenTile;
-    // // doing this in case need more ghosts in future. don't want to harder hard code their exact starting positions. Can define their offsets in a config file
-    // SDL_Point pinky_from_pen = {0, 0};
-    // SDL_Point blinky_from_pen = {0, -3};
-    // SDL_Point inky_from_pen = { -1, 0 };
-    // SDL_Point clyde_from_pen = {1, 0};
-
-    // SDL_Point blinky_tile;
-    // blinky_tile.x = ghost_pen_tile.x + blinky_from_pen.x;
-    // blinky_tile.y = ghost_pen_tile.y + blinky_from_pen.y;
-    // actors[ 1 ] = init_actor( blinky_tile, tilemap.tm_screen_position, base_speed, 0.8f );
-
-
-    // SDL_Point pinky_tile;
-    // pinky_tile.x = ghost_pen_tile.x + pinky_from_pen.x;
-    // pinky_tile.y = ghost_pen_tile.y + pinky_from_pen.y;
-    // actors[ 2 ]= init_actor( pinky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-
-    // SDL_Point inky_tile;
-    // inky_tile.x = ghost_pen_tile.x + inky_from_pen.x;
-    // inky_tile.y = ghost_pen_tile.y + inky_from_pen.y;
-    // actors[ 3 ]= init_actor( inky_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-
-    // SDL_Point clyde_tile;
-    // clyde_tile.x = ghost_pen_tile.x + clyde_from_pen.x;
-    // clyde_tile.y = ghost_pen_tile.y + clyde_from_pen.y;
-    // actors[ 4 ]= init_actor( clyde_tile, tilemap.tm_screen_position, base_speed, 0.8f  );
-
-
-    // for( int i = 0; i < 4; ++i ) {
-    //     SDL_Point screen_position = tile_grid_point_to_screen_point( tilemap.tm_power_pellet_tiles[ i ], tilemap.tm_screen_position );
-    //     renderDatas[ 6 + i ]->dest_rect.x = screen_position.x;
-    //     renderDatas[ 6 + i ]->dest_rect.y = screen_position.y;
-    //     renderDatas[ 6 + i ]->dest_rect.w = TILE_SIZE;
-    //     renderDatas[ 6 + i ]->dest_rect.h = TILE_SIZE;
-    //     renderDatas[ 6 + i ]->flip = SDL_FLIP_NONE;
-    // }
-
-    
-
 
     SDL_Point ghost_pen_position = tile_grid_point_to_world_point( ghost_pen_tile ); 
     SDL_Point ghost_pen_center_point;
@@ -521,655 +458,750 @@ int main( int argc, char *argv[] ) {
     SDL_bool charge_button_down = SDL_FALSE;
 
 
-    while (!quit) {
+    SDL_Surface *mainMenuTextSurface = TTF_RenderText_Solid( font, gMainMenuText, white );
+    gMainMenuTextTexture = SDL_CreateTextureFromSurface( renderer, mainMenuTextSurface );
+    SDL_Rect gMainMenuTextDestRect = {SCREEN_WIDTH / 2 - mainMenuTextSurface->w/2 ,SCREEN_HEIGHT/2 - mainMenuTextSurface->h/2, mainMenuTextSurface->w, mainMenuTextSurface->h};
+    SDL_FreeSurface( mainMenuTextSurface );
+    mainMenuTextSurface = NULL;
 
+    SDL_Surface *pauseTextSurface = TTF_RenderText_Solid( font, gPauseText, pac_color );
+    gPauseTextTexture = SDL_CreateTextureFromSurface( renderer, pauseTextSurface);
+    SDL_Rect pauseTextDestRect = { SCREEN_WIDTH / 2 - pauseTextSurface->w/2 ,SCREEN_HEIGHT/2 - pauseTextSurface->h/2, pauseTextSurface->w, pauseTextSurface->h};
+    SDL_FreeSurface( pauseTextSurface );
+    pauseTextSurface = NULL;
+
+    while (!quit) {
         // semi-fixed timestep
         float current_frame_ticks = SDL_GetTicks() / 1000.0;
-        float delta_time = current_frame_ticks - previous_frame_ticks;
+        float deltaTime = current_frame_ticks - previous_frame_ticks;
         previous_frame_ticks = current_frame_ticks;
         // adjust for any pauses, debugging breaks, etc
-        delta_time = delta_time < max_delta_time ?  delta_time : max_delta_time;
+        deltaTime = deltaTime < max_delta_time ?  deltaTime : max_delta_time;
 
-        
-        // EVENTS
-        while (SDL_PollEvent( &event ) != 0 ) {
-            //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
-            
-            if( event.type == SDL_QUIT ) {
-                quit = 1;
-            }
-            if ( event.type == SDL_KEYDOWN ) {
-                if ( event.key.keysym.sym == SDLK_b ) {
-                    g_show_debug_info = !g_show_debug_info;
-                }
-                if (event.key.keysym.sym == SDLK_v ) {
-                    // ghost_vulnerable_timer = 20.0f;
-                    // for( int i = 1; i < 5; ++i ) {
-                    //     ghost_states[ i ] = STATE_VULNERABLE;
-                    //     vulnerable_enter( actors, animations, i, renderDatas[ i ] );
-                    // }
-                    
-                }
-                if( event.key.keysym.sym == SDLK_z ) {
-                    charge_button_down = SDL_TRUE;
-                    charge_button_up = SDL_FALSE;
-                }
-            }
-            if( event.type == SDL_KEYUP ) {
-                if( event.key.keysym.sym == SDLK_z ) {
-                    charge_button_up = SDL_TRUE;
-                    charge_button_down = SDL_FALSE;
-                }
-            }
-            if( event.type == SDL_CONTROLLERBUTTONDOWN ) {
-                for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-                    if( entities.gameControllers[ i ] == NULL || entities.inputMasks[ i ] == NULL ) {
-                        continue;
+        switch( gGameState ) {
+            /**************
+             * ************
+             * *** MAIN MENU
+             * *****************/
+            case MAIN_MENU_GAME_STATE:
+                while( SDL_PollEvent( &event ) != 0 ) {
+                    if( event.type == SDL_QUIT ) {
+                        gGameState = EXIT_STATE;
+                        break;
                     }
-                    if( event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities.gameControllers[ i ]))) {
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
-                            *entities.inputMasks[ i ] |= g_INPUT_UP;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT ) {
-                            *entities.inputMasks[ i ] |= g_INPUT_LEFT;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) {
-                            *entities.inputMasks[ i ] |= g_INPUT_RIGHT;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN ) {
-                            *entities.inputMasks[ i ] |= g_INPUT_DOWN;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
-                            *entities.inputMasks[ i ] |= g_INPUT_ACTION;
-                            charge_button_down = SDL_TRUE;
-                            charge_button_up = SDL_FALSE;
+                    if( event.type == SDL_KEYUP ) {
+                        if( event.key.keysym.sym == SDLK_RETURN ) {
+                            gGameState = GAME_PLAYING_GAME_STATE;
+                            break;
                         }
                     }
-                }
-                
-            }
-            if( event.type == SDL_CONTROLLERBUTTONUP ) {
-                for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-                    if( entities.gameControllers[ i ] == NULL || entities.inputMasks[ i ] == NULL ) {
-                        continue;
-                    }
-                    if( event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities.gameControllers[ i ]))) {
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
-                            *entities.inputMasks[ i ] ^= g_INPUT_UP;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT ) {
-                            *entities.inputMasks[ i ] ^= g_INPUT_LEFT;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) {
-                            *entities.inputMasks[ i ] ^= g_INPUT_RIGHT;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN ) {
-                            *entities.inputMasks[ i ] ^= g_INPUT_DOWN;
-                        }
-                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
-                            *entities.inputMasks[ i ] ^= g_INPUT_ACTION;
-                            charge_button_up = SDL_TRUE;
-                            charge_button_down = SDL_FALSE;
-                        }
-                    }
-                }
-            }
-        }
-        if(quit) break;
-
-        // NEXT LEVEL?
-        if( g_NumDots <= 0 ) {
-            level_advance( &levelConfig, &tilemap, renderer, &entities );
-        }
-
-        // KEYBOARD STATE
-
-        const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
-        //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
-        
-        // adjust tilemap
-        if( current_key_states[ SDL_SCANCODE_S ] ) {
-            tilemap.tm_screen_position.y++;
-            // increase double speed if shift held down
-            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
-                tilemap.tm_screen_position.y+=4;
-            }
-        }
-        if( current_key_states[ SDL_SCANCODE_W ] ) {
-            tilemap.tm_screen_position.y--;
-            // increase double speed if shift held down
-
-            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
-                tilemap.tm_screen_position.y-=4;
-            }
-        }
-        if( current_key_states[ SDL_SCANCODE_D ] ) {
-            tilemap.tm_screen_position.x++;
-            // increase double speed if shift held down
-            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
-                tilemap.tm_screen_position.x+=4;
-            }
-        }
-        if( current_key_states[ SDL_SCANCODE_A ] ) {
-            tilemap.tm_screen_position.x--;
-            // increase double speed if shift held down
-            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
-                tilemap.tm_screen_position.x-=4;
-            }
-        }
-        if( current_key_states[ SDL_SCANCODE_COMMA ] ) {
-            SDL_Delay(500);
-            level_advance( &levelConfig, &tilemap, renderer, &entities );
-        }
-        
-
-        // UPDATE SIMULATION
-
-        inputToTryMoveProcess( &entities, &tilemap, delta_time);
-
-        dashTimersProcess( &entities, delta_time );
-
-        animatedSpriteIncProcess( entities.animatedSprites , delta_time); 
-        
-        // slow down pacman if in pac-pellet-tile
-        
-        // TODO: FIX
-        // process eating dots slow timers
-        for( int eid = 0 ; eid < MAX_NUM_ENTITIES; eid++ ) {
-            if( entities.slowTimers[ eid ] == NULL ) {
-                continue;
-            }
-            if( tilemap.tm_dots[ entities.actors[ eid ]->current_tile.y ][ entities.actors[ eid ]->current_tile.x ] == 'x' ) {
-                *entities.slowTimers[ eid ] = 0.075f;
-            }
-        }
-        // if( tilemap.tm_dots[ actors[ 0 ]->current_tile.y ][ actors[ 0 ]->current_tile.x ] == 'x' ) {
-        //     g_PacSlowTimers[ 0 ] = 0.075f;
-        // }
-
-        // if( tilemap.tm_dots[ actors[ 5 ]->current_tile.y ][ actors[ 5 ]->current_tile.x ] == 'x' ) {
-        //     g_PacSlowTimers[ 1 ] = 0.075f;
-        // }
-
-        collectDotProcess( &entities, tilemap.tm_dots, &g_NumDots, &score, renderer );
-
-        
-        // CHECK STATE TRANSITIONS FOR GHOSTS
-        for(int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-            if( entities.ghostStates[ eid ] == NULL ) {
-                continue;
-            }
-            switch( *entities.ghostStates[ eid ] ) {
-                case STATE_VULNERABLE :
-                    // return all ghosts that are still vulnerable to normal
-                    // when the timer runs out
-                    if (ghost_vulnerable_timer <= 0.0f ) {
-                        g_NumGhostsEaten = 0;
-                        *entities.ghostStates[ eid ] = STATE_NORMAL;
-                        normal_enter( &entities, eid );
-                        // for( int i = 1; i < 5; ++i ) {
-                        //     if( *entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
-                        //         *entities.ghostStates[ eid ] = STATE_NORMAL;
-                        //         normal_enter( &entities, eid );
-                        //     }
-                        // }
-                    }
-
-                    EntityId playerId;
-                    for( int i = 0; i < numPlayers; ++i ) {
-                        playerId = playerIds[ i ];
-
-                        // eat ghost if pacman touches
-                        if ( entities.actors[ playerId ]->current_tile.x == entities.actors[ eid ]->current_tile.x 
-                        && entities.actors[ playerId ]->current_tile.y == entities.actors[ eid ]->current_tile.y ) {
-                            Mix_PlayChannel( -1, g_PacChompSound, 0 );
-                            Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
-                            score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
-                            g_NumGhostsEaten++;
-                            *entities.ghostStates[ eid ] = STATE_GO_TO_PEN;
-                            uint8_t texture_atlas_id = 4;
-                            entities.animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
-                            entities.actors[ eid ]->next_tile = entities.actors[ eid ]->current_tile;
-                            entities.actors[ eid ]->target_tile = ghost_pen_tile;
-                            entities.actors[ eid ]->speed_multp = 1.6f;
-
-                            // show message
-                            for( int i = 0; i < g_NumTimedMessages; i++ ) {
-                                if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
-                                    g_TimedMessages[ i ].remainingTime = 0.85f;
-                                    g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities.actors[ playerId ]->current_tile );
-                                    snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
-                                    g_TimedMessages[ i ].color = white;
-                                    SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
-                                    g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( renderer, msgSurface );
-                                    g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).x;
-                                    g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).y;
-                                    g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
-                                    g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
-                                    SDL_FreeSurface( msgSurface );
-                                    g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
-
-                                    break;
-
+                        
+                    if( event.type == SDL_CONTROLLERBUTTONUP ) {
+                        for( int i = 0; i < g_NumGamepads; i++ ) {
+                            
+                            if( event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(g_GameControllers[ i ]))) {
+                                if( event.cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
+                                    gGameState = GAME_PLAYING_GAME_STATE;
+                                    break;                                    
                                 }
                             }
                         }
                     }
-                    break;
-                    
-                case STATE_GO_TO_PEN :
-                    // ghost is in pen
-                    
-                    if( points_equal(entities.actors[ eid ]->current_tile, ghost_pen_tile ) && entities.actors[ eid ]->world_center_point.y >= ghost_pen_center_point.y) {
-
-                        *entities.ghostStates[ eid ] = STATE_LEAVE_PEN;
-                        leave_pen_enter( &entities, eid );
-                    }
-                    break;
-
-                
-                case STATE_NORMAL :
-                    break;
-                case STATE_LEAVE_PEN:
-                    if( points_equal( entities.actors[ eid ]->current_tile, entities.actors[ eid ]->target_tile ) ) {
-                        *entities.ghostStates[ eid ] = STATE_NORMAL;
-                        normal_enter( &entities, eid );
-                    }
-                    
-                    break;
-            }
-        }
-
-        // pacman eats power pellet
-        // TODO: FIX
-
-        // process power pellet pickups
-        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-            if( entities.pickupTypes[ eid ] == NULL || *entities.pickupTypes[ eid] != POWER_PELLET_PICKUP ) { // its a power pellet pickup
-                continue;
-            }
-
-            for( int i = 0; i < numPlayers; i++ ) {
-                EntityId playerId = playerIds[ i ];
-                // player eats power pellet
-                if( points_equal( entities.actors[ eid ]->current_tile, entities.actors[ playerId ]->current_tile ) ) {
-                    score.score_number += 20;
-                    g_NumGhostsEaten = 0;
-                    // move it outside of the world area for now.
-                    // TODO: deactivate this somehow
-                    entities.actors[ eid ]->current_tile.x = -1;
-                    entities.actors[ eid ]->current_tile.y = -1;
-                    entities.actors[ eid ]->world_position.x = -100;
-                    entities.actors[ eid ]->world_position.y = -100;
-                    entities.actors[ eid ]->world_center_point.x = -100;
-                    entities.actors[ eid ]->world_center_point.y = -100;
-                    g_NumDots--;
-
-                    // make ghosts all vulnerable state
-                    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-                        if( entities.ghostStates[ eid ] == NULL ) {
-                            continue;
-                        }
-                        if ( *entities.ghostStates[ eid ] != STATE_GO_TO_PEN && *entities.ghostStates[ eid ] != STATE_LEAVE_PEN ) {
-
-                            *entities.ghostStates[ eid ] = STATE_VULNERABLE;
-                            vulnerable_enter( &entities, eid );
-                        }
-                        
-                    }   
-                    ghost_vulnerable_timer = 20.0f;   
                 }
-            }
 
-        }
+               
+                SDL_SetRenderDrawColor( renderer, 20,20,20,255);
+                SDL_RenderClear( renderer );
 
-        // for( int power_pellet_indx = 0; power_pellet_indx < 4; ++power_pellet_indx ) {
-        // // pac-man eats power pellet
-        //     EntityId playerId;
-        //     for( int i = 0; i < numPlayers; ++i ) {
-        //         playerId = playerIds[ i ];
+                // display message
 
-        //         if ( points_equal( entities.actors[ playerId ]->current_tile, tilemap.tm_power_pellet_tiles[ power_pellet_indx ] ) ){
-        //             score.score_number += 20;
-        //             g_NumGhostsEaten = 0;
-        //             tilemap.tm_power_pellet_tiles[ power_pellet_indx ] = TILE_NONE;
-        //             g_NumDots--;
-
-        //             for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-        //                 if( entities.ghostStates[ eid ] == NULL ) {
-        //                     continue;
-        //                 }
-        //                 if ( *entities.ghostStates[ eid ] != STATE_GO_TO_PEN && *entities.ghostStates[ eid ] != STATE_LEAVE_PEN ) {
-
-        //                     entities.ghostStates[ eid ] = STATE_VULNERABLE;
-        //                     vulnerable_enter( &entities, eid );
-        //                 }
-                        
-        //             }   
-        //             ghost_vulnerable_timer = 20.0f;                        
-        //         }
-        //     }
-                
-            
-        
-        // }
-
-        /*******************
-         * PROCESS STATES
-         * ******************/
-        //states_machine_process( actors, ghost_states, &tilemap );
-
-        //if no ghosts normal, then stop playing ghost sound
-        int any_ghosts_nomral = 0;
-        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-            if( entities.ghostStates[ eid ] == STATE_NORMAL ) {
-                any_ghosts_nomral = 1;
+                SDL_RenderCopy( renderer, gMainMenuTextTexture, NULL, &gMainMenuTextDestRect);
+                SDL_RenderPresent( renderer );
+                SDL_Delay( 10 );
                 break;
-            }
-        }
-        if( !any_ghosts_nomral ) {
-            if(Mix_Playing( GHOST_SOUND_CHANNEL ) ) {
-                Mix_HaltChannel( GHOST_SOUND_CHANNEL );
-            }
-        }
 
-        // PROCESS GLOBAL GAME STATE FOR ANY GHOSTS VULNERABLE
-        int any_ghosts_vuln = 0;
-        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-            if( entities.ghostStates[ eid ] == NULL ) {
-                continue;
-            }
-            if( *entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
-                any_ghosts_vuln = 1;
-                break;
-            }
-        }
-        if( !any_ghosts_vuln ) {
-            if(Mix_Playing( GHOST_VULN_CHANNEL ) ) {
-                Mix_HaltChannel( GHOST_VULN_CHANNEL );
-            }
-        }
-        else {
-            ghost_vulnerable_timer -= delta_time;
-        }
+            /**************
+             * ************
+             * *** GAME PLAYING
+             * *****************/
 
-        ghostsProcess( &entities, playerIds, 2, &tilemap, delta_time);
+            case GAME_PLAYING_GAME_STATE:
 
-        /********************
-         * MOVE GHOSTS
-         * ********************/
-        for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-            if( entities.targetingBehaviors[ i ] == NULL ) {
-                continue;
-            }
-            ghost_move( entities.actors, i, &tilemap, delta_time );
-        }
-        
+                switch(gGamePlayingState) {
+                    /**************
+                     * ************
+                     * *** GAME PLAYING
+                     * *****************/
+                    case GAME_PLAYING:
 
-        // ADJUST ANIMATION DEPENDING ON DIRECTION ACTOR IS MOVING
-        // hardcoded ids! uh oh!
-        // we really just want to do this on all animations that have more than 1 row. It must have 4 rows for ghosts because they can move in 4 directions
-        // When pac-man animations are complete, he will have 8 rows because he can move in 8 directions ( he cuts corners diaganolly )
-        // set_animation_row( animations[ 1 ], actors[ 1 ] );
-        // set_animation_row( animations[ 3 ], actors[ 3 ] );
-        // set_animation_row( animations[ 2 ], actors[ 2 ] );
-        // set_animation_row( animations[ 4 ], actors[ 4 ] );
+                                //gamePlayingProcess( &entities, &tilemap, deltaTime );
+                            // EVENTS
+                        while (SDL_PollEvent( &event ) != 0 ) {
+                            //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
+                            
+                            if( event.type == SDL_QUIT ) {
+                                gGameState = EXIT_STATE;
+                                break;
+                            }
+                            if ( event.type == SDL_KEYDOWN ) {
+                                if ( event.key.keysym.sym == SDLK_b ) {
+                                    g_show_debug_info = !g_show_debug_info;
+                                }
+                                if (event.key.keysym.sym == SDLK_v ) {
+                                    // ghost_vulnerable_timer = 20.0f;
+                                    // for( int i = 1; i < 5; ++i ) {
+                                    //     ghost_states[ i ] = STATE_VULNERABLE;
+                                    //     vulnerable_enter( actors, animations, i, renderDatas[ i ] );
+                                    // }
+                                    
+                                }
+                                if( event.key.keysym.sym == SDLK_z ) {
+                                    charge_button_down = SDL_TRUE;
+                                    charge_button_up = SDL_FALSE;
+                                }
+                            }
+                            if( event.type == SDL_KEYUP ) {
+                                if( event.key.keysym.sym == SDLK_z ) {
+                                    charge_button_up = SDL_TRUE;
+                                    charge_button_down = SDL_FALSE;
+                                }
+                                if( event.key.keysym.sym == SDLK_RETURN ) {
+                                    gGamePlayingState = GAME_PAUSED;
+                                    break;
+                                }
+                            
+                            }
+                            if( event.type == SDL_CONTROLLERBUTTONDOWN ) {
+                                for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+                                    if( entities.gameControllers[ i ] == NULL || entities.inputMasks[ i ] == NULL ) {
+                                        continue;
+                                    }
+                                    if( event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities.gameControllers[ i ]))) {
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
+                                            *entities.inputMasks[ i ] |= g_INPUT_UP;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT ) {
+                                            *entities.inputMasks[ i ] |= g_INPUT_LEFT;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) {
+                                            *entities.inputMasks[ i ] |= g_INPUT_RIGHT;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN ) {
+                                            *entities.inputMasks[ i ] |= g_INPUT_DOWN;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
+                                            *entities.inputMasks[ i ] |= g_INPUT_ACTION;
+                                            charge_button_down = SDL_TRUE;
+                                            charge_button_up = SDL_FALSE;
+                                        }
+                                    }
+                                }
+                                
+                            }
+                            if( event.type == SDL_CONTROLLERBUTTONUP ) {
+                                for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+                                    if( entities.gameControllers[ i ] == NULL || entities.inputMasks[ i ] == NULL ) {
+                                        continue;
+                                    }
+                                    if( event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities.gameControllers[ i ]))) {
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
+                                            *entities.inputMasks[ i ] ^= g_INPUT_UP;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT ) {
+                                            *entities.inputMasks[ i ] ^= g_INPUT_LEFT;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) {
+                                            *entities.inputMasks[ i ] ^= g_INPUT_RIGHT;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN ) {
+                                            *entities.inputMasks[ i ] ^= g_INPUT_DOWN;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
+                                            *entities.inputMasks[ i ] ^= g_INPUT_ACTION;
+                                            charge_button_up = SDL_TRUE;
+                                            charge_button_down = SDL_FALSE;
+                                        }
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
+                                            gGamePlayingState = GAME_PAUSED;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if(quit) break;
 
+                        // NEXT LEVEL?
+                        if( g_NumDots <= 0 ) {
+                            
+                            SDL_bool gameCleared = level_advance( &levelConfig, &tilemap, renderer, &entities );
+                            if( gameCleared ) {
+                                Mix_HaltChannel( GHOST_SOUND_CHANNEL );
+                                Mix_HaltChannel( GHOST_VULN_CHANNEL );
+                                
+                                gGameState = MAIN_MENU_GAME_STATE;
+                                gGamePlayingState = GAME_PLAYING;
+                                gCurrentLevel = 0;
+                                break;
+                            }
+                        }
 
+                        // KEYBOARD STATE
 
-
-        /*********************
-         * GHOST MODE PERIOD
-         * *******************/
-        ghost_mode_timer += delta_time;
-
-        if( g_current_scatter_chase_period < NUM_SCATTER_CHASE_PERIODS && ghost_mode_timer > g_scatter_chase_period_seconds[ g_current_scatter_chase_period ] ) {
-            if( g_current_ghost_mode == MODE_CHASE ) {
-                g_current_ghost_mode = MODE_SCATTER;
-                for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
-                    if( entities.ghostStates[ i ] != NULL && entities.ghostStates[ i ] == STATE_NORMAL ) {
-                        entities.actors[ i ]->direction = opposite_directions[ entities.actors[ i ]->direction ];
-                        entities.actors[ i ]->next_tile = entities.actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
-                    }
-                    
-                }
-            }
-            else {
-                g_current_ghost_mode = MODE_CHASE;
-                for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
-                    if( entities.ghostStates[ i ] != NULL && entities.ghostStates[ i ] == STATE_NORMAL ) {
-                        entities.actors[ i ]->direction = opposite_directions[ entities.actors[ i ]->direction ];
-                        entities.actors[ i ]->next_tile = entities.actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
-                    }
-
-                }
-            }
-            ghost_mode_timer = 0.0f;
-            g_current_scatter_chase_period++;
-        }
-
-        
-        /**********
-         * UPDATE DOTS ANIMATION
-         * **********/
-        int top_bound = DOT_PADDING;
-        int bottom_bound = TILE_SIZE - DOT_PADDING;
-        for( int r = 0; r < TILE_ROWS; ++r ) {
-            for( int c = 0; c < TILE_COLS; ++c ) {
-                
-                tilemap.tm_dot_particles[ r ][ c ].position.y += tilemap.tm_dot_particles[ r ][ c ].velocity.y * DOT_SPEED * delta_time ;
-
-                if ( tilemap.tm_dot_particles[ r ][ c ].position.y < top_bound ) {
-                    tilemap.tm_dot_particles[ r ][ c ].position.y = top_bound;
-                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = 1;
-                }
-                if ( tilemap.tm_dot_particles[ r ][ c ].position.y > bottom_bound) {
-                    tilemap.tm_dot_particles[ r ][ c ].position.y = bottom_bound;
-                    
-                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = -1;
-                }
-            }
-        }
-
-        /**********
-         * RENDER
-         * **********/
-        set_render_clip_values_based_on_positions_and_animation( &entities, tilemap.tm_screen_position );
-
-        
-
-        SDL_SetRenderDrawColor( renderer, 0,0,0,255);
-        SDL_RenderClear( renderer );    
-
-        tm_render_with_screen_position_offset( renderer, &tilemap );
-
-        renderDataForAnimatedSpriteProcess( renderer, &entities );
-
-
-        SDL_Rect black_bar = {0,0, 1920, TILE_SIZE * 2};
-        SDL_SetRenderDrawColor( renderer, 0,0,0,255 );
-        SDL_RenderFillRect( renderer, &black_bar);
-
-        SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
-
-        /****
-         * ANY MESSAGES
-         **/
-        for(int i = 0; i < g_NumTimedMessages; i++ ) {
-            if( g_TimedMessages[ i ].remainingTime > 0.0f ) {
-                
-                if( g_TimedMessages[ i ].l.remainingTime > 0.0f ) {
-                    
-                    
-                    blinkProcess( &g_ScoreBlinks[ i ], delta_time );
-                    interpolate( &g_TimedMessages[ i ].l, delta_time );
-                    g_TimedMessages[ i ].world_position.y = g_TimedMessages[ i ].l.value;
-                    g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point( g_TimedMessages[ i ].world_position, tilemap.tm_screen_position ).y;
-                }
-                else {
-                    g_ScoreBlinks[ i ].current_value_idx = 1;
-                }
-                
-
-                SDL_SetTextureAlphaMod( g_TimedMessages[ i ].messageTexture, g_ScoreBlinks[ i ].values[ g_ScoreBlinks->current_value_idx ] );
-                SDL_RenderCopy( renderer, g_TimedMessages[ i ].messageTexture, NULL, &g_TimedMessages[ i ].render_dest_rect);
-                g_TimedMessages[ i ].remainingTime -= delta_time;
-                if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
-                    SDL_DestroyTexture( g_TimedMessages[ i ].messageTexture );
-                    g_TimedMessages[ i ].messageTexture = NULL;
-                }
-            }
-        }
-
-        if( charge_button_down ) {
-            SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-            SDL_Rect rect_holding = { 600, 0, TILE_SIZE, TILE_SIZE };
-            SDL_RenderDrawRect( renderer, &rect_holding );
-        }
-
-        // DEBUG
-        if ( g_show_debug_info ) {
-            //grid
-            SDL_SetRenderDrawColor( renderer, 50,50,50,255);
-            for ( int y = tilemap.tm_screen_position.y; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
-                SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
-            }
-            for ( int x = tilemap.tm_screen_position.x; x < SCREEN_WIDTH; x+= TILE_SIZE) {
-                SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
-            }
-
-            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 30 );
-            for( int row = 0; row < TILE_ROWS; row++ ) {
-                for( int col = 0; col < TILE_COLS; col ++ ) {
-
-                    if( tilemap.tm_walls[ row ][ col ] == 'x' ) {
-
-                        SDL_Rect wall_rect = {
-                            tilemap.tm_screen_position.x + ( TILE_SIZE * col ),
-                            tilemap.tm_screen_position.y + ( TILE_SIZE * row ),
-                            TILE_SIZE,
-                            TILE_SIZE
-                        };
+                        const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
+                        //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
                         
-                        SDL_RenderFillRect( renderer, &wall_rect );
+                        // adjust tilemap
+                        if( current_key_states[ SDL_SCANCODE_S ] ) {
+                            tilemap.tm_screen_position.y++;
+                            // increase double speed if shift held down
+                            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                                tilemap.tm_screen_position.y+=4;
+                            }
+                        }
+                        if( current_key_states[ SDL_SCANCODE_W ] ) {
+                            tilemap.tm_screen_position.y--;
+                            // increase double speed if shift held down
 
-                    } 
+                            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                                tilemap.tm_screen_position.y-=4;
+                            }
+                        }
+                        if( current_key_states[ SDL_SCANCODE_D ] ) {
+                            tilemap.tm_screen_position.x++;
+                            // increase double speed if shift held down
+                            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                                tilemap.tm_screen_position.x+=4;
+                            }
+                        }
+                        if( current_key_states[ SDL_SCANCODE_A ] ) {
+                            tilemap.tm_screen_position.x--;
+                            // increase double speed if shift held down
+                            if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+                                tilemap.tm_screen_position.x-=4;
+                            }
+                        }
+                        if( current_key_states[ SDL_SCANCODE_COMMA ] ) {
+                            SDL_Delay(500);
+                            level_advance( &levelConfig, &tilemap, renderer, &entities );
+                        }
+                        
+                        
+
+                        // UPDATE SIMULATION
+
+                        inputToTryMoveProcess( &entities, &tilemap, deltaTime);
+
+                        dashTimersProcess( &entities, deltaTime );
+
+                        animatedSpriteIncProcess( entities.animatedSprites , deltaTime); 
+                        
+                        // slow down pacman if in pac-pellet-tile
+        
+                        // process eating dots slow timers
+                        for( int eid = 0 ; eid < MAX_NUM_ENTITIES; eid++ ) {
+                            if( entities.slowTimers[ eid ] == NULL ) {
+                                continue;
+                            }
+                            if( tilemap.tm_dots[ entities.actors[ eid ]->current_tile.y ][ entities.actors[ eid ]->current_tile.x ] == 'x' ) {
+                                *entities.slowTimers[ eid ] = 0.075f;
+                            }
+                        }
+
+                        collectDotProcess( &entities, tilemap.tm_dots, &g_NumDots, &score, renderer );
+
+                        
+                        // CHECK STATE TRANSITIONS FOR GHOSTS
+                        for(int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                            if( entities.ghostStates[ eid ] == NULL ) {
+                                continue;
+                            }
+                            switch( *entities.ghostStates[ eid ] ) {
+                                case STATE_VULNERABLE :
+                                    // return all ghosts that are still vulnerable to normal
+                                    // when the timer runs out
+                                    if (ghost_vulnerable_timer <= 0.0f ) {
+                                        g_NumGhostsEaten = 0;
+                                        *entities.ghostStates[ eid ] = STATE_NORMAL;
+                                        normal_enter( &entities, eid );
+                                        // for( int i = 1; i < 5; ++i ) {
+                                        //     if( *entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
+                                        //         *entities.ghostStates[ eid ] = STATE_NORMAL;
+                                        //         normal_enter( &entities, eid );
+                                        //     }
+                                        // }
+                                    }
+
+                                    EntityId playerId;
+                                    for( int i = 0; i < numPlayers; ++i ) {
+                                        playerId = playerIds[ i ];
+
+                                        // eat ghost if pacman touches
+                                        if ( entities.actors[ playerId ]->current_tile.x == entities.actors[ eid ]->current_tile.x 
+                                        && entities.actors[ playerId ]->current_tile.y == entities.actors[ eid ]->current_tile.y ) {
+                                            Mix_PlayChannel( -1, g_PacChompSound, 0 );
+                                            Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
+                                            score.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
+                                            g_NumGhostsEaten++;
+                                            *entities.ghostStates[ eid ] = STATE_GO_TO_PEN;
+                                            uint8_t texture_atlas_id = 4;
+                                            entities.animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
+                                            entities.actors[ eid ]->next_tile = entities.actors[ eid ]->current_tile;
+                                            entities.actors[ eid ]->target_tile = ghost_pen_tile;
+                                            entities.actors[ eid ]->speed_multp = 1.6f;
+
+                                            // show message
+                                            for( int i = 0; i < g_NumTimedMessages; i++ ) {
+                                                if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
+                                                    g_TimedMessages[ i ].remainingTime = 0.85f;
+                                                    g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities.actors[ playerId ]->current_tile );
+                                                    snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
+                                                    g_TimedMessages[ i ].color = white;
+                                                    SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
+                                                    g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( renderer, msgSurface );
+                                                    g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).x;
+                                                    g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap.tm_screen_position).y;
+                                                    g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
+                                                    g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
+                                                    SDL_FreeSurface( msgSurface );
+                                                    g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
+
+                                                    break;
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                    break;
+                                    
+                                case STATE_GO_TO_PEN :
+                                    // ghost is in pen
+                                    
+                                    if( points_equal(entities.actors[ eid ]->current_tile, ghost_pen_tile ) && entities.actors[ eid ]->world_center_point.y >= ghost_pen_center_point.y) {
+
+                                        *entities.ghostStates[ eid ] = STATE_LEAVE_PEN;
+                                        leave_pen_enter( &entities, eid );
+                                    }
+                                    break;
+
+                                
+                                case STATE_NORMAL :
+                                    break;
+                                case STATE_LEAVE_PEN:
+                                    if( points_equal( entities.actors[ eid ]->current_tile, entities.actors[ eid ]->target_tile ) ) {
+                                        *entities.ghostStates[ eid ] = STATE_NORMAL;
+                                        normal_enter( &entities, eid );
+                                    }
+                                    
+                                    break;
+                            }
+                        }
+
+                        // pacman eats power pellet
+                        // TODO: FIX
+
+                        // process power pellet pickups
+                        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+                            if( entities.pickupTypes[ eid ] == NULL || *entities.pickupTypes[ eid] != POWER_PELLET_PICKUP ) { // its a power pellet pickup
+                                continue;
+                            }
+
+                            for( int i = 0; i < numPlayers; i++ ) {
+                                EntityId playerId = playerIds[ i ];
+                                // player eats power pellet
+                                if( points_equal( entities.actors[ eid ]->current_tile, entities.actors[ playerId ]->current_tile ) ) {
+                                    score.score_number += 20;
+                                    g_NumGhostsEaten = 0;
+                                    // move it outside of the world area for now.
+                                    // TODO: deactivate this somehow
+                                    entities.actors[ eid ]->current_tile.x = -1;
+                                    entities.actors[ eid ]->current_tile.y = -1;
+                                    entities.actors[ eid ]->world_position.x = -100;
+                                    entities.actors[ eid ]->world_position.y = -100;
+                                    entities.actors[ eid ]->world_center_point.x = -100;
+                                    entities.actors[ eid ]->world_center_point.y = -100;
+                                    g_NumDots--;
+
+                                    // make ghosts all vulnerable state
+                                    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                                        if( entities.ghostStates[ eid ] == NULL ) {
+                                            continue;
+                                        }
+                                        if ( *entities.ghostStates[ eid ] != STATE_GO_TO_PEN && *entities.ghostStates[ eid ] != STATE_LEAVE_PEN ) {
+
+                                            *entities.ghostStates[ eid ] = STATE_VULNERABLE;
+                                            vulnerable_enter( &entities, eid );
+                                        }
+                                        
+                                    }   
+                                    ghost_vulnerable_timer = 20.0f;   
+                                }
+                            }
+
+                        }
+
+
+                        /*******************
+                         * PROCESS STATES
+                         * ******************/
+                        //states_machine_process( actors, ghost_states, &tilemap );
+
+                        //if no ghosts normal, then stop playing ghost sound
+                        int any_ghosts_nomral = 0;
+                        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+                            if( entities.ghostStates[ eid ] == STATE_NORMAL ) {
+                                any_ghosts_nomral = 1;
+                                break;
+                            }
+                        }
+                        if( !any_ghosts_nomral ) {
+                            if(Mix_Playing( GHOST_SOUND_CHANNEL ) ) {
+                                Mix_HaltChannel( GHOST_SOUND_CHANNEL );
+                            }
+                        }
+
+                        // PROCESS GLOBAL GAME STATE FOR ANY GHOSTS VULNERABLE
+                        int any_ghosts_vuln = 0;
+                        for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+                            if( entities.ghostStates[ eid ] == NULL ) {
+                                continue;
+                            }
+                            if( *entities.ghostStates[ eid ] == STATE_VULNERABLE ) {
+                                any_ghosts_vuln = 1;
+                                break;
+                            }
+                        }
+                        if( !any_ghosts_vuln ) {
+                            if(Mix_Playing( GHOST_VULN_CHANNEL ) ) {
+                                Mix_HaltChannel( GHOST_VULN_CHANNEL );
+                            }
+                        }
+                        else {
+                            ghost_vulnerable_timer -= deltaTime;
+                        }
+
+                        ghostsProcess( &entities, playerIds, 2, &tilemap, deltaTime);
+
+                        /********************
+                         * MOVE GHOSTS
+                         * ********************/
+                        for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+                            if( entities.targetingBehaviors[ i ] == NULL ) {
+                                continue;
+                            }
+                            ghost_move( entities.actors, i, &tilemap, deltaTime );
+                        }
+                        
+                        /*********************
+                         * GHOST MODE PERIOD
+                         * *******************/
+                        ghost_mode_timer += deltaTime;
+
+                        if( g_current_scatter_chase_period < NUM_SCATTER_CHASE_PERIODS && ghost_mode_timer > g_scatter_chase_period_seconds[ g_current_scatter_chase_period ] ) {
+                            if( g_current_ghost_mode == MODE_CHASE ) {
+                                g_current_ghost_mode = MODE_SCATTER;
+                                for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
+                                    if( entities.ghostStates[ i ] != NULL && entities.ghostStates[ i ] == STATE_NORMAL ) {
+                                        entities.actors[ i ]->direction = opposite_directions[ entities.actors[ i ]->direction ];
+                                        entities.actors[ i ]->next_tile = entities.actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
+                                    }
+                                    
+                                }
+                            }
+                            else {
+                                g_current_ghost_mode = MODE_CHASE;
+                                for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
+                                    if( entities.ghostStates[ i ] != NULL && entities.ghostStates[ i ] == STATE_NORMAL ) {
+                                        entities.actors[ i ]->direction = opposite_directions[ entities.actors[ i ]->direction ];
+                                        entities.actors[ i ]->next_tile = entities.actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
+                                    }
+
+                                }
+                            }
+                            ghost_mode_timer = 0.0f;
+                            g_current_scatter_chase_period++;
+                        }
+
+                        
+                        /**********
+                         * UPDATE DOTS ANIMATION
+                         * **********/
+                        int top_bound = DOT_PADDING;
+                        int bottom_bound = TILE_SIZE - DOT_PADDING;
+                        for( int r = 0; r < TILE_ROWS; ++r ) {
+                            for( int c = 0; c < TILE_COLS; ++c ) {
+                                
+                                tilemap.tm_dot_particles[ r ][ c ].position.y += tilemap.tm_dot_particles[ r ][ c ].velocity.y * DOT_SPEED * deltaTime ;
+
+                                if ( tilemap.tm_dot_particles[ r ][ c ].position.y < top_bound ) {
+                                    tilemap.tm_dot_particles[ r ][ c ].position.y = top_bound;
+                                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = 1;
+                                }
+                                if ( tilemap.tm_dot_particles[ r ][ c ].position.y > bottom_bound) {
+                                    tilemap.tm_dot_particles[ r ][ c ].position.y = bottom_bound;
+                                    
+                                    tilemap.tm_dot_particles[ r ][ c ].velocity.y = -1;
+                                }
+                            }
+                        }
+
+                        /**********
+                         * RENDER
+                         * **********/
+                        set_render_clip_values_based_on_positions_and_animation( &entities, tilemap.tm_screen_position );
+
+                        
+
+                        SDL_SetRenderDrawColor( renderer, 0,0,0,255);
+                        SDL_RenderClear( renderer );    
+
+                        tm_render_with_screen_position_offset( renderer, &tilemap );
+
+                        renderDataForAnimatedSpriteProcess( renderer, &entities );
+
+
+                        SDL_Rect black_bar = {0,0, 1920, TILE_SIZE * 2};
+                        SDL_SetRenderDrawColor( renderer, 0,0,0,255 );
+                        SDL_RenderFillRect( renderer, &black_bar);
+
+                        SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
+
+                        /****
+                         * ANY MESSAGES
+                         **/
+                        for(int i = 0; i < g_NumTimedMessages; i++ ) {
+                            if( g_TimedMessages[ i ].remainingTime > 0.0f ) {
+                                
+                                if( g_TimedMessages[ i ].l.remainingTime > 0.0f ) {
+                                    
+                                    
+                                    blinkProcess( &g_ScoreBlinks[ i ], deltaTime );
+                                    interpolate( &g_TimedMessages[ i ].l, deltaTime );
+                                    g_TimedMessages[ i ].world_position.y = g_TimedMessages[ i ].l.value;
+                                    g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point( g_TimedMessages[ i ].world_position, tilemap.tm_screen_position ).y;
+                                }
+                                else {
+                                    g_ScoreBlinks[ i ].current_value_idx = 1;
+                                }
+                                
+
+                                SDL_SetTextureAlphaMod( g_TimedMessages[ i ].messageTexture, g_ScoreBlinks[ i ].values[ g_ScoreBlinks->current_value_idx ] );
+                                SDL_RenderCopy( renderer, g_TimedMessages[ i ].messageTexture, NULL, &g_TimedMessages[ i ].render_dest_rect);
+                                g_TimedMessages[ i ].remainingTime -= deltaTime;
+                                if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
+                                    SDL_DestroyTexture( g_TimedMessages[ i ].messageTexture );
+                                    g_TimedMessages[ i ].messageTexture = NULL;
+                                }
+                            }
+                        }
+
+                        if( charge_button_down ) {
+                            SDL_SetRenderDrawColor( renderer, 255,255,255,255);
+                            SDL_Rect rect_holding = { 600, 0, TILE_SIZE, TILE_SIZE };
+                            SDL_RenderDrawRect( renderer, &rect_holding );
+                        }
+
+                        // DEBUG
+                        if ( g_show_debug_info ) {
+                            //grid
+                            SDL_SetRenderDrawColor( renderer, 50,50,50,255);
+                            for ( int y = tilemap.tm_screen_position.y; y < SCREEN_HEIGHT; y+= TILE_SIZE ) {
+                                SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y);
+                            }
+                            for ( int x = tilemap.tm_screen_position.x; x < SCREEN_WIDTH; x+= TILE_SIZE) {
+                                SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT );
+                            }
+
+                            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 30 );
+                            for( int row = 0; row < TILE_ROWS; row++ ) {
+                                for( int col = 0; col < TILE_COLS; col ++ ) {
+
+                                    if( tilemap.tm_walls[ row ][ col ] == 'x' ) {
+
+                                        SDL_Rect wall_rect = {
+                                            tilemap.tm_screen_position.x + ( TILE_SIZE * col ),
+                                            tilemap.tm_screen_position.y + ( TILE_SIZE * row ),
+                                            TILE_SIZE,
+                                            TILE_SIZE
+                                        };
+                                        
+                                        SDL_RenderFillRect( renderer, &wall_rect );
+
+                                    } 
+                                }
+                            }
+                            
+                            SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 150 );
+
+                            SDL_Rect tileRect;
+                            SDL_Point screenPoint;
+                            // current tile
+                            for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+                                if( entities.actors[ i ] == NULL ) {
+                                    continue;
+                                }
+                                screenPoint = tile_grid_point_to_screen_point( entities.actors[ i ]->current_tile, tilemap.tm_screen_position );
+                                tileRect.x = screenPoint.x;    
+                                tileRect.y = screenPoint.y;    
+                                tileRect.w = TILE_SIZE;    
+                                tileRect.h = TILE_SIZE;    
+                                SDL_RenderFillRect( renderer, &tileRect);
+
+                                screenPoint = tile_grid_point_to_screen_point( entities.actors[ i ]->next_tile, tilemap.tm_screen_position );
+                                tileRect.x = screenPoint.x;    
+                                tileRect.y = screenPoint.y; 
+                                SDL_RenderFillRect( renderer, &tileRect);
+
+                            }
+                            // target tile
+                            for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+                                if( entities.targetingBehaviors[ i ] == NULL ) {
+                                    continue;
+                                }
+
+                                switch( *entities.targetingBehaviors[ i ] ) {
+                                    case SHADOW_BEHAVIOR:
+                                        SDL_SetRenderDrawColor( renderer, 255,0,0,255);
+                                        break;
+                                    case AMBUSH_BEHAVIOR:
+                                        SDL_SetRenderDrawColor( renderer, 255,0,255,255);
+                                        break;
+                                    case MOODY_BEHAVIOR:
+                                        SDL_SetRenderDrawColor( renderer, 0,255,255,255);
+                                        break;
+                                    case POKEY_BEHAVIOR:
+                                        SDL_SetRenderDrawColor( renderer, 150,150,0,255);
+                                        break;
+                                    default:
+                                        SDL_SetRenderDrawColor( renderer, 255,255,255,255);
+                                        break;
+                                }
+                                screenPoint = tile_grid_point_to_screen_point( entities.actors[ i ]->target_tile, tilemap.tm_screen_position );
+                                tileRect.x = screenPoint.x;
+                                tileRect.y = screenPoint.y;
+                                SDL_RenderDrawRect( renderer, &tileRect );
+                            }
+
+
+                            // current_tile
+                            // for(int i = 0; i < 4; ++i) {
+                            //     SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
+                            //     SDL_Rect tile_rect = { actors[ i ]->current_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
+                            //     SDL_RenderFillRect( renderer, &tile_rect);
+                            // }
+                            
+                            // // next tile 
+                            // for( int i = 0; i < 5; ++i ) {
+                            //     SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
+                            //     SDL_Rect next_rect = { actors[ i ]->next_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->next_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                            //     SDL_RenderFillRect( renderer, &next_rect );
+
+                            // }
+
+                            // SDL_SetRenderDrawColor( renderer, 255,0,0,255);
+                            // SDL_Rect b_target_rect = { actors[ 1 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 1 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                            // SDL_RenderDrawRect( renderer, &b_target_rect );
+
+                            // SDL_SetRenderDrawColor( renderer, 255,150,255,255);
+                            // SDL_Rect p_target_rect = { actors[ 2 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 2 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                            // SDL_RenderDrawRect( renderer, &p_target_rect );
+
+                            // SDL_SetRenderDrawColor( renderer, 3,252,248,255);
+                            // SDL_Rect i_target_rect = { actors[ 3 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 3 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                            // SDL_RenderDrawRect( renderer, &i_target_rect );
+
+                            // SDL_SetRenderDrawColor( renderer, 235, 155, 52,255);
+                            // SDL_Rect c_target_rect = { actors[ 4 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 4 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
+                            // SDL_RenderDrawRect( renderer, &c_target_rect );
+                            
+                            // // pacman center point
+                            // SDL_SetRenderDrawColor( renderer, 255,255,255,255);
+                            // SDL_Point points_to_draw[ 25 ];
+                            
+                            // //CENTER
+                            // set_cross( actors[ 0 ]->world_center_point, 0, tilemap.tm_screen_position, points_to_draw );
+                            
+                            // // SENSORS
+                            // set_cross( actors[ 0 ]->world_top_sensor, 5, tilemap.tm_screen_position, points_to_draw );
+                            // set_cross( actors[ 0 ]->world_bottom_sensor, 10, tilemap.tm_screen_position, points_to_draw );
+                            // set_cross( actors[ 0 ]->world_left_sensor, 15, tilemap.tm_screen_position,points_to_draw );
+                            // set_cross( actors[ 0 ]->world_right_sensor, 20,tilemap.tm_screen_position, points_to_draw );
+
+                            // SDL_RenderDrawPoints( renderer, points_to_draw, 25 );
+
+                            // // GHOST PEN
+                            // SDL_SetRenderDrawColor( renderer, 255,255,255,50);
+                            // SDL_Point ghost_pen_screen_point = world_point_to_screen_point( ghost_pen_position, tilemap.tm_screen_position );
+                            // SDL_Rect pen_rect = { ghost_pen_screen_point.x, ghost_pen_screen_point.y, TILE_SIZE, TILE_SIZE };
+                            // SDL_RenderFillRect( renderer, &pen_rect);
+
+                            // // GHOST PEN ENTRANCE
+                            // SDL_SetRenderDrawColor( renderer, 255,255,255,50);
+                            // SDL_Point ghost_pen_entrance_screen_point = tile_grid_point_to_screen_point(tilemap.one_way_tile, tilemap.tm_screen_position);//world_point_to_screen_point( tilemap.one_way_tile, tilemap.tm_screen_position );
+                            // SDL_Rect pen_entrance_rect = { ghost_pen_entrance_screen_point.x, ghost_pen_entrance_screen_point.y, TILE_SIZE, TILE_SIZE };
+                            // SDL_RenderFillRect( renderer, &pen_entrance_rect);
+
+                        }
+                        SDL_RenderPresent( renderer );
+                        SDL_Delay(5);
+                        break;
+                    /**************
+                     * ************
+                     * *** GAME PAUSED
+                     * *****************/
+                    case GAME_PAUSED:
+                        while (SDL_PollEvent( &event ) != 0 ) {
+                            //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
+                            
+                            if( event.type == SDL_QUIT ) {
+                                gGameState = EXIT_STATE;
+                                break;
+                            }
+                            if( event.type == SDL_KEYUP ) {
+                                if( event.key.keysym.sym == SDLK_RETURN ) {
+                                    gGamePlayingState = GAME_PLAYING;
+                                }
+                            }
+                            if( event.type == SDL_CONTROLLERBUTTONUP ) {
+                                for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+                                    if( entities.gameControllers[ i ] == NULL || entities.inputMasks[ i ] == NULL ) {
+                                        continue;
+                                    }
+                                    if( event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities.gameControllers[ i ]))) {
+                                        if( event.cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
+                                            gGamePlayingState = GAME_PLAYING;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                            }
+                        }
+
+                        const Uint8 *currentKeyState = SDL_GetKeyboardState( NULL );
+                        if( currentKeyState[ SDL_SCANCODE_RETURN ] ) {
+                            
+                        }   
+
+                        SDL_RenderCopy( renderer, gPauseTextTexture, NULL, &pauseTextDestRect);
+
+                        SDL_RenderPresent( renderer );
+                        SDL_Delay(5);
+                        break;
                 }
-            }
-            
-            SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 150 );
-
-            SDL_Rect tileRect;
-            SDL_Point screenPoint;
-            // current tile
-            for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-                if( entities.actors[ i ] == NULL ) {
-                    continue;
-                }
-                screenPoint = tile_grid_point_to_screen_point( entities.actors[ i ]->current_tile, tilemap.tm_screen_position );
-                tileRect.x = screenPoint.x;    
-                tileRect.y = screenPoint.y;    
-                tileRect.w = TILE_SIZE;    
-                tileRect.h = TILE_SIZE;    
-                SDL_RenderFillRect( renderer, &tileRect);
-
-                screenPoint = tile_grid_point_to_screen_point( entities.actors[ i ]->next_tile, tilemap.tm_screen_position );
-                tileRect.x = screenPoint.x;    
-                tileRect.y = screenPoint.y; 
-                SDL_RenderFillRect( renderer, &tileRect);
-
-            }
-            // target tile
-            for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-                if( entities.targetingBehaviors[ i ] == NULL ) {
-                    continue;
-                }
-
-                switch( *entities.targetingBehaviors[ i ] ) {
-                    case SHADOW_BEHAVIOR:
-                        SDL_SetRenderDrawColor( renderer, 255,0,0,255);
-                        break;
-                    case AMBUSH_BEHAVIOR:
-                        SDL_SetRenderDrawColor( renderer, 255,0,255,255);
-                        break;
-                    case MOODY_BEHAVIOR:
-                        SDL_SetRenderDrawColor( renderer, 0,255,255,255);
-                        break;
-                    case POKEY_BEHAVIOR:
-                        SDL_SetRenderDrawColor( renderer, 150,150,0,255);
-                        break;
-                    default:
-                        SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-                        break;
-                }
-                screenPoint = tile_grid_point_to_screen_point( entities.actors[ i ]->target_tile, tilemap.tm_screen_position );
-                tileRect.x = screenPoint.x;
-                tileRect.y = screenPoint.y;
-                SDL_RenderDrawRect( renderer, &tileRect );
-            }
-
-
-            // current_tile
-            // for(int i = 0; i < 4; ++i) {
-            //     SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
-            //     SDL_Rect tile_rect = { actors[ i ]->current_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
-            //     SDL_RenderFillRect( renderer, &tile_rect);
-            // }
-            
-            // // next tile 
-            // for( int i = 0; i < 5; ++i ) {
-            //     SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
-            //     SDL_Rect next_rect = { actors[ i ]->next_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->next_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-            //     SDL_RenderFillRect( renderer, &next_rect );
-
-            // }
-
-            // SDL_SetRenderDrawColor( renderer, 255,0,0,255);
-            // SDL_Rect b_target_rect = { actors[ 1 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 1 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-            // SDL_RenderDrawRect( renderer, &b_target_rect );
-
-            // SDL_SetRenderDrawColor( renderer, 255,150,255,255);
-            // SDL_Rect p_target_rect = { actors[ 2 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 2 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-            // SDL_RenderDrawRect( renderer, &p_target_rect );
-
-            // SDL_SetRenderDrawColor( renderer, 3,252,248,255);
-            // SDL_Rect i_target_rect = { actors[ 3 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 3 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-            // SDL_RenderDrawRect( renderer, &i_target_rect );
-
-            // SDL_SetRenderDrawColor( renderer, 235, 155, 52,255);
-            // SDL_Rect c_target_rect = { actors[ 4 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 4 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-            // SDL_RenderDrawRect( renderer, &c_target_rect );
-            
-            // // pacman center point
-            // SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-            // SDL_Point points_to_draw[ 25 ];
-            
-            // //CENTER
-            // set_cross( actors[ 0 ]->world_center_point, 0, tilemap.tm_screen_position, points_to_draw );
-            
-            // // SENSORS
-            // set_cross( actors[ 0 ]->world_top_sensor, 5, tilemap.tm_screen_position, points_to_draw );
-            // set_cross( actors[ 0 ]->world_bottom_sensor, 10, tilemap.tm_screen_position, points_to_draw );
-            // set_cross( actors[ 0 ]->world_left_sensor, 15, tilemap.tm_screen_position,points_to_draw );
-            // set_cross( actors[ 0 ]->world_right_sensor, 20,tilemap.tm_screen_position, points_to_draw );
-
-            // SDL_RenderDrawPoints( renderer, points_to_draw, 25 );
-
-            // // GHOST PEN
-            // SDL_SetRenderDrawColor( renderer, 255,255,255,50);
-            // SDL_Point ghost_pen_screen_point = world_point_to_screen_point( ghost_pen_position, tilemap.tm_screen_position );
-            // SDL_Rect pen_rect = { ghost_pen_screen_point.x, ghost_pen_screen_point.y, TILE_SIZE, TILE_SIZE };
-            // SDL_RenderFillRect( renderer, &pen_rect);
-
-            // // GHOST PEN ENTRANCE
-            // SDL_SetRenderDrawColor( renderer, 255,255,255,50);
-            // SDL_Point ghost_pen_entrance_screen_point = tile_grid_point_to_screen_point(tilemap.one_way_tile, tilemap.tm_screen_position);//world_point_to_screen_point( tilemap.one_way_tile, tilemap.tm_screen_position );
-            // SDL_Rect pen_entrance_rect = { ghost_pen_entrance_screen_point.x, ghost_pen_entrance_screen_point.y, TILE_SIZE, TILE_SIZE };
-            // SDL_RenderFillRect( renderer, &pen_entrance_rect);
-
+                
+                break;
+            case EXIT_STATE:
+                quit = SDL_TRUE;
+                break;
+            default:
+                printf("something went wrong. gGameState: %d\n", gGameState );
+                break;
         }
-        SDL_RenderPresent( renderer );
-        SDL_Delay(5);
+        
+
+        
+        
     }
 
     // CLOSE DOWN
