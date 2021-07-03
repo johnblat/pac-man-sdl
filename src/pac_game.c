@@ -20,6 +20,8 @@
 #include "sounds.h"
 #include "input.h"
 
+SDL_bool gIsFullscreen = SDL_TRUE;
+
 typedef enum {
     MAIN_MENU_GAME_STATE,
     GAME_PLAYING_GAME_STATE,
@@ -43,7 +45,7 @@ SDL_Texture *gPauseTextTexture = NULL;
 
 // End Main Menu
 
-SDL_bool g_show_debug_info = SDL_TRUE;
+SDL_bool g_show_debug_info = SDL_FALSE;
 
 SDL_Color pac_color = {200,150,0};
 SDL_Color white = {200,200,255};
@@ -187,12 +189,13 @@ int main( int argc, char *argv[] ) {
         entities.animatedSprites  [ i ] = NULL;
         entities.renderDatas     [ i ] = NULL;
         entities.ghostStates      [ i ] = NULL;
-        entities.targetingBehaviors       [ i ] = NULL;
+        entities.targetingBehaviors [ i ] = NULL;
         entities.chargeTimers     [ i ] = NULL;
         entities.dashTimers       [ i ] = NULL;
         entities.slowTimers       [ i ] = NULL;
         entities.inputMasks       [ i ] = NULL;
         entities.pickupTypes      [ i ] = NULL;
+        entities.dashCooldownStocks [ i ] = NULL;
     }
     
     // TIMER USED FOR VULNERABILITY STATE
@@ -228,7 +231,7 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    window = SDL_CreateWindow( "JB Pacmonster", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
+    window = SDL_CreateWindow( "JB Pacmonster", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN );
     if ( window == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
@@ -283,7 +286,7 @@ int main( int argc, char *argv[] ) {
     // end game controller
 
     //Load music
-    g_Music = Mix_LoadMUS( "res/sounds/Scruffy - World 0 & 1 (Pac-Man Arrangement) - arranged by Scruffy.ogg" );
+    g_Music = Mix_LoadMUS( gMenuMusicFilename );
     // g_Music = Mix_LoadMUS( "res/sounds/test/Dont-Worry-We-Got-Warp-Spe.mp3" );
     if( g_Music == NULL )
     {
@@ -494,13 +497,26 @@ int main( int argc, char *argv[] ) {
                             gGameState = GAME_PLAYING_GAME_STATE;
                             break;
                         }
+                        if( event.key.keysym.sym == SDLK_ESCAPE ) {
+                            quit = 1;
+                            break;
+                        }
+                        if( event.key.keysym.sym == SDLK_F11 ) {
+                            Uint32 windowFlags = SDL_GetWindowFlags( window );
+                            SDL_SetWindowFullscreen( window, windowFlags ^= SDL_WINDOW_FULLSCREEN );
+                        }
                     }
+                    
                         
                     if( event.type == SDL_CONTROLLERBUTTONUP ) {
                         for( int i = 0; i < g_NumGamepads; i++ ) {
                             
                             if( event.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(g_GameControllers[ i ]))) {
                                 if( event.cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
+                                    Mix_HaltMusic();
+                                    Mix_FreeMusic( g_Music );
+                                    g_Music = Mix_LoadMUS( gGameMusicFilename );
+                                    Mix_PlayMusic( g_Music, -1 );
                                     gGameState = GAME_PLAYING_GAME_STATE;
                                     break;                                    
                                 }
@@ -569,6 +585,15 @@ int main( int argc, char *argv[] ) {
                                     gGamePlayingState = GAME_PAUSED;
                                     break;
                                 }
+                                if( event.key.keysym.sym == SDLK_ESCAPE ) {
+                                    quit = 1;
+                                    break;
+                                }
+                                if( event.key.keysym.sym == SDLK_F11 ) {
+                                    Uint32 windowFlags = SDL_GetWindowFlags( window );
+                                    SDL_SetWindowFullscreen( window, windowFlags ^= SDL_WINDOW_FULLSCREEN );
+                                }
+                        
                             
                             }
                             if( event.type == SDL_CONTROLLERBUTTONDOWN ) {
@@ -638,9 +663,11 @@ int main( int argc, char *argv[] ) {
                             if( gameCleared ) {
                                 Mix_HaltChannel( GHOST_SOUND_CHANNEL );
                                 Mix_HaltChannel( GHOST_VULN_CHANNEL );
-                                
+                                Mix_HaltMusic();
+                                Mix_FreeMusic( g_Music );
+                                g_Music = Mix_LoadMUS( gMenuMusicFilename );
+                                Mix_PlayMusic( g_Music, -1 );
                                 gGameState = MAIN_MENU_GAME_STATE;
-                                gGamePlayingState = GAME_PLAYING;
                                 gCurrentLevel = 0;
                                 break;
                             }
@@ -1160,6 +1187,10 @@ int main( int argc, char *argv[] ) {
                             if( event.type == SDL_KEYUP ) {
                                 if( event.key.keysym.sym == SDLK_RETURN ) {
                                     gGamePlayingState = GAME_PLAYING;
+                                }
+                                if( event.key.keysym.sym == SDLK_F11 ) {
+                                    Uint32 windowFlags = SDL_GetWindowFlags( window );
+                                    SDL_SetWindowFullscreen( window, windowFlags ^= SDL_WINDOW_FULLSCREEN );
                                 }
                             }
                             if( event.type == SDL_CONTROLLERBUTTONUP ) {
