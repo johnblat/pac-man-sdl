@@ -16,3 +16,4 @@ toolchains
 build
 include/SDL2
 res/sounds/test
+val_out.txt
