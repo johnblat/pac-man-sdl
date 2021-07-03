@@ -201,6 +201,7 @@ int main( int argc, char *argv[] ) {
         entities.dashTimers       [ i ] = NULL;
         entities.slowTimers       [ i ] = NULL;
         entities.inputMasks       [ i ] = NULL;
+        entities.pickupTypes      [ i ] = NULL;
     }
     
     // TIMER USED FOR VULNERABILITY STATE
@@ -292,6 +293,7 @@ int main( int argc, char *argv[] ) {
 
     //Load music
     g_Music = Mix_LoadMUS( "res/sounds/Scruffy - World 0 & 1 (Pac-Man Arrangement) - arranged by Scruffy.ogg" );
+    // g_Music = Mix_LoadMUS( "res/sounds/test/Dont-Worry-We-Got-Warp-Spe.mp3" );
     if( g_Music == NULL )
     {
         printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() );
@@ -344,7 +346,7 @@ int main( int argc, char *argv[] ) {
     g_GhostEatenSounds[ 2 ] = g_GhostEatenCoolSound;
     g_GhostEatenSounds[ 3 ] = g_GhostEatenGroovySound;
 
-    Mix_VolumeMusic( 0 );
+    Mix_VolumeMusic( 50 );
 
     Mix_PlayMusic(g_Music, -1 );
     
@@ -518,8 +520,6 @@ int main( int argc, char *argv[] ) {
     SDL_bool charge_button_up = SDL_FALSE;
     SDL_bool charge_button_down = SDL_FALSE;
 
-    g_InputMasks[ 0 ] = 0b00000; // reset
-    g_InputMasks[ 1 ] = 0b00000; // reset
 
     while (!quit) {
 

@@ -37,10 +37,21 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
             return;
         }
 
+        // are other players there?
+        // for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        //     if( entities->inputMasks[ eid ] == NULL ) {
+        //         continue;
+        //     }
+        //     if( points_equal( entities->actors[ eid ]->current_tile, tile_above ) ) {
+        //         return;
+        //     }
+        // }
+
         if( tilemap->tm_walls[ tile_above.y ][ tile_above.x ] != 'x' ) 
         {
             actors[ entityId ]->direction = DIR_UP;
         }
+        
         else {
             return;
         }
@@ -198,6 +209,17 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                     Vector_f reversed_velocity = { -actors[ i ]->velocity.x, -actors[ i ]->velocity.y };
                     moveActor(actors[ i ], reversed_velocity );
                 }
+                 // are other players there?
+                // for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+                //     if( entities->inputMasks[ eid ] == NULL || eid == i) {
+                //         continue;
+                //     }
+                //     if( points_equal( entities->actors[ eid ]->current_tile, actors[ i ]->next_tile ) ) {
+                //         Vector_f reversed_velocity = { -actors[ i ]->velocity.x, -actors[ i ]->velocity.y };
+                //         moveActor(actors[ i ], reversed_velocity );
+                //         return;
+                //     }
+                // }
             }
         }
 
