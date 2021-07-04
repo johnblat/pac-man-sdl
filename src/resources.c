@@ -106,7 +106,9 @@ void initializeGhostsFromFile( Entities *entities, LevelConfig *levelConfig, con
         fprintf(stderr, "Error opening file %s\n", ghostSpritesFilename );
     }
 
-    char line[ 64 ];
+    char line[ 64 ] = {'\0'};
+    memset(line, '\0', 64);
+
     for( int i = 0; i < 4; i++ ) { // 0 thru 4 will also be used for setting the targeting behavior. This will need to change if more ghosts are added with varying targeting behaviors
         do {
             fgets( line, 64, f );

@@ -7,7 +7,7 @@ COMPILER_FLAGS = -w -Wall -Werror -g -fno-omit-frame-pointer -std=c99
 
 SDL_INC = -I/usr/include/SDL2 -Iinclude/
 
-SDL_LIBS = -lSDL2 -lSDL2main -lm  -lSDL2_image -lSDL2_ttf
+SDL_LIBS = -lSDL2 -lSDL2main -lm  -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 
 
 EXE = ./bin/pac_game

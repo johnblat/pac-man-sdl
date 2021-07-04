@@ -1349,6 +1349,14 @@ int main( int argc, char *argv[] ) {
             free(entities.targetingBehaviors[ i ] );
             entities.targetingBehaviors[ i ] = NULL;
         }
+        if( entities.pickupTypes[i] != NULL ) {
+            free(entities.pickupTypes[i]);
+            entities.pickupTypes[i] = NULL;
+        }
+        if(entities.dashCooldownStocks[i] != NULL ) {
+            free(entities.dashCooldownStocks[i]);
+            entities.dashCooldownStocks[i] = NULL;
+        }
         
     }
     for( int i = 0; i < MAX_TEXTURE_ATLASES; i++ ) {

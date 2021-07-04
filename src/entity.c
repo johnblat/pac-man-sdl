@@ -22,8 +22,6 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     // allocate
     entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
     entities->actors         [ entityId ] = ( Actor * )                 malloc( sizeof( Actor ) );
-    entities->animatedSprites[ entityId ] = (AnimatedSprite * )         malloc( sizeof( Actor ) );
-    entities->renderDatas   [ entityId ] = (RenderData *)malloc(sizeof(RenderData ) );
     entities->chargeTimers   [ entityId ] = (float * )                  malloc(sizeof(float));
     entities->dashTimers     [ entityId ] = (float * )                  malloc(sizeof(float ) );
     entities->slowTimers     [ entityId ] = ( float * )malloc(sizeof(float ) );
@@ -94,8 +92,6 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     // allocate
     entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
     entities->actors         [ entityId ] = ( Actor * )                 malloc( sizeof( Actor ) );
-    entities->animatedSprites[ entityId ] = (AnimatedSprite * )         malloc( sizeof( Actor ) );
-    entities->renderDatas   [ entityId ] = (RenderData *)malloc(sizeof(RenderData ) );
     entities->targetingBehaviors     [ entityId ] = (TargetingBehavior *)              malloc(sizeof(TargetingBehavior));
     entities->ghostStates[ entityId] = (GhostState *)malloc(sizeof(GhostState));
 
@@ -184,8 +180,6 @@ EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, S
 
     entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
     entities->actors        [ entityId ] = (Actor * ) malloc(sizeof(Actor)); // should be deprecated
-    entities->animatedSprites[ entityId ] = (AnimatedSprite * )         malloc( sizeof( Actor ) );
-    entities->renderDatas   [ entityId ] = (RenderData *)malloc(sizeof(RenderData ) );
     entities->pickupTypes   [ entityId ] = ( PickupType *) malloc( sizeof( PickupType ) );
 
     entities->positions[ entityId ]->current_tile = tile;
