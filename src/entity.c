@@ -140,7 +140,7 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
 // }
 
-void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime ) {
+void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime, LevelConfig *levelConfig ) {
     Actor **actors = entities->actors;
     TargetingBehavior **targetingBehaviors = entities->targetingBehaviors;
     GhostState **ghostStates = entities->ghostStates;
@@ -154,7 +154,7 @@ void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPla
         //Ghost state machine processing
         switch( *ghostStates[ eid ] ) {
             case STATE_NORMAL:
-                normal_process( entities, eid, playerIds, numPlayers, tilemap );
+                normal_process( entities, eid, playerIds, numPlayers, tilemap, levelConfig );
                 break;
             case STATE_VULNERABLE:
                 vulnerable_process(entities, eid , tilemap );

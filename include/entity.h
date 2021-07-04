@@ -55,6 +55,8 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
 EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, TargetingBehavior targetingBehavior );
 
+void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime, LevelConfig *levelConfig );
+
 EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, SDL_Point tile );
 
 void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer );

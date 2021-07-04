@@ -2,6 +2,7 @@
 #define STATES_H
 
 #include "entity.h"
+#include "resources.h"
 #include "tiles.h"
 
 extern SDL_Point ghost_pen_tile;
@@ -46,7 +47,7 @@ void normal_enter( Entities *entities, EntityId ghostId ) ;
  * 
  * playerIds: list of players to target. Will target closest player. 
  */
-void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers, TileMap *tm );
+void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers, TileMap *tm, LevelConfig *levelConfig );
 
 /**
  * Sets the animation texture atlas to be the eyes

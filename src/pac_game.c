@@ -95,6 +95,9 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             continue;
         }
         actor_reset_data( entities->actors[ i ], levelConfig->pacStartingTile );
+        *entities->inputMasks[i  ] = 0b0;
+        *entities->chargeTimers[i] = 0.0f;
+        *entities->dashTimers[i] = 0.0f;
     }
     
     
@@ -343,7 +346,7 @@ int main( int argc, char *argv[] ) {
     g_GhostEatenSounds[ 2 ] = g_GhostEatenCoolSound;
     g_GhostEatenSounds[ 3 ] = g_GhostEatenGroovySound;
 
-    Mix_VolumeMusic( 50 );
+    Mix_VolumeMusic( 0 );
 
     Mix_PlayMusic(g_Music, -1 );
     
@@ -499,6 +502,10 @@ int main( int argc, char *argv[] ) {
                     }
                     if( event.type == SDL_KEYUP ) {
                         if( event.key.keysym.sym == SDLK_RETURN ) {
+                            Mix_HaltMusic();
+                            Mix_FreeMusic( g_Music );
+                            g_Music = Mix_LoadMUS( gGameMusicFilename );
+                            Mix_PlayMusic( g_Music, -1 );
                             gGameState = GAME_PLAYING_GAME_STATE;
                             break;
                         }
@@ -676,7 +683,8 @@ int main( int argc, char *argv[] ) {
                                 g_Music = Mix_LoadMUS( gMenuMusicFilename );
                                 Mix_PlayMusic( g_Music, -1 );
                                 gGameState = MAIN_MENU_GAME_STATE;
-                                gCurrentLevel = 0;
+                                gCurrentLevel = 1;
+                                load_current_level_off_disk( &levelConfig, &tilemap, renderer);
                                 break;
                             }
                         }
@@ -717,8 +725,20 @@ int main( int argc, char *argv[] ) {
                             }
                         }
                         if( current_key_states[ SDL_SCANCODE_COMMA ] ) {
-                            SDL_Delay(500);
-                            level_advance( &levelConfig, &tilemap, renderer, &entities );
+                            SDL_Delay(300);
+                            SDL_bool gameCleared = level_advance( &levelConfig, &tilemap, renderer, &entities );
+                            if( gameCleared ) {
+                                Mix_HaltChannel( GHOST_SOUND_CHANNEL );
+                                Mix_HaltChannel( GHOST_VULN_CHANNEL );
+                                Mix_HaltMusic();
+                                Mix_FreeMusic( g_Music );
+                                g_Music = Mix_LoadMUS( gMenuMusicFilename );
+                                Mix_PlayMusic( g_Music, -1 );
+                                gGameState = MAIN_MENU_GAME_STATE;
+                                gCurrentLevel = 1;
+                                load_current_level_off_disk( &levelConfig, &tilemap, renderer);
+                                break;
+                            }
                         }
                         
                         
@@ -928,7 +948,7 @@ int main( int argc, char *argv[] ) {
                             ghost_vulnerable_timer -= deltaTime;
                         }
 
-                        ghostsProcess( &entities, playerIds, 2, &tilemap, deltaTime);
+                        ghostsProcess( &entities, playerIds, 2, &tilemap,  deltaTime,&levelConfig);
 
                         /********************
                          * MOVE GHOSTS

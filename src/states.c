@@ -10,7 +10,8 @@
 #include "ghostStates.h"
 #include <SDL2/SDL_mixer.h>
 #include "sounds.h"
-#include "stdio.h"
+#include <stdio.h>
+#include "resources.h"
 
 
 SDL_Point ghost_pen_tile = {23, 11};
@@ -120,7 +121,7 @@ void normal_enter( Entities *entities, EntityId ghostId )  {
 }
 
 
-void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap ){
+void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, LevelConfig *levelConfig ){
     Actor *ghostActor = entities->actors[ ghostId ];
     //TargetingBehavior *ghostTargetBehavior = entities->targetingBehaviors[ ghostId ];
 
@@ -204,8 +205,11 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
         if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
             Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
 
-            entities->actors[ playerId ]->world_position.x = TILE_SIZE * 23;
-            entities->actors[ playerId ]->world_position.y =  TILE_SIZE * 15;
+            entities->actors[playerId]->current_tile = levelConfig->pacStartingTile;
+            entities->actors[playerId]->current_tile.y -= 1;
+            entities->actors[playerId]->next_tile = levelConfig->pacStartingTile;
+            entities->actors[ playerId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
+            entities->actors[ playerId ]->world_position.y =  tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y - 1;
             entities->actors[ playerId ]->world_center_point.y = ( int ) entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );
 
             entities->actors[ playerId ]->world_top_sensor.x = entities->actors[ playerId ]->world_position.x + ( ACTOR_SIZE / 2 );
@@ -222,7 +226,7 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
 
             entities->actors[ playerId ]->direction = DIR_NONE;
 
-            actor_set_current_tile( entities->actors[ playerId ] );
+            //actor_set_current_tile( entities->actors[ playerId ] );
             entities->actors[ playerId ]->next_tile = entities->actors[ playerId ]->current_tile;
         }
     }
