@@ -470,8 +470,6 @@ int main( int argc, char *argv[] ) {
     if( avgFps > 20000 ) {
         avgFps = 0.0f;
     } 
-    SDL_bool charge_button_up = SDL_FALSE;
-    SDL_bool charge_button_down = SDL_FALSE;
 
 
     SDL_Surface *mainMenuTextSurface = TTF_RenderText_Solid( font, gMainMenuText, white );
@@ -606,16 +604,10 @@ int main( int argc, char *argv[] ) {
                                     // }
                                     
                                 }
-                                if( event.key.keysym.sym == SDLK_z ) {
-                                    charge_button_down = SDL_TRUE;
-                                    charge_button_up = SDL_FALSE;
-                                }
+
                             }
                             if( event.type == SDL_KEYUP ) {
-                                if( event.key.keysym.sym == SDLK_z ) {
-                                    charge_button_up = SDL_TRUE;
-                                    charge_button_down = SDL_FALSE;
-                                }
+
                                 if( event.key.keysym.sym == SDLK_RETURN ) {
                                     gGamePlayingState = GAME_PAUSED;
                                     break;
@@ -651,8 +643,7 @@ int main( int argc, char *argv[] ) {
                                         }
                                         if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
                                             *entities.inputMasks[ i ] |= g_INPUT_ACTION;
-                                            charge_button_down = SDL_TRUE;
-                                            charge_button_up = SDL_FALSE;
+
                                         }
                                     }
                                 }
@@ -678,8 +669,7 @@ int main( int argc, char *argv[] ) {
                                         }
                                         if( event.cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
                                             *entities.inputMasks[ i ] ^= g_INPUT_ACTION;
-                                            charge_button_up = SDL_TRUE;
-                                            charge_button_down = SDL_FALSE;
+
                                         }
                                         if( event.cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
                                             gGamePlayingState = GAME_PAUSED;
@@ -1086,11 +1076,7 @@ int main( int argc, char *argv[] ) {
                             }
                         }
 
-                        if( charge_button_down ) {
-                            SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-                            SDL_Rect rect_holding = { 600, 0, TILE_SIZE, TILE_SIZE };
-                            SDL_RenderDrawRect( renderer, &rect_holding );
-                        }
+
 
                         // DEBUG
                         if ( g_show_debug_info ) {
