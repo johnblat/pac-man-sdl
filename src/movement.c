@@ -495,8 +495,21 @@ void dashTimersProcess( Entities *entities, float deltaTime ) {
             *entities->chargeTimers[ eid ] += deltaTime;
         }
         else if( *entities->inputMasks[ eid ] ^ g_INPUT_ACTION && *entities->chargeTimers[ eid ] > 0.0f ) {
-            *entities->dashTimers[ eid ] = *entities->chargeTimers[ eid ] > g_PAC_DASH_TIME_MAX ? g_PAC_DASH_TIME_MAX : *entities->chargeTimers[ eid ];
-            *entities->chargeTimers[ eid ] = 0.0f;
+
+            if( entities->dashCooldownStocks[ eid ]->currentNumStock > 0 ) {
+                *entities->dashTimers[ eid ] = *entities->chargeTimers[ eid ] > g_PAC_DASH_TIME_MAX ? g_PAC_DASH_TIME_MAX : *entities->chargeTimers[ eid ];
+                *entities->chargeTimers[ eid ] = 0.0f;
+
+                // remove a stock
+                entities->dashCooldownStocks[ eid ]->currentNumStock--;
+                entities->dashCooldownStocks[ eid ]->cooldownTimer = entities->dashCooldownStocks[ eid ]->cooldownDuration;
+            }
+            else {
+                *entities->chargeTimers[ eid ] = 0.0f;
+            }
+            
+
+                
         }
         
         entities->actors[ eid ]->speed_multp = 1.0f;

@@ -15,6 +15,21 @@
 typedef unsigned int EntityId;
 extern unsigned int g_NumEntities;
 
+
+/**
+ * If currenNumStock is less than numStockCap, then 
+ * the cooldownTimer will decide when a stock is recharged
+ * and can be used again
+ * the stocks
+ */
+typedef struct {
+    unsigned int numStockCap;
+    unsigned int currentNumStock;
+    float cooldownDuration; // time until 1 stock is recharged
+    float cooldownTimer; // timer for rechargine stock
+} CooldownStock;
+
+
 typedef enum {
     POWER_PELLET_PICKUP,
     FRUIT_PICKUP
@@ -30,6 +45,7 @@ typedef struct Entities {
     float              *chargeTimers      [ MAX_NUM_ENTITIES ];
     float              *dashTimers        [ MAX_NUM_ENTITIES ];
     float              *slowTimers        [ MAX_NUM_ENTITIES ];
+    CooldownStock      *dashCooldownStocks[ MAX_NUM_ENTITIES ];
     uint8_t            *inputMasks        [ MAX_NUM_ENTITIES ];
     SDL_GameController *gameControllers   [ MAX_NUM_ENTITIES ];
     PickupType         *pickupTypes       [ MAX_NUM_ENTITIES ];

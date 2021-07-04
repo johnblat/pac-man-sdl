@@ -78,6 +78,12 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
     *entities->inputMasks[ entityId ] = 0b00000;
 
+    entities->dashCooldownStocks[entityId]->cooldownDuration = 3.0f;
+    entities->dashCooldownStocks[entityId]->cooldownTimer = 0.0f;
+    entities->dashCooldownStocks[entityId]->currentNumStock = 3;
+    entities->dashCooldownStocks[entityId]->numStockCap = 3;
+    
+
     return entityId;
 }
 
@@ -238,4 +244,26 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
     }
         
 
+}
+
+void cooldownProcess( Entities *entities, float deltaTime ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if( entities->dashCooldownStocks[ eid ] == NULL ) {
+            continue;
+        }
+
+        if( entities->dashCooldownStocks[ eid ]->currentNumStock >= entities->dashCooldownStocks[ eid ]->numStockCap ) {
+            continue; // no need to charge anything. Player has max stock
+        }
+        if( entities->dashCooldownStocks[ eid ]->currentNumStock < entities->dashCooldownStocks[ eid ]->numStockCap ) {
+            entities->dashCooldownStocks[ eid ]->cooldownTimer -= deltaTime;
+        }
+        if( entities->dashCooldownStocks[ eid ]->cooldownTimer <= 0.0f ) {
+            entities->dashCooldownStocks[ eid ]->currentNumStock++;
+            if( entities->dashCooldownStocks[ eid ]->currentNumStock < entities->dashCooldownStocks[ eid ]->numStockCap ) {
+                entities->dashCooldownStocks[ eid ]->cooldownTimer = entities->dashCooldownStocks[ eid ]->cooldownDuration;
+
+            }
+        }
+    }
 }

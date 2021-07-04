@@ -5,6 +5,9 @@
 
 Mix_Music *g_Music = NULL;
 
+const char *gGameMusicFilename = "res/sounds/Scruffy - World 0 & 1 (Pac-Man Arrangement) - arranged by Scruffy.ogg";
+const char *gMenuMusicFilename = "res/sounds/Trust-Relax-Autopilot.mp3";
+
 Mix_Chunk *g_GhostSound = NULL;
 Mix_Chunk *g_GhostVulnerableSound = NULL;
 Mix_Chunk *g_PacChompSound = NULL;

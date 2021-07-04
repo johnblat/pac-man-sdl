@@ -43,6 +43,9 @@ SDL_Texture *gMainMenuTextTexture = NULL;
 char *gPauseText = "PAUSED";
 SDL_Texture *gPauseTextTexture = NULL;
 
+SDL_Texture *gCooldownTexture = NULL;
+SDL_Rect gCooldownRect;
+
 // End Main Menu
 
 SDL_bool g_show_debug_info = SDL_FALSE;
@@ -473,6 +476,8 @@ int main( int argc, char *argv[] ) {
     SDL_FreeSurface( pauseTextSurface );
     pauseTextSurface = NULL;
 
+    Blink startMenuBlink = blinkInit( 0.33f, 255, 50);
+
     while (!quit) {
         // semi-fixed timestep
         float current_frame_ticks = SDL_GetTicks() / 1000.0;
@@ -525,7 +530,10 @@ int main( int argc, char *argv[] ) {
                     }
                 }
 
-               
+                blinkProcess( &startMenuBlink, deltaTime );
+
+                SDL_SetTextureAlphaMod( gMainMenuTextTexture, startMenuBlink.values[ startMenuBlink.current_value_idx ] );
+
                 SDL_SetRenderDrawColor( renderer, 20,20,20,255);
                 SDL_RenderClear( renderer );
 
@@ -720,6 +728,19 @@ int main( int argc, char *argv[] ) {
                         inputToTryMoveProcess( &entities, &tilemap, deltaTime);
 
                         dashTimersProcess( &entities, deltaTime );
+                        cooldownProcess( &entities, deltaTime );
+
+                        SDL_DestroyTexture( gCooldownTexture );
+                        char coolDownNumberText[2];
+                        snprintf(coolDownNumberText, 2, "%d", entities.dashCooldownStocks[ 4 ]->currentNumStock );
+                        SDL_Surface *cooldownSurface = TTF_RenderText_Solid( font, coolDownNumberText, pac_color );
+                        gCooldownTexture = SDL_CreateTextureFromSurface( renderer, cooldownSurface );
+                        gCooldownRect.x =  SCREEN_WIDTH/2 - cooldownSurface->w/2;
+                        gCooldownRect.y =  20;
+                        gCooldownRect.w = cooldownSurface->w; 
+                        gCooldownRect.h = cooldownSurface->h ;
+                        SDL_FreeSurface( cooldownSurface );
+                        
 
                         animatedSpriteIncProcess( entities.animatedSprites , deltaTime); 
                         
@@ -986,12 +1007,15 @@ int main( int argc, char *argv[] ) {
 
                         renderDataForAnimatedSpriteProcess( renderer, &entities );
 
+                        
 
                         SDL_Rect black_bar = {0,0, 1920, TILE_SIZE * 2};
                         SDL_SetRenderDrawColor( renderer, 0,0,0,255 );
                         SDL_RenderFillRect( renderer, &black_bar);
 
                         SDL_RenderCopy( renderer, score.score_texture, NULL, &score.score_render_dst_rect);
+                        SDL_RenderCopy(renderer, gCooldownTexture, NULL, &gCooldownRect);
+
 
                         /****
                          * ANY MESSAGES
