@@ -346,7 +346,7 @@ int main( int argc, char *argv[] ) {
     g_GhostEatenSounds[ 2 ] = g_GhostEatenCoolSound;
     g_GhostEatenSounds[ 3 ] = g_GhostEatenGroovySound;
 
-    Mix_VolumeMusic( 0 );
+    Mix_VolumeMusic( 50 );
 
     Mix_PlayMusic(g_Music, -1 );
     
