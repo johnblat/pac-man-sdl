@@ -243,7 +243,7 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED );
+    renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
     if (renderer == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
@@ -463,6 +463,13 @@ int main( int argc, char *argv[] ) {
     // delta time - frame rate independent movement
     float max_delta_time = 1 / 60.0;
     float previous_frame_ticks = SDL_GetTicks() / 1000.0;
+    float fpsTimerStart = SDL_GetTicks();
+    float fpsTimerCurrent = fpsTimerStart - SDL_GetTicks()  ;
+    unsigned int countedFrames = 0;
+    float avgFps = countedFrames / (fpsTimerCurrent*0.001f);
+    if( avgFps > 20000 ) {
+        avgFps = 0.0f;
+    } 
     SDL_bool charge_button_up = SDL_FALSE;
     SDL_bool charge_button_down = SDL_FALSE;
 
@@ -488,6 +495,20 @@ int main( int argc, char *argv[] ) {
         previous_frame_ticks = current_frame_ticks;
         // adjust for any pauses, debugging breaks, etc
         deltaTime = deltaTime < max_delta_time ?  deltaTime : max_delta_time;
+        ++countedFrames;
+        fpsTimerCurrent = SDL_GetTicks() - fpsTimerStart ;
+        avgFps = countedFrames/(fpsTimerCurrent*0.001f);
+        if( avgFps > 20000 ) {
+            avgFps = 0.0f;
+        } 
+        if( (countedFrames % 200 ) == 0 ) { // only display every so often and update the counter to get a new read on avg. This way spikes won't effect it that much
+            printf("FPS:%f\n", avgFps);
+            fpsTimerStart = SDL_GetTicks(); //reset timer to get new avg
+            countedFrames = 0;
+
+        }
+        
+
 
         switch( gGameState ) {
             /**************
@@ -548,7 +569,6 @@ int main( int argc, char *argv[] ) {
 
                 SDL_RenderCopy( renderer, gMainMenuTextTexture, NULL, &gMainMenuTextDestRect);
                 SDL_RenderPresent( renderer );
-                SDL_Delay( 10 );
                 break;
 
             /**************
@@ -1214,7 +1234,6 @@ int main( int argc, char *argv[] ) {
 
                         }
                         SDL_RenderPresent( renderer );
-                        SDL_Delay(5);
                         break;
                     /**************
                      * ************
@@ -1261,7 +1280,6 @@ int main( int argc, char *argv[] ) {
                         SDL_RenderCopy( renderer, gPauseTextTexture, NULL, &pauseTextDestRect);
 
                         SDL_RenderPresent( renderer );
-                        SDL_Delay(5);
                         break;
                 }
                 
