@@ -199,37 +199,37 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
     }
 
     // check if player should die
-    EntityId playerId;
-    for( int i = 0; i < numPlayers; i++ ) {
-        playerId = playerIds[ i ];
-        if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
-            Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
+    //EntityId playerId;
+    // for( int i = 0; i < numPlayers; i++ ) {
+    //     playerId = playerIds[ i ];
+    //     if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
+    //         Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
 
-            entities->actors[playerId]->current_tile = levelConfig->pacStartingTile;
-            entities->actors[playerId]->current_tile.y -= 1;
-            entities->actors[playerId]->next_tile = levelConfig->pacStartingTile;
-            entities->actors[ playerId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
-            entities->actors[ playerId ]->world_position.y =  tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y - 1;
-            entities->actors[ playerId ]->world_center_point.y = ( int ) entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );
+    //         entities->actors[playerId]->current_tile = levelConfig->pacStartingTile;
+    //         entities->actors[playerId]->current_tile.y -= 1;
+    //         entities->actors[playerId]->next_tile = levelConfig->pacStartingTile;
+    //         entities->actors[ playerId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
+    //         entities->actors[ playerId ]->world_position.y =  tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y - 1;
+    //         entities->actors[ playerId ]->world_center_point.y = ( int ) entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );
 
-            entities->actors[ playerId ]->world_top_sensor.x = entities->actors[ playerId ]->world_position.x + ( ACTOR_SIZE / 2 );
-            entities->actors[ playerId ]->world_top_sensor.y = entities->actors[ playerId ]->world_position.y;
+    //         entities->actors[ playerId ]->world_top_sensor.x = entities->actors[ playerId ]->world_position.x + ( ACTOR_SIZE / 2 );
+    //         entities->actors[ playerId ]->world_top_sensor.y = entities->actors[ playerId ]->world_position.y;
 
-            entities->actors[ playerId ]->world_bottom_sensor.x = entities->actors[ playerId ]->world_position.x + ( ACTOR_SIZE / 2 );
-            entities->actors[ playerId ]->world_bottom_sensor.y = entities->actors[ playerId ]->world_position.y + ACTOR_SIZE;
+    //         entities->actors[ playerId ]->world_bottom_sensor.x = entities->actors[ playerId ]->world_position.x + ( ACTOR_SIZE / 2 );
+    //         entities->actors[ playerId ]->world_bottom_sensor.y = entities->actors[ playerId ]->world_position.y + ACTOR_SIZE;
 
-            entities->actors[ playerId ]->world_left_sensor.x = entities->actors[ playerId ]->world_position.x;
-            entities->actors[ playerId ]->world_left_sensor.y = entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );
+    //         entities->actors[ playerId ]->world_left_sensor.x = entities->actors[ playerId ]->world_position.x;
+    //         entities->actors[ playerId ]->world_left_sensor.y = entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );
 
-            entities->actors[ playerId ]->world_right_sensor.x = entities->actors[ playerId ]->world_position.x + ACTOR_SIZE;
-            entities->actors[ playerId ]->world_right_sensor.y = entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );    
+    //         entities->actors[ playerId ]->world_right_sensor.x = entities->actors[ playerId ]->world_position.x + ACTOR_SIZE;
+    //         entities->actors[ playerId ]->world_right_sensor.y = entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );    
 
-            entities->actors[ playerId ]->direction = DIR_NONE;
+    //         entities->actors[ playerId ]->direction = DIR_NONE;
 
-            //actor_set_current_tile( entities->actors[ playerId ] );
-            entities->actors[ playerId ]->next_tile = entities->actors[ playerId ]->current_tile;
-        }
-    }
+    //         //actor_set_current_tile( entities->actors[ playerId ] );
+    //         entities->actors[ playerId ]->next_tile = entities->actors[ playerId ]->current_tile;
+    //     }
+    // }
     
 }
 

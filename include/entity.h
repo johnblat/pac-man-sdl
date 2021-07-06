@@ -11,7 +11,6 @@
 #include "inttypes.h"
 
 #define MAX_NUM_ENTITIES 13
-
 typedef unsigned int EntityId;
 extern unsigned int g_NumEntities;
 

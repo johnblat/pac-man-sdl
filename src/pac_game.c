@@ -37,8 +37,8 @@ unsigned int gNumPlayers = 0;
 Score gScore;
 
 typedef enum {
-    MAIN_MENU_GAME_STATE,
-    GAME_PLAYING_GAME_STATE,
+    MAIN_MENU_PROGRAM_STATE,
+    GAME_PLAYING_PROGRAM_STATE,
     EXIT_STATE
 } ProgramState;
 
@@ -49,8 +49,22 @@ typedef enum {
     LEVEL_END
 } GamePlayingState;
 
-ProgramState gProgramState = MAIN_MENU_GAME_STATE;
+ProgramState gProgramState = MAIN_MENU_PROGRAM_STATE;
 GamePlayingState gGamePlayingState = GAME_PLAYING;
+
+// level transition variables
+const char* gLevelStartText = "READY!";
+SDL_Texture *gLevelStartTextTexture = NULL;
+SDL_Rect gLevelStartTextRect;
+
+const char *gLevelEndText = "LEVEL CLEARED!";
+SDL_Texture *gLevelEndTextTexture = NULL;
+SDL_Rect gLevelEndTextRect;
+
+const float gLevelStartDuration = 3.0f; 
+float gLevelStartTimer = 0.0f;
+const float gLevelEndDuration = 1.5f;
+float gLevelEndTimer = 0.0f;
 
 // Main Menu
 char *gMainMenuText = "Press START to Play!";
@@ -102,6 +116,7 @@ Blink g_ScoreBlinks[g_NumTimedMessages ];
 // Returns SDL_TRUE if advanced to next level
 // Returns SDL_FALSE if no more levels to advance
 SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer, Entities *entities) {
+
     gCurrentLevel++;
 
     if( gCurrentLevel > gNumLevels ) {
@@ -199,9 +214,8 @@ void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_sc
     points[ starting_index + 4 ].y = center_point.y + tilemap_screen_position.y ;
 }
 
-void mainMenuProcess( SDL_Event *event, Blink *startMenuBlink, float deltaTime );
-inline void mainMenuProcess( SDL_Event *event, Blink *startMenuBlink, float deltaTime );
-inline void mainMenuProcess( SDL_Event *event, Blink *startMenuBlink, float deltaTime ) {
+void mainMenuProcess(LevelConfig *levelConfig, Entities *entities, TileMap *tilemap, SDL_Event *event, Blink *startMenuBlink, float deltaTime );
+inline void mainMenuProcess( LevelConfig *levelConfig, Entities *entities, TileMap *tilemap, SDL_Event *event, Blink *startMenuBlink, float deltaTime ) {
     while( SDL_PollEvent( event ) != 0 ) {
         if( event->type == SDL_QUIT ) {
             gProgramState = EXIT_STATE;
@@ -213,7 +227,7 @@ inline void mainMenuProcess( SDL_Event *event, Blink *startMenuBlink, float delt
                 Mix_FreeMusic( g_Music );
                 g_Music = Mix_LoadMUS( gGameMusicFilename );
                 Mix_PlayMusic( g_Music, -1 );
-                gProgramState = GAME_PLAYING_GAME_STATE;
+                gProgramState = GAME_PLAYING_PROGRAM_STATE;
                 break;
             }
             if( event->key.keysym.sym == SDLK_ESCAPE ) {
@@ -236,7 +250,9 @@ inline void mainMenuProcess( SDL_Event *event, Blink *startMenuBlink, float delt
                         Mix_FreeMusic( g_Music );
                         g_Music = Mix_LoadMUS( gGameMusicFilename );
                         Mix_PlayMusic( g_Music, -1 );
-                        gProgramState = GAME_PLAYING_GAME_STATE;
+                        gProgramState = GAME_PLAYING_PROGRAM_STATE;
+                        gGamePlayingState = LEVEL_START;
+                        level_advance( levelConfig, tilemap, gRenderer, entities );
                         break;                                    
                     }
                 }
@@ -366,11 +382,15 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             Mix_FreeMusic( g_Music );
             g_Music = Mix_LoadMUS( gMenuMusicFilename );
             Mix_PlayMusic( g_Music, -1 );
-            gProgramState = MAIN_MENU_GAME_STATE;
-            gCurrentLevel = 1;
-            load_current_level_off_disk( levelConfig, tilemap, gRenderer);
+            gProgramState = MAIN_MENU_PROGRAM_STATE;
+            gCurrentLevel = 0;
+            //load_current_level_off_disk( levelConfig, tilemap, gRenderer);
             return;
         }
+        Mix_HaltChannel( GHOST_SOUND_CHANNEL );
+        Mix_HaltChannel( GHOST_VULN_CHANNEL );
+        gGamePlayingState = LEVEL_END;
+        return;
     }
 
     // KEYBOARD STATE
@@ -418,9 +438,9 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             Mix_FreeMusic( g_Music );
             g_Music = Mix_LoadMUS( gMenuMusicFilename );
             Mix_PlayMusic( g_Music, -1 );
-            gProgramState = MAIN_MENU_GAME_STATE;
-            gCurrentLevel = 1;
-            load_current_level_off_disk( levelConfig, tilemap, gRenderer);
+            gProgramState = MAIN_MENU_PROGRAM_STATE;
+            gCurrentLevel = 0;
+            //load_current_level_off_disk( levelConfig, tilemap, gRenderer);
             return;
         }
     }
@@ -456,7 +476,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             continue;
         }
         if( tilemap->tm_dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x' ) {
-            *entities->slowTimers[ eid ] = 0.075f;
+            *entities->slowTimers[ eid ] = 0.05f;
         }
     }
 
@@ -939,12 +959,36 @@ inline void gamePausedProcess( Entities *entities, SDL_Event *event, LevelConfig
     SDL_RenderPresent( gRenderer );
 }
 
+void gameLevelStartProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime );
 inline void gameLevelStartProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime ) {
+    
+    SDL_SetRenderDrawColor( gRenderer, 20,20,20,255 );
+    SDL_RenderClear( gRenderer );
+    SDL_RenderCopy( gRenderer, gLevelStartTextTexture, NULL, &gLevelStartTextRect );
+    SDL_RenderPresent( gRenderer );
 
+    gLevelStartTimer += deltaTime;
+    if( gLevelStartTimer >= gLevelStartDuration ) {
+        gGamePlayingState = GAME_PLAYING;
+        gLevelStartTimer = 0.0f;
+        return;
+    }
 }
 
+void gameLevelEndProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime ) ;
 inline void gameLevelEndProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime ) {
+    
+    SDL_SetRenderDrawColor( gRenderer, 20,20,20,255 );
+    SDL_RenderClear( gRenderer );
+    SDL_RenderCopy( gRenderer, gLevelEndTextTexture, NULL, &gLevelEndTextRect );
+    SDL_RenderPresent( gRenderer );
 
+    gLevelEndTimer += deltaTime;
+    if( gLevelEndTimer >= gLevelEndDuration ) {
+        gGamePlayingState = LEVEL_START;
+        gLevelEndTimer = 0.0f;
+        return;
+    }
 }
 
 
@@ -976,7 +1020,7 @@ int main( int argc, char *argv[] ) {
     gNumLevels = determine_number_of_levels_from_dirs();
     printf("Num levels %d\n", gNumLevels);
 
-    gCurrentLevel++;
+    //gCurrentLevel++;
 
     // initialize levelConfig
     SDL_Point zero = {0, 0};
@@ -1124,7 +1168,7 @@ int main( int argc, char *argv[] ) {
     load_global_texture_atlases_from_config_file( gRenderer );
 
     // setup first level data
-    load_current_level_off_disk( &levelConfig, &tilemap, gRenderer);
+    //load_current_level_off_disk( &levelConfig, &tilemap, gRenderer);
 
     
     for( int i = 0; i < 4; i++ ) {
@@ -1153,25 +1197,26 @@ int main( int argc, char *argv[] ) {
     }
 
     // calculate number of dots
-    for( int row = 0; row < TILE_ROWS; row++ ) {
-        for(int col =0; col < TILE_COLS; col++ ) {
-            if( tilemap.tm_dots[ row ][ col ] == 'x' ) {
-                g_NumDots++;
-            }
-        }
-    }
+    // for( int row = 0; row < TILE_ROWS; row++ ) {
+    //     for(int col =0; col < TILE_COLS; col++ ) {
+    //         if( tilemap.tm_dots[ row ][ col ] == 'x' ) {
+    //             g_NumDots++;
+    //         }
+    //     }
+    // }
 
-    //try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
+    // //try_load_resource_from_file( tilemap.tm_power_pellet_tiles, "res/power_pellets", sizeof( SDL_Point ), 4 );
 
-    // add power pellets to number of dotss
-    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-        if( entities.pickupTypes[ i ] == NULL || *entities.pickupTypes[ i ] != POWER_PELLET_PICKUP ) {
-            continue;
-        }
-        if( !points_equal( entities.actors[ i ]->current_tile, TILE_NONE ) ) {
-            g_NumDots++;
-        }
-    }
+    // // add power pellets to number of dotss
+    // for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+    //     if( entities.pickupTypes[ i ] == NULL || *entities.pickupTypes[ i ] != POWER_PELLET_PICKUP ) {
+    //         continue;
+    //     }
+    //     if( !points_equal( entities.actors[ i ]->current_tile, TILE_NONE ) ) {
+    //         g_NumDots++;
+    //     }
+    // }
+
 
     // INIT Playwe
     initializePlayersFromFiles( &entities, &levelConfig, 2 );
@@ -1180,6 +1225,8 @@ int main( int argc, char *argv[] ) {
     initializeGhostsFromFile( &entities, &levelConfig, "res/ghost_animated_sprites");
 
     // load everything for entity data from config
+    //level_advance( &levelConfig, &tilemap, gRenderer, &entities );
+
 
     
     for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
@@ -1233,7 +1280,7 @@ int main( int argc, char *argv[] ) {
         avgFps = 0.0f;
     } 
 
-
+    // TODO: Compress this initialization into a function
     SDL_Surface *mainMenuTextSurface = TTF_RenderText_Solid( gFont, gMainMenuText, white );
     gMainMenuTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuTextSurface );
     gMainMenuTextDestRect.x = SCREEN_WIDTH / 2 - mainMenuTextSurface->w/2 ;
@@ -1251,6 +1298,26 @@ int main( int argc, char *argv[] ) {
     gPauseTextDestRect.h = pauseTextSurface->h;
     SDL_FreeSurface( pauseTextSurface );
     pauseTextSurface = NULL;
+
+    SDL_Surface *levelStartTextSurface = TTF_RenderText_Solid( gFont, gLevelStartText, white );
+    gLevelStartTextTexture = SDL_CreateTextureFromSurface( gRenderer, levelStartTextSurface);
+    gLevelStartTextRect.x = SCREEN_WIDTH / 2 -levelStartTextSurface->w/2; 
+    gLevelStartTextRect.y = SCREEN_HEIGHT/2 - levelStartTextSurface->h/2;
+    gLevelStartTextRect.w = levelStartTextSurface->w;
+    gLevelStartTextRect.h = levelStartTextSurface->h;
+    SDL_FreeSurface( levelStartTextSurface );
+    levelStartTextSurface = NULL;
+
+    SDL_Surface *levelEndTextSurface = TTF_RenderText_Solid( gFont, gLevelEndText, white );
+    gLevelEndTextTexture = SDL_CreateTextureFromSurface( gRenderer, levelEndTextSurface);
+    gLevelEndTextRect.x = SCREEN_WIDTH / 2 -levelEndTextSurface->w/2; 
+    gLevelEndTextRect.y = SCREEN_HEIGHT/2 - levelEndTextSurface->h/2;
+    gLevelEndTextRect.w = levelEndTextSurface->w;
+    gLevelEndTextRect.h = levelEndTextSurface->h;
+    SDL_FreeSurface( levelEndTextSurface );
+    levelEndTextSurface = NULL;
+
+
 
     Blink startMenuBlink = blinkInit( 0.33f, 255, 50);
 
@@ -1281,14 +1348,14 @@ int main( int argc, char *argv[] ) {
              * ************
              * *** MAIN MENU
              * *****************/
-            case MAIN_MENU_GAME_STATE:
-                mainMenuProcess( &event, &startMenuBlink, deltaTime );
+            case MAIN_MENU_PROGRAM_STATE:
+                mainMenuProcess( &levelConfig, &entities, &tilemap, &event, &startMenuBlink, deltaTime );
                 break;
             /**************
              * ************
              * *** GAME PLAYING
              * *****************/
-            case GAME_PLAYING_GAME_STATE:
+            case GAME_PLAYING_PROGRAM_STATE:
 
                 switch(gGamePlayingState) {
                     /**************
@@ -1306,8 +1373,10 @@ int main( int argc, char *argv[] ) {
                         gamePausedProcess( &entities, &event, &levelConfig, deltaTime );
                         break;
                     case LEVEL_START:
+                        gameLevelStartProcess( &entities, &event, &levelConfig, deltaTime );
                         break;
                     case LEVEL_END:
+                        gameLevelEndProcess( &entities, &event, &levelConfig, deltaTime );
                         break;
                 }
                 break;
