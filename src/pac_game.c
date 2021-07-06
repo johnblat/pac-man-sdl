@@ -202,6 +202,8 @@ int main( int argc, char *argv[] ) {
         entities.inputMasks       [ i ] = NULL;
         entities.pickupTypes      [ i ] = NULL;
         entities.dashCooldownStocks [ i ] = NULL;
+        entities.activeTimer [ i ] = NULL;
+        entities.numDots [ i ] = NULL;
     }
     
     // TIMER USED FOR VULNERABILITY STATE
@@ -368,6 +370,7 @@ int main( int argc, char *argv[] ) {
         AnimatedSprite *powerPelletSprite = init_animation( 5, 12, 1, 6 );
         createPowerPellet( &entities, powerPelletSprite, levelConfig.powerPelletTiles[ i ] );
     }
+    
 
 
 
@@ -434,6 +437,9 @@ int main( int argc, char *argv[] ) {
         }
         entities.gameControllers[ playerIds[ i ] ] = g_GameControllers[ i ];
     }
+
+    AnimatedSprite *fruitAnimatedSprite = init_animation(9,1,1,1);
+    createFruit( &entities, &levelConfig, fruitAnimatedSprite, 10 );
     
 
     SDL_Point ghost_pen_position = tile_grid_point_to_world_point( ghost_pen_tile ); 
@@ -884,7 +890,7 @@ int main( int argc, char *argv[] ) {
                                     break;
                             }
                         }
-
+                        
                         // pacman eats power pellet
                         // TODO: FIX
 
@@ -1374,6 +1380,14 @@ int main( int argc, char *argv[] ) {
         if(entities.dashCooldownStocks[i] != NULL ) {
             free(entities.dashCooldownStocks[i]);
             entities.dashCooldownStocks[i] = NULL;
+        }
+        if( entities.activeTimer[i] != NULL ) {
+            free(entities.activeTimer[i]);
+            entities.activeTimer[i] = NULL;
+        }
+        if( entities.numDots[i] != NULL ) {
+            free(entities.numDots[i]);
+            entities.numDots[i] = NULL;
         }
         
     }

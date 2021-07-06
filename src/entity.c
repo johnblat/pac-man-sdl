@@ -136,6 +136,40 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
 // }
 
+EntityId createFruit( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, unsigned int numDots  ) {
+    EntityId entityId = g_NumEntities;
+    g_NumEntities++;
+
+    entities->positions[ entityId ] = (Position * ) malloc( sizeof( Position ) );
+    entities->actors[ entityId ] = (Actor * ) malloc( sizeof( Actor ) );
+    entities->activeTimer[ entityId ] = (float *) malloc(sizeof(float));
+    entities->pickupTypes[ entityId] = (PickupType *)malloc(sizeof( PickupType )) ;
+    entities->numDots[ entityId ] = (unsigned int *) malloc( sizeof( unsigned int ) );
+
+
+    entities->positions[ entityId ]->current_tile = levelConfig->pacStartingTile;
+    entities->positions[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
+    entities->positions[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
+    entities->positions[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
+    entities->positions[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
+
+    entities->actors[ entityId ]->current_tile = levelConfig->pacStartingTile;
+    entities->actors[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
+    entities->actors[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
+    entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
+    entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
+
+    entities->animatedSprites[ entityId ] = animatedSprite;
+
+    *entities->activeTimer[ entityId ] = 10.0f;
+    *entities->pickupTypes[ entityId ] = FRUIT_PICKUP;
+    *entities->numDots[ entityId ] = numDots;
+
+    entities->renderDatas[ entityId ] = renderDataInit();
+
+    return entityId;
+}
+
 void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime, LevelConfig *levelConfig ) {
     Actor **actors = entities->actors;
     TargetingBehavior **targetingBehaviors = entities->targetingBehaviors;
@@ -259,5 +293,28 @@ void cooldownProcess( Entities *entities, float deltaTime ) {
 
             }
         }
+    }
+}
+
+void processTemporaryPickup( Entities *entities, unsigned int numDotsLeft, float deltaTime ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if( entities->pickupTypes[ eid ] == NULL || entities->numDots[ eid ] == NULL || entities->activeTimer[ eid ] == NULL ) {
+            continue;
+        }
+
+        if( *entities->activeTimer[ eid ] <= 0.0f ){
+            continue;
+        }
+        
+        if( *entities->numDots[ eid ] <= numDotsLeft ) {
+            *entities->activeTimer[ eid ] -= deltaTime;
+            SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
+            SDL_SetTextureAlphaMod( texture, 255 );
+        }
+        else {
+            SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
+            SDL_SetTextureAlphaMod( texture, 0 );
+        }
+
     }
 }
