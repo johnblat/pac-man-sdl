@@ -18,9 +18,10 @@
 #include "renderProcessing.h"
 #include "interpolation.h"
 #include "sounds.h"
+#include "UI.h"
 #include "input.h"
 
-SDL_bool gIsFullscreen = SDL_TRUE;
+SDL_bool gIsFullscreen = SDL_FALSE;
 
 int gQuit = 0;
 
@@ -93,24 +94,9 @@ unsigned int g_GhostPointValues[] = { 400, 800, 1600, 3200 };
 
 
 SDL_Window *gWindow = NULL;
-SDL_Renderer *gRenderer = NULL;
 TTF_Font *gFont = NULL; 
 
-typedef struct {
-    float remainingTime;
-    char message[ 8 ];
-    SDL_Point world_position;
-    SDL_Color color;
-    SDL_Texture *messageTexture;
-    SDL_Rect render_dest_rect;
-    TTF_Font *font;
-    Lerp l;
 
-} TimedMessage;
-
-#define g_NumTimedMessages 4
-TimedMessage g_TimedMessages[ g_NumTimedMessages ];
-Blink g_ScoreBlinks[g_NumTimedMessages ];
 
 // TODO: FIX
 // Returns SDL_TRUE if advanced to next level
@@ -191,6 +177,21 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         g_NumDots++;
         ppIdx++;
     
+    }
+
+    //fruits
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] != FRUIT_PICKUP ) {
+            continue;
+        }
+
+        // entities->actors[ eid ]->current_tile.x = -1;
+        // entities->actors[ eid ]->current_tile.y = -1;
+        entities->actors[ eid ]->current_tile = levelConfig->pacStartingTile;
+
+        entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
+        entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
+
     }
 
     return SDL_FALSE;
@@ -482,6 +483,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     collectDotProcess( entities, tilemap->tm_dots, &g_NumDots, &gScore, gRenderer );
 
+    updateScoreTexture( &gScore, gRenderer );
+
     
     // CHECK STATE TRANSITIONS FOR GHOSTS
     for(int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
@@ -612,6 +615,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     }
 
+    processTemporaryPickup( entities, gPlayerIds, gNumPlayers, &gScore, tilemap, g_NumDots, deltaTime ) ;
 
     /*******************
      * PROCESS STATES
@@ -1046,7 +1050,11 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    gWindow = SDL_CreateWindow( "JB Pacmonster", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN );
+    Uint32 windowFlags = SDL_WINDOW_SHOWN;
+    if( gIsFullscreen ) {
+        windowFlags |= SDL_WINDOW_FULLSCREEN;
+    }
+    gWindow = SDL_CreateWindow( "JB Pacmonster", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, windowFlags);
     if ( gWindow == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );

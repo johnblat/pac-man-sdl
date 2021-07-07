@@ -11,6 +11,9 @@
  * Responsible for holding render details of textures to be rendered in each cycle through the game loop
  */
 
+SDL_Renderer *gRenderer = NULL;
+
+
 typedef struct {
     SDL_Texture *texture;
     SDL_Rect *sprite_clips;
@@ -33,6 +36,8 @@ typedef struct RenderData {
 int addTextureAtlas( SDL_Renderer *renderer, const char *filename, int num_rows, int num_cols );
 
 RenderData *renderDataInit(  ) ;
+
+void updateScoreTexture( Score *score, SDL_Renderer *renderer );
 
 
 #endif

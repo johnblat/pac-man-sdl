@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include "sounds.h"
+#include "comparisons.h"
 #include "stdio.h"
 #include "jb_types.h"
 #include "animation.h"
@@ -11,6 +12,7 @@
 #include "levelConfig.h"
 #include "actor.h"
 #include "entity.h"
+#include "UI.h"
 
 
 unsigned int g_NumEntities = 0;
@@ -255,18 +257,6 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
             *num_dots = n;
             
             score->score_number += 20;
-            
-            snprintf( score->score_text, 32, "Score : %d", score->score_number );
-            SDL_Surface *score_surface = TTF_RenderText_Solid( score->font, score->score_text, score->score_color );
-
-            SDL_DestroyTexture( score->score_texture );
-            score->score_texture = SDL_CreateTextureFromSurface( renderer, score_surface );
-            score->score_render_dst_rect.x = 10;
-            score->score_render_dst_rect.y = 10;
-            score->score_render_dst_rect.w = score_surface->w;
-            score->score_render_dst_rect.h = score_surface->h;
-
-            SDL_FreeSurface( score_surface );
 
         }
     }
@@ -296,20 +286,58 @@ void cooldownProcess( Entities *entities, float deltaTime ) {
     }
 }
 
-void processTemporaryPickup( Entities *entities, unsigned int numDotsLeft, float deltaTime ) {
+void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime ) {
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
         if( entities->pickupTypes[ eid ] == NULL || entities->numDots[ eid ] == NULL || entities->activeTimer[ eid ] == NULL ) {
             continue;
         }
 
         if( *entities->activeTimer[ eid ] <= 0.0f ){
+            SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
+            SDL_SetTextureAlphaMod( texture, 0 );
             continue;
         }
         
-        if( *entities->numDots[ eid ] <= numDotsLeft ) {
+        const unsigned int StartingNumDotsApproximation = 320; 
+        // pickup is active
+        if( ( StartingNumDotsApproximation - *entities->numDots[ eid ] ) >= numDotsLeft ) {
             *entities->activeTimer[ eid ] -= deltaTime;
             SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
             SDL_SetTextureAlphaMod( texture, 255 );
+
+            EntityId playerId;
+            for( int i = 0; i < numPlayers; i++ ) {
+                playerId = playerIds[ i ];
+                // player picks up
+                if( points_equal( entities->actors[ playerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
+                    *entities->activeTimer[ eid ] = 0.0f;
+                    score->score_number += 500;
+
+                     for( int i = 0; i < g_NumTimedMessages; i++ ) {
+                        if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
+                            g_TimedMessages[ i ].remainingTime = 0.85f;
+                            g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities->actors[ playerId ]->current_tile );
+                            snprintf( g_TimedMessages[ i ].message, 8, "%d", 500 );
+                            g_TimedMessages[ i ].color.r = 255 ;
+                            g_TimedMessages[ i ].color.g = 255;
+                            g_TimedMessages[ i ].color.b = 255;
+                            SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
+                            g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( gRenderer, msgSurface );
+                            g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap->tm_screen_position).x;
+                            g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap->tm_screen_position).y;
+                            g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
+                            g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
+                            SDL_FreeSurface( msgSurface );
+                            g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
+
+                            break;
+
+                        }
+                        }
+
+                }
+            }
+
         }
         else {
             SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;

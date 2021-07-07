@@ -1,3 +1,6 @@
+#ifndef LERP_H
+#define LERP_H
+
 #include <SDL2/SDL.h>
 
 typedef struct{
@@ -46,3 +49,5 @@ Blink blinkInit( float time, float value1, float value2 ) {
 
     return b;
 }
+
+#endif

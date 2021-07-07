@@ -125,3 +125,17 @@ void set_render_clip_values_based_on_positions_and_animation( Entities *entities
 
     }
 }
+
+void updateScoreTexture( Score *score, SDL_Renderer *renderer ) {
+    snprintf( score->score_text, 32, "Score : %d", score->score_number );
+    SDL_Surface *score_surface = TTF_RenderText_Solid( score->font, score->score_text, score->score_color );
+
+    SDL_DestroyTexture( score->score_texture );
+    score->score_texture = SDL_CreateTextureFromSurface( renderer, score_surface );
+    score->score_render_dst_rect.x = 10;
+    score->score_render_dst_rect.y = 10;
+    score->score_render_dst_rect.w = score_surface->w;
+    score->score_render_dst_rect.h = score_surface->h;
+
+    SDL_FreeSurface( score_surface );
+}
