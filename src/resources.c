@@ -351,6 +351,8 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
     
     char filename_texture_atlas[ MAX_FILENAME_SIZE ];
 
+    char textureName[ 16 ];
+
     int num_sprites_texture_atlas;
 
     char current_line[ 256 ];
@@ -365,23 +367,37 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
         
         // zero these out
         memset(filename_texture_atlas, '\0', MAX_FILENAME_SIZE );
+        memset(textureName, '\0', 16 );
         num_sprites_texture_atlas = 0;
 
         int beg_value_idx = 0;
         int line_idx = 0;
         int size_bytes_value = 0;
         
+        // texture name
         while( current_line[ line_idx ] != ' ' ) {
             line_idx++;
         }
 
         size_bytes_value = line_idx;
+        memcpy( textureName, current_line + beg_value_idx, size_bytes_value );
+        line_idx++;
+        beg_value_idx = line_idx;
+
+        // texture filename
+        while( current_line[ line_idx ] != ' ' ) {
+            line_idx++;
+        }
+
+        size_bytes_value = line_idx - beg_value_idx;
         memcpy( filename_texture_atlas, current_line + beg_value_idx, size_bytes_value );
 
         beg_value_idx = line_idx + 1;
         line_idx = beg_value_idx;
 
         // NUMERIC VALUES
+        // num rows
+        // num cols
         int numeric_values[ 2 ];
         for( int i = 0; i < 2 ; i++ ) {
             numeric_values[ i ] = strtol( current_line + line_idx , NULL, 10 );
@@ -393,7 +409,7 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
 
         int num_rows = numeric_values[ 0 ];
         int num_cols = numeric_values[ 1 ];
-        addTextureAtlas( renderer, filename_texture_atlas, num_rows, num_cols );
+        addTextureAtlas( renderer, textureName, filename_texture_atlas, num_rows, num_cols );
 
     }
 }

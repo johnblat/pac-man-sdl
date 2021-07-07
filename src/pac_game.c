@@ -121,6 +121,8 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         *entities->inputMasks[i  ] = 0b0;
         *entities->chargeTimers[i] = 0.0f;
         *entities->dashTimers[i] = 0.0f;
+        *entities->inputMasks[i]= 0b0;
+        entities->actors[i]->direction = DIR_NONE;
     }
     
     
@@ -276,6 +278,7 @@ inline void mainMenuProcess( LevelConfig *levelConfig, Entities *entities, TileM
 
 void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event *event, LevelConfig *levelConfig, float deltaTime) ;
 inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event *event, LevelConfig *levelConfig, float deltaTime) {
+
     while (SDL_PollEvent( event ) != 0 ) {
         //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
         
@@ -347,16 +350,22 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 }
                 if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities->gameControllers[ i ]))) {
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
-                        *entities->inputMasks[ i ] ^= g_INPUT_UP;
+                        if( *entities->inputMasks[i] & g_INPUT_UP )
+                            *entities->inputMasks[ i ] ^= g_INPUT_UP;
                     }
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT ) {
-                        *entities->inputMasks[ i ] ^= g_INPUT_LEFT;
+                        if( *entities->inputMasks[i] & g_INPUT_LEFT )
+                            *entities->inputMasks[ i ] ^= g_INPUT_LEFT;
                     }
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) {
-                        *entities->inputMasks[ i ] ^= g_INPUT_RIGHT;
+                        if( *entities->inputMasks[i] & g_INPUT_RIGHT )
+                            *entities->inputMasks[ i ] ^= g_INPUT_RIGHT;
                     }
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN ) {
-                        *entities->inputMasks[ i ] ^= g_INPUT_DOWN;
+                        if( ( *entities->inputMasks[ i ] & g_INPUT_DOWN ) ) {
+                            *entities->inputMasks[ i ] ^= g_INPUT_DOWN;
+                        }
+                        
                     }
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
                         *entities->inputMasks[ i ] ^= g_INPUT_ACTION;
@@ -617,6 +626,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     processTemporaryPickup( entities, gPlayerIds, gNumPlayers, &gScore, tilemap, g_NumDots, deltaTime ) ;
 
+
+
     /*******************
      * PROCESS STATES
      * ******************/
@@ -742,7 +753,9 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     SDL_RenderFillRect( gRenderer, &black_bar);
 
     SDL_RenderCopy( gRenderer, gScore.score_texture, NULL, &gScore.score_render_dst_rect);
-    SDL_RenderCopy(gRenderer, gCooldownTexture, NULL, &gCooldownRect);
+    //SDL_RenderCopy(gRenderer, gCooldownTexture, NULL, &gCooldownRect);
+
+    renderDashStockRects( ) ;
 
 
     /****
@@ -773,6 +786,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             }
         }
     }
+
+    updateDashStockRects( entities, gPlayerIds, gNumPlayers ) ;
 
 
 
@@ -1234,6 +1249,9 @@ int main( int argc, char *argv[] ) {
     
     // init ghosts
     initializeGhostsFromFile( &entities, &levelConfig, "res/ghost_animated_sprites");
+
+
+    initializeDashStockRects( 2 );
 
     // load everything for entity data from config
     //level_advance( &levelConfig, &tilemap, gRenderer, &entities );
