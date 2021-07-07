@@ -199,7 +199,7 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
     }
 
     // check if player should die
-    // EntityId playerId;
+    //EntityId playerId;
     // for( int i = 0; i < numPlayers; i++ ) {
     //     playerId = playerIds[ i ];
     //     if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
