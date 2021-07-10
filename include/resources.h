@@ -33,6 +33,8 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites );
 void load_render_xx_from_config_file( RenderData **renderDatas );
 
 void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_periods, char *filename_config );
+
+void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullResourcePath );
 /**
  * FILE I/O FOR SAVING/LOADING
  */

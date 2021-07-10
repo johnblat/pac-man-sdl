@@ -20,20 +20,11 @@
 #include "sounds.h"
 #include "UI.h"
 #include "input.h"
-
-SDL_bool gIsFullscreen = SDL_FALSE;
-
-int gQuit = 0;
-
-// TIMER USED FOR VULNERABILITY STATE
-float gGhostVulnerableTimer = 0.0f;
-// GHOST BEHAVIOR TIMER FOR CURRENT GLOBAL GHOST MODE
-float gGhostModeTimer = 0.0f;
+#include "globalData.h"
 
 //unsigned int gNumLevels = 0;
 
-EntityId gPlayerIds[ 2 ];
-unsigned int gNumPlayers = 0;
+
 
 Score gScore;
 
@@ -80,22 +71,6 @@ SDL_Texture *gCooldownTexture = NULL;
 SDL_Rect gCooldownRect;
 
 // End Main Menu
-
-SDL_bool g_show_debug_info = SDL_FALSE;
-
-SDL_Color pac_color = {200,150,0};
-SDL_Color white = {200,200,255};
-
-// used to track progress in level
-unsigned int g_NumDots = 0;
-
-uint8_t g_NumGhostsEaten = 0;
-unsigned int g_GhostPointValues[] = { 400, 800, 1600, 3200 };
-
-
-SDL_Window *gWindow = NULL;
-TTF_Font *gFont = NULL; 
-
 
 
 // TODO: FIX
@@ -181,18 +156,44 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
     
     }
 
-    //fruits
+    g_StartingNumDots = g_NumDots;
+
+    // " zero out " all pickups. Makes sure they don't get processed
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] != FRUIT_PICKUP ) {
+        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] == POWER_PELLET_PICKUP ) {
             continue;
         }
 
-        // entities->actors[ eid ]->current_tile.x = -1;
-        // entities->actors[ eid ]->current_tile.y = -1;
+        *entities->pickupTypes[ eid ] = NONE_PICKUP;
+        *entities->activeTimer[ eid ] = 0.0f;
+
+    }
+
+    // set all of the pickups to what the levelConfgi has
+    unsigned int pickupIdx = 0;
+
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] == POWER_PELLET_PICKUP ) {
+            continue;
+        }
+
+        if( pickupIdx >= levelConfig->numPickupConfigs ) {
+            break; // loaded in all the pickup configs for the level
+        }
+
         entities->actors[ eid ]->current_tile = levelConfig->pacStartingTile;
 
         entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
         entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
+
+        *entities->pickupTypes[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].pickupType;
+        *entities->activeTimer[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].activeTime;
+        *entities->numDots[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].numDots;
+        *entities->score[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].scoreReward;
+        entities->animatedSprites[ eid ]->texture_atlas_id = levelConfig->pickupConfigs[ pickupIdx ].textureAtlasId;
+        entities->animatedSprites[ eid ]->default_texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
+
+        pickupIdx++; // will go to the next one if any
 
     }
 
@@ -684,7 +685,6 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
      * *******************/
     gGhostModeTimer += deltaTime;
 
-
     if( g_current_scatter_chase_period < NUM_SCATTER_CHASE_PERIODS && gGhostModeTimer > g_scatter_chase_period_seconds[ g_current_scatter_chase_period ] ) {
         if( g_current_ghost_mode == MODE_CHASE ) {
             g_current_ghost_mode = MODE_SCATTER;
@@ -1034,6 +1034,7 @@ int main( int argc, char *argv[] ) {
         entities.dashCooldownStocks [ i ] = NULL;
         entities.activeTimer [ i ] = NULL;
         entities.numDots [ i ] = NULL;
+        entities.score [ i ] = NULL;
     }
     
     
@@ -1274,8 +1275,12 @@ int main( int argc, char *argv[] ) {
         entities.gameControllers[ gPlayerIds[ i ] ] = g_GameControllers[ i ];
     }
 
-    AnimatedSprite *fruitAnimatedSprite = init_animation(9,1,1,1);
-    createFruit( &entities, &levelConfig, fruitAnimatedSprite, 10 );
+    // pre-initialize pickup entities ( non power pellet )
+    for( int i = 0; i < MAX_PICKUPS_PER_LEVEL; i++ ) { // start with 4
+        createInitialTemporaryPickup( &entities, &levelConfig );
+    }
+    // AnimatedSprite *fruitAnimatedSprite = init_animation(9,1,1,1);
+    // createFruit( &entities, &levelConfig, fruitAnimatedSprite, 60 );
     
 
     SDL_Point ghost_pen_position = tile_grid_point_to_world_point( ghost_pen_tile ); 

@@ -13,6 +13,7 @@
 #include "actor.h"
 #include "entity.h"
 #include "UI.h"
+#include "globalData.h"
 
 
 unsigned int g_NumEntities = 0;
@@ -137,6 +138,44 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 // EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, SDL_Point tile ) {
 
 // }
+
+EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelConfig ) {
+    EntityId entityId = g_NumEntities;
+    g_NumEntities++;
+
+    entities->positions[ entityId ] = (Position * ) malloc( sizeof( Position ) );
+    entities->actors[ entityId ] = (Actor * ) malloc( sizeof( Actor ) );
+    entities->activeTimer[ entityId ] = (float *) malloc(sizeof(float));
+    entities->pickupTypes[ entityId] = (PickupType *)malloc(sizeof( PickupType )) ;
+    entities->numDots[ entityId ] = (unsigned int *) malloc( sizeof( unsigned int ) );
+
+    entities->positions[ entityId ]->current_tile = levelConfig->pacStartingTile;
+    entities->positions[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
+    entities->positions[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
+    entities->positions[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
+    entities->positions[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
+
+    entities->actors[ entityId ]->current_tile = levelConfig->pacStartingTile;
+    entities->actors[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
+    entities->actors[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
+    entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
+    entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
+
+    entities->animatedSprites[ entityId ] = init_animation( 0, 1, 1, 1 ); // need to set texture atlas later. This is an initial invalid texture atlas id.
+
+    *entities->activeTimer[ entityId ] = 0.0f;
+    *entities->pickupTypes[ entityId ] = NONE_PICKUP; // this will be skipped over. Its a NULL-like value for the pickup type
+    *entities->numDots[ entityId ] = 0;
+
+    entities->renderDatas[ entityId ] = renderDataInit();
+
+    entities->score[ entityId ] = (unsigned int *)malloc( sizeof(unsigned int));
+    *entities->score[ entityId ] = 0;
+
+    return entityId;
+
+
+}
 
 EntityId createFruit( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, unsigned int numDots  ) {
     EntityId entityId = g_NumEntities;
@@ -293,17 +332,19 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
         }
 
         if( *entities->activeTimer[ eid ] <= 0.0f ){
-            SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
-            SDL_SetTextureAlphaMod( texture, 0 );
+            entities->renderDatas[ eid ]->alphaMod = 0;
+            // SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
+            // SDL_SetTextureAlphaMod( texture, 0 );
             continue;
         }
         
-        const unsigned int StartingNumDotsApproximation = 320; 
         // pickup is active
-        if( ( StartingNumDotsApproximation - *entities->numDots[ eid ] ) >= numDotsLeft ) {
+        int numDotsEaten = g_StartingNumDots - numDotsLeft;
+        if( *entities->numDots[ eid ]  <= numDotsEaten ) {
             *entities->activeTimer[ eid ] -= deltaTime;
-            SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
-            SDL_SetTextureAlphaMod( texture, 255 );
+            entities->renderDatas[ eid ]->alphaMod = 255;
+            // SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
+            // SDL_SetTextureAlphaMod( texture, 255 );
 
             EntityId playerId;
             for( int i = 0; i < numPlayers; i++ ) {
@@ -340,8 +381,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
 
         }
         else {
-            SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
-            SDL_SetTextureAlphaMod( texture, 0 );
+            entities->renderDatas[ eid ]->alphaMod = 0;
         }
 
     }

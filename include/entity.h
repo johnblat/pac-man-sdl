@@ -9,8 +9,9 @@
 #include "levelConfig.h"
 #include "render.h"
 #include "inttypes.h"
+#include "pickup.h"
 
-#define MAX_NUM_ENTITIES 13
+#define MAX_NUM_ENTITIES 16
 typedef unsigned int EntityId;
 extern unsigned int g_NumEntities;
 
@@ -21,7 +22,7 @@ extern unsigned int g_NumEntities;
  * and can be used again
  * the stocks
  */
-typedef struct {
+typedef struct CoolDownStock {
     unsigned int numStockCap;
     unsigned int currentNumStock;
     float cooldownDuration; // time until 1 stock is recharged
@@ -29,12 +30,10 @@ typedef struct {
 } CooldownStock;
 
 
-typedef enum {
-    POWER_PELLET_PICKUP,
-    FRUIT_PICKUP
-} PickupType;
+
 
 typedef struct Entities {
+    SDL_bool           *isActive          [ MAX_NUM_ENTITIES ]; // process. If deactivated, can be overwritten
     Position           *positions         [ MAX_NUM_ENTITIES ];
     Actor              *actors            [ MAX_NUM_ENTITIES ]; 
     AnimatedSprite     *animatedSprites   [ MAX_NUM_ENTITIES ]; 
@@ -50,6 +49,7 @@ typedef struct Entities {
     PickupType         *pickupTypes       [ MAX_NUM_ENTITIES ];
     unsigned int       *numDots           [ MAX_NUM_ENTITIES ];
     float              *activeTimer       [ MAX_NUM_ENTITIES ];
+    unsigned int       *score             [ MAX_NUM_ENTITIES ];
 } Entities;
 
 EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite );
@@ -65,5 +65,7 @@ EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, S
 void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer );
 
 void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime );
+
+EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelConfig );
 
 #endif

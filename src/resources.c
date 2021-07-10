@@ -296,6 +296,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     char *tileTextureMapFileName = "tile_texture_map";
     char *wallsFileName = "walls";
     char *tilesetFileName = "tileset.png";
+    char *pickupsFileName = "pickups";
 
     char fullResourcePath[ MAX_FILENAME_SIZE ];
 
@@ -322,6 +323,9 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
 
     build_resource_file_path( fullResourcePath, fullLevelDir, wallsFileName );
     try_load_resource_from_file( tilemap->tm_walls, fullResourcePath, sizeof( char ), TOTAL_NUMBER_OF_TILES );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, pickupsFileName );
+    tryLoadPickupsFromConfigFile( levelConfig, fullResourcePath );
 
     SDL_Surface *surface;
 
@@ -502,6 +506,79 @@ void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_
     }
     
 
+}
+
+void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullResourcePath ) {
+    FILE *f;
+    f = fopen(fullResourcePath, "r");
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file: %s\n", fullResourcePath );
+    }
+
+    char currentLine[ 256 ];
+    memset( currentLine, '\0', 256 );
+
+    unsigned int lineIdx = 0;
+    unsigned int pickupIdx = 0;
+
+    while( fgets( currentLine, 256, f ) != NULL ) {
+        if( currentLine[ 0 ] == '#' ) {
+            continue;
+        }
+
+        lineIdx = 0;
+        // numeric values
+        unsigned int values[ 4 ];// textureAtlasId, numDots, ActiveTime, ScoreReward
+        unsigned int beginningIdx = lineIdx;
+        
+        for( int i = 0; i < 4; i++ ) {
+            beginningIdx = lineIdx;
+
+            // find end
+            while( currentLine[ lineIdx ] != ' ') {
+                lineIdx++;
+            }
+
+            values[ i ] = strtol( currentLine + beginningIdx, NULL, 10 );
+
+            // go to start of next value
+            while( currentLine[ lineIdx ] == ' ' ) {
+                lineIdx++;
+            }
+        }
+
+        levelConfig->pickupConfigs[ pickupIdx ].textureAtlasId = values[ 0 ];
+        levelConfig->pickupConfigs[ pickupIdx ].numDots = values[ 1 ];
+        levelConfig->pickupConfigs[ pickupIdx ].activeTime = values[ 2 ];
+        levelConfig->pickupConfigs[ pickupIdx ].scoreReward = values[ 3 ];
+
+        // string values
+        // -> map to enums
+        const char *FRUIT_PICKUP_STR = "FRUIT_PICKUP";
+        const char *MIRROR_PICKUP_STR = "MIRROR_PICKUP";
+
+        beginningIdx = lineIdx;
+
+        while( currentLine[ lineIdx ] != ' ' && currentLine[ lineIdx ] != '\n' && currentLine[ lineIdx ] != '\0') {
+            lineIdx++;
+        }
+        //lineIdx++;
+        
+        char pickupTypeStr[ 32 ] = {'\0'};
+        size_t size = lineIdx - beginningIdx;
+        strncpy( pickupTypeStr, currentLine + beginningIdx, size );
+        
+        if( strncmp(pickupTypeStr, FRUIT_PICKUP_STR, size ) == 0 ) {
+            levelConfig->pickupConfigs[ pickupIdx ].pickupType = FRUIT_PICKUP;
+        }
+        else if( strncmp(pickupTypeStr, MIRROR_PICKUP_STR, size ) == 0 ) {
+            levelConfig->pickupConfigs[ pickupIdx ].pickupType = MIRROR_PICKUP;
+        }
+
+        // new line? new pickup
+        pickupIdx++;
+    }
+    levelConfig->numPickupConfigs = pickupIdx;
 }
 
 // void load_render_xx_from_config_file( RenderData **renderDatas ) {

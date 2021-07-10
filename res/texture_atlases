@@ -1,13 +1,14 @@
 # starting with the first texture atlas, the IDs will be assigned as 0,1,2,3,... and so on
 #
-# texture_filename num_rows num_cols
+# name texture_filename num_rows num_cols
 #
-res/img/pacman-full-2.png 10 10
-res/img/blinky-full.png 4 8
-res/img/clyde-full.png 4 8
-res/img/vulnerable-full.png 4 8 
-res/img/go-to-pen-eyes-full.png 4 8
-res/img/power_pellet_anim.png 1 6
-res/img/inky-full.png 4 8
-res/img/pinky-full.png 4 8
-res/img/pacman-full-green.png 10 10
+pac-p1 res/img/pacman-full-2.png 10 10
+blinky res/img/blinky-full.png 4 8
+clyde res/img/clyde-full.png 4 8
+vuln res/img/vulnerable-full.png 4 8 
+eyes res/img/go-to-pen-eyes-full.png 4 8
+pp res/img/power_pellet_anim.png 1 6
+inky res/img/inky-full.png 4 8
+pinky res/img/pinky-full.png 4 8
+pac-p2 res/img/pacman-full-green.png 10 10
+cherry res/img/cherry.png 1 1

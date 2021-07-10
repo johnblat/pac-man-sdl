@@ -8,6 +8,7 @@
 #include "entity.h"
 #include <assert.h>
 #include "animation.h"
+#include <string.h>
 
 
 // const uint8_t MAX_TEXTURE_ATLASES = 10; 
@@ -16,7 +17,7 @@
 
 uint8_t num_texture_atlases = 0; 
 
-int addTextureAtlas( SDL_Renderer *renderer, const char *filename, int num_rows, int num_cols ) {
+int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char *filename, int num_rows, int num_cols ) {
     if( num_texture_atlases >= MAX_TEXTURE_ATLASES ) {
         fprintf(stderr, "Can't add more texture atlases. Limit of %d reached\n", MAX_TEXTURE_ATLASES );
         return -1;
@@ -33,6 +34,8 @@ int addTextureAtlas( SDL_Renderer *renderer, const char *filename, int num_rows,
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
     }
+
+    strncpy( g_texture_atlases[ num_texture_atlases ].textureName, textureName, 16); 
 
     int stride_cols = surface->w / num_cols;
     int stride_rows = surface->h / num_rows;
@@ -74,6 +77,8 @@ RenderData *renderDataInit( ) {
 
     render_clip->flip = SDL_FLIP_NONE;
 
+    render_clip->alphaMod = 255;
+
 
     return render_clip;
 }
@@ -93,6 +98,8 @@ void renderDataForAnimatedSpriteProcess( SDL_Renderer *renderer, Entities *entit
         SDL_Rect *dest_rect = &entities->renderDatas[ eid ]->dest_rect;
         float rotation = entities->renderDatas[ eid ]->rotation;
         SDL_RendererFlip flip = entities->renderDatas[ eid ]->flip;
+
+        SDL_SetTextureAlphaMod( g_texture_atlases[ texture_atlas_id ].texture,  entities->renderDatas[ eid ]->alphaMod ); 
         
 
         SDL_RenderCopyEx( renderer, g_texture_atlases[ texture_atlas_id ].texture, &src_rect, dest_rect, rotation, NULL, flip );
@@ -106,6 +113,7 @@ void set_render_clip_values_based_on_positions_and_animation( Entities *entities
             continue;
         }
         uint8_t texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
+        if( texture_atlas_id == 255 ) continue;
         uint8_t current_col = entities->animatedSprites[ eid ]->current_frame_col;
         uint8_t current_row = entities->animatedSprites[ eid ]->current_anim_row;
         uint8_t num_cols = entities->animatedSprites[ eid ]->num_frames_col; 

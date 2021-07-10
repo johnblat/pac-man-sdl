@@ -3,6 +3,17 @@
 
 #include <SDL2/SDL.h>
 #include "inttypes.h"
+#include "pickup.h"
+
+#define MAX_PICKUPS_PER_LEVEL 4
+
+typedef struct PickupConfig {
+    unsigned int textureAtlasId;
+    unsigned int numDots;
+    float activeTime;
+    unsigned int scoreReward;
+    PickupType pickupType;
+} PickupConfig;
 
 typedef struct LevelConfig {
     uint8_t *scatterChasePeriodSeconds;
@@ -11,6 +22,8 @@ typedef struct LevelConfig {
     SDL_Point pacStartingTile;
     float baseSpeed;
     SDL_Point powerPelletTiles[ 4 ];
+    PickupConfig pickupConfigs[ MAX_PICKUPS_PER_LEVEL ];
+    unsigned int numPickupConfigs;
 } LevelConfig;
 
 #endif
