@@ -684,6 +684,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
      * *******************/
     gGhostModeTimer += deltaTime;
 
+
     if( g_current_scatter_chase_period < NUM_SCATTER_CHASE_PERIODS && gGhostModeTimer > g_scatter_chase_period_seconds[ g_current_scatter_chase_period ] ) {
         if( g_current_ghost_mode == MODE_CHASE ) {
             g_current_ghost_mode = MODE_SCATTER;
@@ -777,7 +778,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             }
             
 
-            SDL_SetTextureAlphaMod( g_TimedMessages[ i ].messageTexture, g_ScoreBlinks[ i ].values[ g_ScoreBlinks->current_value_idx ] );
+            SDL_SetTextureAlphaMod( g_TimedMessages[ i ].messageTexture, g_ScoreBlinks[ i ].values[ g_ScoreBlinks[ i ].current_value_idx ] );
             SDL_RenderCopy( gRenderer, g_TimedMessages[ i ].messageTexture, NULL, &g_TimedMessages[ i ].render_dest_rect);
             g_TimedMessages[ i ].remainingTime -= deltaTime;
             if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
@@ -1219,7 +1220,7 @@ int main( int argc, char *argv[] ) {
     }
 
     for( int i = 0; i < g_NumTimedMessages; i ++ ) {
-        g_ScoreBlinks[ i ] = blinkInit( 0.033, 0, 255 );
+        g_ScoreBlinks[ i ] = blinkInit( 0.033, 50, 255 );
     }
 
     // calculate number of dots
