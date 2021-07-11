@@ -465,6 +465,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     dashTimersProcess( entities, deltaTime );
     cooldownProcess( entities, deltaTime );
 
+    processTempMirrorPlayers( entities, deltaTime);
+
     SDL_DestroyTexture( gCooldownTexture );
     char coolDownNumberText[2];
     snprintf(coolDownNumberText, 2, "%d", entities->dashCooldownStocks[ 4 ]->currentNumStock );
@@ -492,6 +494,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     }
 
     collectDotProcess( entities, tilemap->tm_dots, &g_NumDots, &gScore, gRenderer );
+    tempMirrorPlayerCollectDotProcess( entities, tilemap->tm_dots, &gScore ) ;
 
     updateScoreTexture( &gScore, gRenderer );
 
@@ -1035,6 +1038,7 @@ int main( int argc, char *argv[] ) {
         entities.activeTimer [ i ] = NULL;
         entities.numDots [ i ] = NULL;
         entities.score [ i ] = NULL;
+        entities.mirrorEntityRef[ i ] = NULL;
     }
     
     

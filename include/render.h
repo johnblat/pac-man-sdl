@@ -22,7 +22,7 @@ typedef struct {
     uint8_t cols;
 } TextureAtlas;
 
-#define MAX_TEXTURE_ATLASES 10 
+#define MAX_TEXTURE_ATLASES 20 
 TextureAtlas g_texture_atlases[ MAX_TEXTURE_ATLASES ];
 extern uint8_t num_texture_atlases;
 

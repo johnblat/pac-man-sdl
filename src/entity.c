@@ -303,6 +303,31 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
 
 }
 
+void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score ) {
+    for( int eid = 0; eid < g_NumEntities; eid++ ) {
+        if( entities->mirrorEntityRef[ eid ] == NULL ) {
+            continue;
+        }
+        // dont process if inactive
+        if( *entities->activeTimer[eid] <= 0.0f ) {
+            continue;
+        }
+        if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
+     
+            Mix_PlayChannel( -1, g_PacChompSound, 0 );
+
+            // get rid of dot marker
+            dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] = ' ';
+
+            g_NumDots -= 1;
+            
+            score->score_number += 20;
+
+        }
+
+    }
+}
+
 void cooldownProcess( Entities *entities, float deltaTime ) {
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
         if( entities->dashCooldownStocks[ eid ] == NULL ) {
@@ -322,6 +347,186 @@ void cooldownProcess( Entities *entities, float deltaTime ) {
 
             }
         }
+    }
+}
+
+EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float activeTime ) {
+    EntityId entityId = g_NumEntities++;
+
+    Actor *playerActor = entities->actors[playerId];
+    AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
+
+    entities->positions[entityId] = (Position *)malloc(sizeof(Position));
+    entities->actors[ entityId ] = (Actor *)malloc(sizeof(Actor));
+    entities->animatedSprites[ entityId ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
+    entities->mirrorEntityRef[ entityId ] = (EntityId *)malloc(sizeof(EntityId));
+    entities->activeTimer[entityId]=(float *)malloc(sizeof(float));
+
+    entities->actors[entityId]->current_tile = playerActor->current_tile;
+    entities->actors[entityId]->direction = playerActor->direction;
+    entities->actors[entityId]->world_position = playerActor->world_position;
+    entities->actors[entityId]->world_center_point = playerActor->world_center_point;
+
+    entities->animatedSprites[entityId]->accumulator = playerAnimatedSprite->accumulator;
+    entities->animatedSprites[entityId]->current_anim_row = playerAnimatedSprite->current_anim_row;
+    entities->animatedSprites[entityId]->current_frame_col = playerAnimatedSprite->current_frame_col;
+    entities->animatedSprites[entityId]->default_texture_atlas_id = playerAnimatedSprite->default_texture_atlas_id;
+    entities->animatedSprites[entityId]->frame_interval = playerAnimatedSprite->frame_interval;
+    entities->animatedSprites[entityId]->num_frames_col = playerAnimatedSprite->num_frames_col;
+    entities->animatedSprites[entityId]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
+
+    entities->renderDatas[ entityId ] = renderDataInit( );
+    entities->renderDatas[entityId]->alphaMod = 100;
+
+    *entities->mirrorEntityRef[entityId] = playerId;
+    *entities->activeTimer[entityId] = activeTime;
+
+    return entityId;
+}
+
+/**
+ * Overwrite the first inactive entity. creates if none to overwrite
+*/
+EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerId, float activeTime ) {
+    for( int eid = 0 ; eid < g_NumEntities; eid++ ) {
+        if( entities->mirrorEntityRef[eid] == NULL ) {
+            continue;
+        }
+        // can overwrite
+        if( *entities->activeTimer[eid] <= 0.0f ) {
+            EntityId entityId = ++g_NumEntities;
+
+            Actor *playerActor = entities->actors[playerId];
+            AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
+
+            entities->actors[ entityId ] = (Actor *)malloc(sizeof(Actor));
+            entities->animatedSprites[ entityId ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
+            entities->mirrorEntityRef[ entityId ] = (EntityId *)malloc(sizeof(EntityId));
+            entities->activeTimer[entityId]=(float *)malloc(sizeof(float));
+
+            entities->actors[entityId]->current_tile = playerActor->current_tile;
+            entities->actors[entityId]->direction = playerActor->direction;
+            entities->actors[entityId]->world_position = playerActor->world_position;
+            entities->actors[entityId]->world_center_point = playerActor->world_center_point;
+
+            entities->animatedSprites[entityId]->accumulator = playerAnimatedSprite->accumulator;
+            entities->animatedSprites[entityId]->current_anim_row = playerAnimatedSprite->current_anim_row;
+            entities->animatedSprites[entityId]->current_frame_col = playerAnimatedSprite->current_frame_col;
+            entities->animatedSprites[entityId]->default_texture_atlas_id = playerAnimatedSprite->default_texture_atlas_id;
+            entities->animatedSprites[entityId]->frame_interval = playerAnimatedSprite->frame_interval;
+            entities->animatedSprites[entityId]->num_frames_col = playerAnimatedSprite->num_frames_col;
+            entities->animatedSprites[entityId]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
+
+            entities->renderDatas[ entityId ] = renderDataInit( );
+            entities->renderDatas[entityId]->alphaMod = 50;
+
+            *entities->mirrorEntityRef[entityId] = playerId;
+            *entities->activeTimer[entityId] = activeTime;
+
+            return entityId;
+        }
+
+        
+    }
+    // none was overwritten, so need to make a new one
+    EntityId entityId = createTempMirrorPlayer( entities, playerId, activeTime );
+    return entityId;
+}
+
+void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
+    for( int eid = 0; eid < g_NumEntities; eid++ ) {
+        if( entities->mirrorEntityRef[ eid ] == NULL ) {
+            continue;
+        }
+
+        if( *entities->activeTimer[eid] <= 0.0f ) {
+            continue;
+        }
+
+        EntityId playerId = *entities->mirrorEntityRef[ eid ];
+        Actor *playerActor = entities->actors[playerId];
+        AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
+
+        const int tileCols = TILE_COLS - 1; // accidentally gave map one more than it should have
+        const int midTileX = tileCols*0.5;
+
+        entities->actors[eid]->current_tile.y = playerActor->current_tile.y;
+        if( midTileX == playerActor->current_tile.x ) {
+            entities->actors[eid]->current_tile.x = playerActor->current_tile.x ;
+        }
+        else if( playerActor->current_tile.x < midTileX ) {
+            int difference = midTileX - playerActor->current_tile.x;
+            entities->actors[eid]->current_tile.x = midTileX + difference;
+        }
+        else if( playerActor->current_tile.x > midTileX ) {
+            int difference = playerActor->current_tile.x - midTileX;
+            entities->actors[eid]->current_tile.x = midTileX - difference;
+        }
+
+        const int midWorldPointX = midTileX*TILE_SIZE + TILE_SIZE*0.5;
+
+        entities->actors[eid]->direction = playerActor->direction;
+        if( entities->actors[eid]->direction == DIR_LEFT || entities->actors[eid]->direction == DIR_RIGHT) {
+            entities->actors[eid]->direction = opposite_directions[entities->actors[eid]->direction ];
+        }
+
+        entities->actors[eid]->world_position.y = playerActor->world_position.y;
+
+        if( midWorldPointX == playerActor->world_position.x ) {
+            entities->actors[eid]->world_position.x = playerActor->world_position.x ;
+        }
+        else if( playerActor->world_position.x < midWorldPointX ) {
+            int difference = midWorldPointX - playerActor->world_position.x;
+            entities->actors[eid]->world_position.x = midWorldPointX + difference;
+        }
+        else if( playerActor->world_position.x > midWorldPointX ) {
+            int difference = playerActor->world_position.x - midWorldPointX;
+            entities->actors[eid]->world_position.x = midWorldPointX - difference;
+        }
+        entities->actors[eid]->world_position.x -= ACTOR_SIZE;
+
+
+        entities->actors[eid]->world_center_point = playerActor->world_center_point;
+
+        entities->actors[eid]->velocity.x = -playerActor->velocity.x;
+        entities->actors[eid]->velocity.y = playerActor->velocity.y;
+
+        // pacman animation row
+        if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y == 0 ) { // right
+            entities->animatedSprites[ eid ]->current_anim_row = 0;
+        }
+        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ eid ]->velocity.y == 0 ) { // left
+            entities->animatedSprites[ eid ]->current_anim_row = 1;
+        }
+        if( entities->actors[ eid ]->velocity.x == 0 && entities->actors[ eid ]->velocity.y > 0 ) { // down
+            entities->animatedSprites[ eid ]->current_anim_row = 2;
+        }
+        if( entities->actors[ eid ]->velocity.x == 0 && entities->actors[ eid ]->velocity.y < 0 ) { // up
+            entities->animatedSprites[ eid ]->current_anim_row = 3;
+        }
+        if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y < 0 ) { //  up-right
+            entities->animatedSprites[ eid ]->current_anim_row = 4;
+        }
+        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ eid ]->velocity.y < 0 ) { // up-left
+            entities->animatedSprites[ eid ]->current_anim_row = 5;
+        }
+        if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y > 0 ) { // down-right
+            entities->animatedSprites[ eid ]->current_anim_row = 6;
+        }
+        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ 0 ]->velocity.y > 0 ) { // down-left
+            entities->animatedSprites[ eid ]->current_anim_row = 7;
+        }
+
+        entities->animatedSprites[eid]->accumulator = playerAnimatedSprite->accumulator;
+        //entities->animatedSprites[eid]->current_anim_row = playerAnimatedSprite->current_anim_row;
+        entities->animatedSprites[eid]->current_frame_col = playerAnimatedSprite->current_frame_col;
+        entities->animatedSprites[eid]->default_texture_atlas_id = playerAnimatedSprite->default_texture_atlas_id;
+        entities->animatedSprites[eid]->frame_interval = playerAnimatedSprite->frame_interval;
+        entities->animatedSprites[eid]->num_frames_col = playerAnimatedSprite->num_frames_col;
+        entities->animatedSprites[eid]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
+
+        *entities->activeTimer[ eid ] -= deltaTime;        
+
     }
 }
 
@@ -352,7 +557,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                 // player picks up
                 if( points_equal( entities->actors[ playerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
                     *entities->activeTimer[ eid ] = 0.0f;
-                    score->score_number += 500;
+                    score->score_number += *entities->score[ eid ];
 
                      for( int i = 0; i < g_NumTimedMessages; i++ ) {
                         if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
@@ -374,7 +579,20 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                             break;
 
                         }
-                        }
+                    }
+
+                    switch( *entities->pickupTypes[ eid ] ) {
+                        case FRUIT_PICKUP:
+                            break; // do nothing. Just a score
+                        case MIRROR_PICKUP:
+                            // look for available entity to overwrite
+                            overwriteInactiveTempMirrorPlayer( entities, playerId, 200.0f);
+                            break;
+                        case POWER_PELLET_PICKUP:
+                            break;
+                        case NONE_PICKUP:
+                            break;
+                    }
 
                 }
             }
