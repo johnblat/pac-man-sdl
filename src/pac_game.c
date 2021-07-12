@@ -520,6 +520,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     // }
                 }
 
+                // collide with players
                 EntityId playerId;
                 for( int i = 0; i < gNumPlayers; ++i ) {
                     playerId = gPlayerIds[ i ];
@@ -560,6 +561,55 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                         }
                     }
                 }
+
+                // collide with ghost mirror player
+                //collide with mirror temp players
+                for( int i = 0; i < g_NumEntities; i++ ) {
+                    
+                    if( entities->mirrorEntityRef[ i ] == NULL ) {
+                        continue;
+                    }
+                    if( *entities->activeTimer[i] <= 0.0f ) {
+                        continue;
+                    }
+
+                    EntityId mirroredTempPlayerId = i;
+                        // eat ghost if pacman touches
+                    if ( points_equal( entities->actors[ mirroredTempPlayerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
+                        Mix_PlayChannel( -1, g_PacChompSound, 0 );
+                        Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
+                        gScore.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
+                        g_NumGhostsEaten++;
+                        *entities->ghostStates[ eid ] = STATE_GO_TO_PEN;
+                        uint8_t texture_atlas_id = 4;
+                        entities->animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
+                        entities->actors[ eid ]->next_tile = entities->actors[ eid ]->current_tile;
+                        entities->actors[ eid ]->target_tile = ghost_pen_tile;
+                        entities->actors[ eid ]->speed_multp = 1.6f;
+
+                        // show message
+                        for( int i = 0; i < g_NumTimedMessages; i++ ) {
+                            if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
+                                g_TimedMessages[ i ].remainingTime = 0.85f;
+                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities->actors[ mirroredTempPlayerId ]->current_tile );
+                                snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
+                                g_TimedMessages[ i ].color = white;
+                                SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
+                                g_TimedMessages[ i ].messageTexture = SDL_CreateTextureFromSurface( gRenderer, msgSurface );
+                                g_TimedMessages[ i ].render_dest_rect.x = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap->tm_screen_position).x;
+                                g_TimedMessages[ i ].render_dest_rect.y = world_point_to_screen_point(g_TimedMessages[ i ].world_position, tilemap->tm_screen_position).y;
+                                g_TimedMessages[ i ].render_dest_rect.w = msgSurface->w;
+                                g_TimedMessages[ i ].render_dest_rect.h = msgSurface->h;
+                                SDL_FreeSurface( msgSurface );
+                                g_TimedMessages[ i ].l = lerpInit( g_TimedMessages[ i ].world_position.y - TILE_SIZE*1.25, g_TimedMessages[ i ].world_position.y, 0.33f );
+
+                                break;
+
+                            }
+                        }
+                    }
+                }
+                
                 break;
                 
             case STATE_GO_TO_PEN :
@@ -594,6 +644,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             continue;
         }
 
+        // collide with players
         for( int i = 0; i < gNumPlayers; i++ ) {
             EntityId playerId = gPlayerIds[ i ];
             // player eats power pellet
@@ -624,6 +675,48 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 }   
                 gGhostVulnerableTimer = 20.0f;   
             }
+        }
+        
+        //collide with mirror temp players
+        for( int i = 0; i < g_NumEntities; i++ ) {
+            
+            if( entities->mirrorEntityRef[ i ] == NULL ) {
+                continue;
+            }
+            if( *entities->activeTimer[i] <= 0.0f ) {
+                continue;
+            }
+
+            EntityId mirroredTempPlayerId = i;
+            // mirrored player eats power pellet
+            if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
+                gScore.score_number += 20;
+                g_NumGhostsEaten = 0;
+                // move it outside of the world area for now.
+                // TODO: deactivate this somehow
+                entities->actors[ eid ]->current_tile.x = -1;
+                entities->actors[ eid ]->current_tile.y = -1;
+                entities->actors[ eid ]->world_position.x = -100;
+                entities->actors[ eid ]->world_position.y = -100;
+                entities->actors[ eid ]->world_center_point.x = -100;
+                entities->actors[ eid ]->world_center_point.y = -100;
+                g_NumDots--;
+
+                // make ghosts all vulnerable state
+                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                    if( entities->ghostStates[ eid ] == NULL ) {
+                        continue;
+                    }
+                    if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
+
+                        *entities->ghostStates[ eid ] = STATE_VULNERABLE;
+                        vulnerable_enter( entities, eid );
+                    }
+                    
+                }   
+                gGhostVulnerableTimer = 20.0f;   
+            }
+
         }
 
     }

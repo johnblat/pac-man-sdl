@@ -376,7 +376,7 @@ EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float ac
     entities->animatedSprites[entityId]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
 
     entities->renderDatas[ entityId ] = renderDataInit( );
-    entities->renderDatas[entityId]->alphaMod = 100;
+    entities->renderDatas[entityId]->alphaMod = 150;
 
     *entities->mirrorEntityRef[entityId] = playerId;
     *entities->activeTimer[entityId] = activeTime;
@@ -394,36 +394,36 @@ EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerI
         }
         // can overwrite
         if( *entities->activeTimer[eid] <= 0.0f ) {
-            EntityId entityId = ++g_NumEntities;
+            //EntityId entityId = ++g_NumEntities;
 
             Actor *playerActor = entities->actors[playerId];
             AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
 
-            entities->actors[ entityId ] = (Actor *)malloc(sizeof(Actor));
-            entities->animatedSprites[ entityId ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
-            entities->mirrorEntityRef[ entityId ] = (EntityId *)malloc(sizeof(EntityId));
-            entities->activeTimer[entityId]=(float *)malloc(sizeof(float));
+            entities->actors[ eid ] = (Actor *)malloc(sizeof(Actor));
+            entities->animatedSprites[ eid ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
+            entities->mirrorEntityRef[ eid ] = (EntityId *)malloc(sizeof(EntityId));
+            entities->activeTimer[eid]=(float *)malloc(sizeof(float));
 
-            entities->actors[entityId]->current_tile = playerActor->current_tile;
-            entities->actors[entityId]->direction = playerActor->direction;
-            entities->actors[entityId]->world_position = playerActor->world_position;
-            entities->actors[entityId]->world_center_point = playerActor->world_center_point;
+            entities->actors[eid]->current_tile = playerActor->current_tile;
+            entities->actors[eid]->direction = playerActor->direction;
+            entities->actors[eid]->world_position = playerActor->world_position;
+            entities->actors[eid]->world_center_point = playerActor->world_center_point;
 
-            entities->animatedSprites[entityId]->accumulator = playerAnimatedSprite->accumulator;
-            entities->animatedSprites[entityId]->current_anim_row = playerAnimatedSprite->current_anim_row;
-            entities->animatedSprites[entityId]->current_frame_col = playerAnimatedSprite->current_frame_col;
-            entities->animatedSprites[entityId]->default_texture_atlas_id = playerAnimatedSprite->default_texture_atlas_id;
-            entities->animatedSprites[entityId]->frame_interval = playerAnimatedSprite->frame_interval;
-            entities->animatedSprites[entityId]->num_frames_col = playerAnimatedSprite->num_frames_col;
-            entities->animatedSprites[entityId]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
+            entities->animatedSprites[eid]->accumulator = playerAnimatedSprite->accumulator;
+            entities->animatedSprites[eid]->current_anim_row = playerAnimatedSprite->current_anim_row;
+            entities->animatedSprites[eid]->current_frame_col = playerAnimatedSprite->current_frame_col;
+            entities->animatedSprites[eid]->default_texture_atlas_id = playerAnimatedSprite->default_texture_atlas_id;
+            entities->animatedSprites[eid]->frame_interval = playerAnimatedSprite->frame_interval;
+            entities->animatedSprites[eid]->num_frames_col = playerAnimatedSprite->num_frames_col;
+            entities->animatedSprites[eid]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
 
-            entities->renderDatas[ entityId ] = renderDataInit( );
-            entities->renderDatas[entityId]->alphaMod = 50;
+            entities->renderDatas[ eid ] = renderDataInit( );
+            entities->renderDatas[eid]->alphaMod = 150;
 
-            *entities->mirrorEntityRef[entityId] = playerId;
-            *entities->activeTimer[entityId] = activeTime;
+            *entities->mirrorEntityRef[eid] = playerId;
+            *entities->activeTimer[eid] = activeTime;
 
-            return entityId;
+            return eid;
         }
 
         
@@ -440,6 +440,7 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
         }
 
         if( *entities->activeTimer[eid] <= 0.0f ) {
+            entities->renderDatas[ eid ]->alphaMod = 0;
             continue;
         }
 
@@ -586,7 +587,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                             break; // do nothing. Just a score
                         case MIRROR_PICKUP:
                             // look for available entity to overwrite
-                            overwriteInactiveTempMirrorPlayer( entities, playerId, 200.0f);
+                            overwriteInactiveTempMirrorPlayer( entities, playerId, 8.0f);
                             break;
                         case POWER_PELLET_PICKUP:
                             break;
