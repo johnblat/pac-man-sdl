@@ -31,6 +31,8 @@ SDL_Point poopy_point = { -1, -1 };
 int num_power_pellets = 0;
 int num_slow_tiles = 0;
 
+SDL_bool showWalls = SDL_FALSE;
+
 /**
  * Returns the values in the num_rows and num_cols pointer parameters
  * It'll be something like 2x18 or something like that because an atlas 
@@ -338,6 +340,12 @@ int main( int argc, char *argv[] ) {
                 else if( event.key.keysym.sym == SDLK_w ) {
                     current_mode = current_mode == WALL_MODE ? TILE_MODE : WALL_MODE;
                 }
+                else if( event.key.keysym.sym == SDLK_y ) {
+                    showWalls = SDL_TRUE;
+                }
+                else if (event.key.keysym.sym == SDLK_n ) {
+                    showWalls = SDL_FALSE;
+                }
                 else if( event.key.keysym.sym == SDLK_p ) {
                     current_mode = current_mode == PAC_PLACEMENT_MODE ? TILE_MODE : PAC_PLACEMENT_MODE;
                 }
@@ -397,6 +405,14 @@ int main( int argc, char *argv[] ) {
             if( current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
                 tilemap.tm_screen_position.x-=4;
             }
+        }
+
+        if( current_key_states[ SDL_SCANCODE_W ] && current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+            showWalls = !showWalls;
+        }
+
+        if( current_key_states[ SDL_SCANCODE_W ] && !current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
+            showWalls = !showWalls;
         }
 
         if ( left_button_pressed ) {
@@ -582,7 +598,8 @@ int main( int argc, char *argv[] ) {
         SDL_RenderFillRect( renderer, &pen_rect );
 
         // render walls - no need to render normally because won't see it during actual game.
-         
+        
+        if( showWalls || ( current_mode == WALL_MODE) ) {
             SDL_SetRenderDrawColor( renderer, 255, 80, 50, 60 );
             for( int row = 0; row < TILE_ROWS; ++row ) {
                 for( int col = 0; col < TILE_COLS; ++col ) {
@@ -600,6 +617,8 @@ int main( int argc, char *argv[] ) {
                     }
                 }
             } 
+        }
+            
         
         render_tile_selection_panel( renderer, &tile_selection_panel, selected_texture_atlas_index );
         
