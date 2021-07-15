@@ -230,8 +230,16 @@ inline void mainMenuProcess( LevelConfig *levelConfig, Entities *entities, TileM
                 Mix_HaltMusic();
                 Mix_FreeMusic( g_Music );
                 g_Music = Mix_LoadMUS( gGameMusicFilename );
-                Mix_PlayMusic( g_Music, -1 );
+                if( g_Music == NULL ) {
+                    fprintf(stderr, "Could not load music from file %s. Error: %s\n\n", gGameMusicFilename, Mix_GetError() );
+                }
+                int channel = Mix_PlayMusic( g_Music, -1 );
+                if( !( channel >= 0 ) ) {
+                    fprintf(stderr, "Could not play %s. Error: %s\n", gGameMusicFilename, Mix_GetError() );
+                }
                 gProgramState = GAME_PLAYING_PROGRAM_STATE;
+                gGamePlayingState = LEVEL_START;
+                level_advance( levelConfig, tilemap, gRenderer, entities );
                 break;
             }
             if( event->key.keysym.sym == SDLK_ESCAPE ) {
@@ -409,6 +417,27 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     const Uint8 *current_key_states = SDL_GetKeyboardState( NULL );
     //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
     
+    // set input masks for keybound players
+    for( int i = 0 ; i < gNumPlayers; i++ ) {
+        EntityId playerId = gPlayerIds[ i ];
+        if( entities->keybinds[ playerId ] == NULL ) {
+            continue;
+        }
+
+        for( int i = 0; i < 5; i++ ) { // 5 is the number of keybinds possible right now.
+            SDL_Scancode scancode = entities->keybinds[ playerId ][i].scancode;
+            InputMask inputMask = entities->keybinds[ playerId ][i].inputMask;
+            if(current_key_states[ scancode ]) {
+                *entities->inputMasks[ playerId ] |= inputMask;
+            } 
+            else { // key not pressed
+                if( *entities->inputMasks[playerId] & inputMask ) {// make sure its not in mask {
+                    *entities->inputMasks[ playerId ] ^= inputMask;
+                }
+            }
+        }
+    }
+    
     // adjust tilemap
     if( current_key_states[ SDL_SCANCODE_S ] ) {
         tilemap->tm_screen_position.y++;
@@ -560,6 +589,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                             }
                         }
                     }
+                    break;
                 }
 
                 // collide with ghost mirror player
@@ -608,9 +638,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                             }
                         }
                     }
+                    break;
                 }
                 
-                break;
+                
                 
             case STATE_GO_TO_PEN :
                 // ghost is in pen
@@ -1125,6 +1156,7 @@ int main( int argc, char *argv[] ) {
         entities.chargeTimers     [ i ] = NULL;
         entities.dashTimers       [ i ] = NULL;
         entities.slowTimers       [ i ] = NULL;
+        entities.keybinds         [ i ] = NULL;
         entities.inputMasks       [ i ] = NULL;
         entities.pickupTypes      [ i ] = NULL;
         entities.dashCooldownStocks [ i ] = NULL;
@@ -1134,8 +1166,14 @@ int main( int argc, char *argv[] ) {
         entities.mirrorEntityRef[ i ] = NULL;
     }
     
-    
-    
+    // initialize default keybindings
+
+    addKeyBinding(0, SDL_SCANCODE_UP, g_INPUT_UP );
+    addKeyBinding(1, SDL_SCANCODE_LEFT, g_INPUT_LEFT );
+    addKeyBinding(2, SDL_SCANCODE_RIGHT, g_INPUT_RIGHT );
+    addKeyBinding(3, SDL_SCANCODE_DOWN, g_INPUT_DOWN );
+    addKeyBinding(4, SDL_SCANCODE_Z, g_INPUT_ACTION );
+
 
     gNumLevels = determine_number_of_levels_from_dirs();
     printf("Num levels %d\n", gNumLevels);
@@ -1364,12 +1402,24 @@ int main( int argc, char *argv[] ) {
         }
     }
 
-    // add game controllers to players
-    for( int i = 0; i < g_NumGamepads; i++ ) {
+    // add controllers to players
+    uint32_t playerIdx = 0;
+
+    for( int i = playerIdx; i < g_NumGamepads; i++ ) {
+
         if( i > gNumPlayers ) {
             break;
         }
         entities.gameControllers[ gPlayerIds[ i ] ] = g_GameControllers[ i ];
+        playerIdx++;
+    }
+
+    int32_t numPlayersLeftToAssignControls = gNumPlayers - g_NumGamepads;
+    if(numPlayersLeftToAssignControls > 0 ) {
+        for( int i = playerIdx; i < gNumPlayers; i++ ) {
+            EntityId playerId = gPlayerIds[ i ];
+            entities.keybinds[ playerId ] = gkeyBindings;
+        }
     }
 
     // pre-initialize pickup entities ( non power pellet )

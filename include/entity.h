@@ -10,6 +10,7 @@
 #include "render.h"
 #include "inttypes.h"
 #include "pickup.h"
+#include "input.h"
 
 #define MAX_NUM_ENTITIES 16
 typedef unsigned int EntityId;
@@ -44,6 +45,7 @@ typedef struct Entities {
     float              *dashTimers        [ MAX_NUM_ENTITIES ];
     float              *slowTimers        [ MAX_NUM_ENTITIES ];
     CooldownStock      *dashCooldownStocks[ MAX_NUM_ENTITIES ];
+    SDL_ScancodeToInputMask *keybinds    [ MAX_NUM_ENTITIES ]; // {      }, {    }, {        }
     uint8_t            *inputMasks        [ MAX_NUM_ENTITIES ];
     SDL_GameController *gameControllers   [ MAX_NUM_ENTITIES ];
     PickupType         *pickupTypes       [ MAX_NUM_ENTITIES ];
