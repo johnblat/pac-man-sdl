@@ -13,8 +13,10 @@
 #include "input.h"
 
 #define MAX_NUM_ENTITIES 16
+#define INVALID_ENTITY_ID MAX_NUM_ENTITIES
 typedef unsigned int EntityId;
 extern unsigned int g_NumEntities;
+
 
 
 /**
@@ -54,7 +56,8 @@ typedef struct Entities {
     unsigned int       *scores             [ MAX_NUM_ENTITIES ];
     EntityId           *mirrorEntityRefs   [ MAX_NUM_ENTITIES ];
     float              *speedBoostTimers   [ MAX_NUM_ENTITIES ];
-    float              *invinsibilityTimers[MAX_NUM_ENTITIES];
+    float              *invincibilityTimers[MAX_NUM_ENTITIES]; // won't be able to get hurt
+    float              *stopTimers         [MAX_NUM_ENTITIES]; // won't move
 } Entities;
 
 EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite );
@@ -79,5 +82,12 @@ void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS
 void processSpeedBoostTimer( Entities *entities, float deltaTime ) ;
 
 void overwriteSpeedBoostTimer(Entities *entities,EntityId playerId, float speed, float duration ) ;
+
+void stopGhostsForDuration(Entities *entities, float duration);
+
+void processStopTimers(Entities *entities, float deltaTime );
+
+void makePlayerInvincibleForDuration( Entities *entities, EntityId playerId, float duration);
+void processInvincibilityTimers( Entities *entities, float deltaTime) ;
 
 #endif

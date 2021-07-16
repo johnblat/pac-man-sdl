@@ -27,7 +27,7 @@ typedef struct {
     unsigned int numRectsToShow;
 } DashStockRects;
 
-DashStockRects gDashStockRects[ 2 ];
+DashStockRects gDashStockRects[ 4 ];
 unsigned int gNumDashStockRects = 0; 
 const unsigned int MAX_NUM_DASH_STOCK_RECTS = 3;
 
@@ -44,8 +44,10 @@ void initializeDashStockRects( unsigned int numPlayers ) {
 
     const SDL_Color p1_color = {200,200,0};
     const SDL_Color p2_color = { 20,255,20};
+    const SDL_Color p3_color = {253,201,255};
+    const SDL_Color p4_color = {200,200,200};
 
-    const SDL_Color colors[ 2 ] = {p1_color, p2_color};
+    const SDL_Color colors[ 4 ] = {p1_color, p2_color, p3_color, p4_color};
 
     unsigned int currentX = 300; // original offset
     for( int i = 0; i < gNumDashStockRects; i++ ) {

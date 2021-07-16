@@ -146,6 +146,9 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] != POWER_PELLET_PICKUP ) {
             continue;
         }
+        if(entities->numDots[eid] != NULL ) {
+            continue;
+        }
         
         entities->actors[ eid ]->current_tile = levelConfig->powerPelletTiles[ ppIdx ];
         entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
@@ -173,7 +176,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
     unsigned int pickupIdx = 0;
 
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] == POWER_PELLET_PICKUP ) {
+        if( entities->pickupTypes[ eid ] == NULL || entities->numDots[eid] == NULL ) {
             continue;
         }
 
@@ -489,13 +492,19 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     // UPDATE SIMULATION
 
-    inputToTryMoveProcess( entities, tilemap, deltaTime);
+    //reset alpha mods. Will be adjusted accordingly by other process functions
+    for( int eid = 0; eid < g_NumEntities; eid++ ) {
+        entities->renderDatas[eid]->alphaMod = 255;
+    }
 
+    inputToTryMoveProcess( entities, tilemap, deltaTime);
     dashTimersProcess( entities, deltaTime );
     cooldownProcess( entities, deltaTime );
-
     processTempMirrorPlayers( entities, deltaTime);
     processSpeedBoostTimer( entities, deltaTime );
+    processStopTimers( entities, deltaTime);
+    processInvincibilityTimers(entities, deltaTime);
+
 
     SDL_DestroyTexture( gCooldownTexture );
     char coolDownNumberText[2];
@@ -692,7 +701,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 entities->actors[ eid ]->world_position.y = -100;
                 entities->actors[ eid ]->world_center_point.x = -100;
                 entities->actors[ eid ]->world_center_point.y = -100;
-                g_NumDots--;
+                //g_NumDots--;
 
                 // make ghosts all vulnerable state
                 for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
@@ -763,7 +772,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         if( *entities->numDots[eid] >= numDotsEaten ) { // not ready
             continue;
         }
-        
+
         if( *entities->activeTimers[eid] <= 0.0f) { // its' dead
             continue;
         }
@@ -890,13 +899,17 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         gGhostVulnerableTimer -= deltaTime;
     }
 
-    ghostsProcess( entities, gPlayerIds, 2, tilemap,  deltaTime,levelConfig);
+    ghostsProcess( entities, gPlayerIds, gNumPlayers, tilemap,  deltaTime,levelConfig);
 
     /********************
      * MOVE GHOSTS
      * ********************/
     for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
         if( entities->targetingBehaviors[ i ] == NULL ) {
+            continue;
+        }
+        // don't move if stopped
+        if( *entities->stopTimers[i] > 0.0f ) {
             continue;
         }
         ghost_move( entities->actors, i, tilemap, deltaTime );
@@ -1240,6 +1253,10 @@ int main( int argc, char *argv[] ) {
     Entities entities;
     LevelConfig levelConfig;
 
+    for(int i = 0; i < 8; i++ ){
+        gGhostIds[ i ] = INVALID_ENTITY_ID;
+    }
+
     // initialize entities
     for( int i = 0; i < MAX_NUM_ENTITIES; i ++ ) { 
         entities.positions        [ i ] = NULL;
@@ -1259,6 +1276,7 @@ int main( int argc, char *argv[] ) {
         entities.numDots [ i ] = NULL;
         entities.scores [ i ] = NULL;
         entities.mirrorEntityRefs[ i ] = NULL;
+        entities.invincibilityTimers[i] = NULL;
 
     }
     
@@ -1336,15 +1354,18 @@ int main( int argc, char *argv[] ) {
     }
 
     g_NumJoysticks = SDL_NumJoysticks();
+    int gameControllerJoyId[4] = {-1};
+
     for( int i = 0; i <g_NumJoysticks; i++ ) {
         if( SDL_IsGameController( i ) ) {
+            gameControllerJoyId[ g_NumGamepads ] = i;
             g_NumGamepads++;
         }
     }
 
     if( g_NumGamepads > 0 ) {
         for( int i = 0; i < g_NumGamepads; i++) {
-            g_GameControllers[ i ] = SDL_GameControllerOpen( i );
+            g_GameControllers[ i ] = SDL_GameControllerOpen( gameControllerJoyId[ i ] );
             if( !SDL_GameControllerGetAttached( g_GameControllers[ i ] ) ) {
                 fprintf(stderr, "Wrong!\n");
             }
@@ -1411,7 +1432,8 @@ int main( int argc, char *argv[] ) {
     g_GhostEatenSounds[ 2 ] = g_GhostEatenCoolSound;
     g_GhostEatenSounds[ 3 ] = g_GhostEatenGroovySound;
 
-    Mix_VolumeMusic( 50 );
+    Mix_VolumeMusic( 20 );
+    
 
     Mix_PlayMusic(g_Music, -1 );
     
@@ -1477,14 +1499,15 @@ int main( int argc, char *argv[] ) {
     // }
 
 
-    // INIT Playwe
-    initializePlayersFromFiles( &entities, &levelConfig, 2 );
+    // INIT Players
+    int numPlayers = 1;
+    initializePlayersFromFiles( &entities, &levelConfig, numPlayers );
     
     // init ghosts
     initializeGhostsFromFile( &entities, &levelConfig, "res/ghost_animated_sprites");
 
 
-    initializeDashStockRects( 2 );
+    initializeDashStockRects( numPlayers );
 
     // load everything for entity data from config
     //level_advance( &levelConfig, &tilemap, gRenderer, &entities );

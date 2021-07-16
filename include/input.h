@@ -23,7 +23,7 @@ typedef struct SDL_ScancodeToInputMask {
 
 SDL_ScancodeToInputMask gkeyBindings[ 5 ];
 
-SDL_GameController *g_GameControllers[] = {NULL, NULL};
+SDL_GameController *g_GameControllers[] = {NULL, NULL, NULL, NULL};
 
 void addKeyBinding(unsigned int keyBindId, SDL_Scancode scancode, InputMask inputMask ) {
     gkeyBindings[ keyBindId ].scancode = scancode;

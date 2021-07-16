@@ -16,8 +16,11 @@ float gGhostVulnerableTimer = 0.0f;
 // GHOST BEHAVIOR TIMER FOR CURRENT GLOBAL GHOST MODE
 float gGhostModeTimer = 0.0f;
 
-EntityId gPlayerIds[ 2 ];
+EntityId gPlayerIds[ 4 ];
 unsigned int gNumPlayers = 0;
+
+EntityId gGhostIds[ 8 ];
+unsigned int gNumGhosts = 0;
 
 SDL_Color pac_color = {200,150,0};
 SDL_Color white = {200,200,255};

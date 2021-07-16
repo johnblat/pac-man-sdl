@@ -13,3 +13,8 @@ pinky res/img/pinky-full.png 4 8
 pac-p2 res/img/pacman-full-green.png 10 10
 cherry res/img/cherry.png 1 1
 mirror res/img/mirror-pickup.png 1 1
+roller_skates res/img/roller_skates.png 1 1
+clock res/img/clock.png 1 1
+shield res/img/shield.png 1 1
+pac-p3 res/img/pacman-full-pink-pastel.png 10 10
+pac-p4 res/img/pacman-full-white.png 10 10

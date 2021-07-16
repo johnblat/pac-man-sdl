@@ -130,7 +130,9 @@ void initializeGhostsFromFile( Entities *entities, LevelConfig *levelConfig, con
 
         AnimatedSprite *animatedSprite = init_animation( values[ 0 ], values[ 1 ], values[ 2 ], values[ 3 ] );
 
-        createGhost( entities, levelConfig, animatedSprite, i );
+        EntityId ghostId = createGhost( entities, levelConfig, animatedSprite, i );
+        gGhostIds[ gNumGhosts ] = ghostId;
+        gNumGhosts++;
     }
 }
 

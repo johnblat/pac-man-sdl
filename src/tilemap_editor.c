@@ -5,6 +5,7 @@
 #include "resources.h"
 #include "constants.h"
 #include "comparisons.h"
+#include "string.h"
 #include "jb_types.h"
 
 typedef struct TileSelectionPanel {
@@ -257,9 +258,30 @@ int main( int argc, char *argv[] ) {
     tile_selection_panel.texture_atlas = tilemap.tm_texture_atlas;
     tile_selection_panel.tile_size = TILE_SIZE;
 
-    tile_selection_panel.num_cols = 40;
-    tile_selection_panel.num_rows = 2;
+    // read in num rows and num cols
     
+    char *tilesetDimensionsFilename = "tilemap_editor_tileset_dimensions";
+    char fullPath[64] = {'\0'};
+    snprintf(fullPath, 64, "res/levels/level%d/", levelNum );
+    strncat(fullPath, tilesetDimensionsFilename, 64);
+
+    FILE *df = fopen(fullPath, "r");
+    char line[64] = {'\0'};
+    while( fgets(line, 64, df) && line[0] == '#') {
+
+    }
+
+    tile_selection_panel.num_rows = strtol(line, NULL, 10);
+
+    memset(line, '\0', 16);
+    fgets(line, 16, df);
+
+    tile_selection_panel.num_cols = strtol(line, NULL, 10);
+
+    fclose(df);
+    
+    // end read in dimensions
+
     SDL_Event event;
     int quit = 0;
 

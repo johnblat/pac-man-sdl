@@ -30,6 +30,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->slowTimers     [ entityId ] = ( float * )malloc(sizeof(float ) );
     entities->inputMasks     [ entityId ] = (uint8_t * ) malloc(sizeof( uint8_t ) );
     entities->dashCooldownStocks[ entityId ] = (CooldownStock *)malloc( sizeof( CooldownStock ) );
+    entities->invincibilityTimers[entityId] = (float *)malloc(sizeof(float));
 
     //initialize
     // position
@@ -83,6 +84,8 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->dashCooldownStocks[entityId]->cooldownTimer = 0.0f;
     entities->dashCooldownStocks[entityId]->currentNumStock = 3;
     entities->dashCooldownStocks[entityId]->numStockCap = 3;
+
+    *entities->invincibilityTimers[entityId] = 0.0f;
     
 
     return entityId;
@@ -97,6 +100,7 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->actors         [ entityId ] = ( Actor * )                 malloc( sizeof( Actor ) );
     entities->targetingBehaviors     [ entityId ] = (TargetingBehavior *)              malloc(sizeof(TargetingBehavior));
     entities->ghostStates[ entityId] = (GhostState *)malloc(sizeof(GhostState));
+    entities->stopTimers[entityId] = (float *) malloc(sizeof(float));
 
     //initialize
     // position
@@ -131,6 +135,8 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     *entities->ghostStates[ entityId ] = STATE_LEAVE_PEN;
     leave_pen_enter( entities, entityId );
     *entities->targetingBehaviors[ entityId ] = targetingBehavior;
+
+    *entities->stopTimers[entityId] = 0.0f;
 
     return entityId;
 }
@@ -446,7 +452,7 @@ void processSpeedBoostTimer( Entities *entities, float deltaTime ) {
             continue;
         }
         if(*entities->speedBoostTimers[eid] >= 0.0f ) {
-            entities->actors[ eid ]->speed_multp += 1.5;
+            entities->actors[ eid ]->speed_multp += 0.5;
             *entities->speedBoostTimers[eid] -= deltaTime;
         }
     }
@@ -511,6 +517,8 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
         entities->actors[eid]->velocity.x = -playerActor->velocity.x;
         entities->actors[eid]->velocity.y = playerActor->velocity.y;
 
+        entities->renderDatas[eid]->alphaMod = 150;
+
         // pacman animation row
         if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y == 0 ) { // right
             entities->animatedSprites[ eid ]->current_anim_row = 0;
@@ -547,6 +555,43 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
 
         *entities->activeTimers[ eid ] -= deltaTime;        
 
+    }
+}
+
+void stopGhostsForDuration(Entities *entities, float duration) {
+    EntityId gid;
+    for( int i = 0; i < gNumGhosts; i++ ) {
+        gid = gGhostIds[ i ];
+        *entities->stopTimers[gid] = duration;
+    }
+}
+
+void processStopTimers(Entities *entities, float deltaTime ) {
+    for( int eid = 0; eid < g_NumEntities; eid++ ) {
+        if( entities->stopTimers[eid] == NULL ) {
+            continue;
+        }
+        if( *entities->stopTimers[eid] <= 0.0f ) {
+            continue;
+        } 
+        *entities->stopTimers[eid] -= deltaTime;
+    }
+}
+
+void makePlayerInvincibleForDuration( Entities *entities, EntityId playerId, float duration) {
+    *entities->invincibilityTimers[ playerId ] = duration;
+}
+
+void processInvincibilityTimers( Entities *entities, float deltaTime) {
+    for( int eid = 0; eid < g_NumEntities ; eid++ ) {
+        if( entities->invincibilityTimers[eid] == NULL ) {
+            continue;
+        }
+        if( *entities->invincibilityTimers[eid] <= 0.0f) {
+            continue;
+        }
+        *entities->invincibilityTimers[eid] -= deltaTime;
+        entities->renderDatas[eid]->alphaMod -= 100; // make player semi transparent to appear immune to hurt
     }
 }
 
@@ -611,10 +656,13 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                         case POWER_PELLET_PICKUP:
                             break;
                         case SPEED_BOOST_PICKUP:
-                            overwriteSpeedBoostTimer( entities, playerId, gBaseSpeed * 1.5, 5.0f );
+                            overwriteSpeedBoostTimer( entities, playerId, gBaseSpeed * 1.2, 8.0f );
+                            break;
                         case SHIELD_PICKUP:
+                            makePlayerInvincibleForDuration( entities, playerId, 10.0f);
                             break;
                         case STOP_GHOSTS_PICKUP:
+                            stopGhostsForDuration(entities, 7.0f);
                             break;
                         case NONE_PICKUP:
                             break;
