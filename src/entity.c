@@ -433,6 +433,25 @@ EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerI
     return entityId;
 }
 
+void overwriteSpeedBoostTimer(Entities *entities,EntityId playerId, float speed, float duration ) {
+    if( entities->baseSpeedBoostTimer[playerId] == NULL ) {
+        entities->baseSpeedBoostTimer[playerId] = (float *)malloc(sizeof(float));
+    }
+    *entities->baseSpeedBoostTimer[playerId] = duration;
+}
+
+void processSpeedBoostTimer( Entities *entities, float deltaTime ) {
+    for( int eid = 0; eid < g_NumEntities; eid++) {
+        if( entities->baseSpeedBoostTimer[ eid ] == NULL ) {
+            continue;
+        }
+        if(*entities->baseSpeedBoostTimer[eid] >= 0.0f ) {
+            entities->actors[ eid ]->speed_multp += 1.5;
+            *entities->baseSpeedBoostTimer[eid] -= deltaTime;
+        }
+    }
+}
+
 void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
     for( int eid = 0; eid < g_NumEntities; eid++ ) {
         if( entities->mirrorEntityRef[ eid ] == NULL ) {
@@ -591,9 +610,12 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                             break;
                         case POWER_PELLET_PICKUP:
                             break;
+                        case SPEED_BOOST_PICKUP:
+                            overwriteSpeedBoostTimer( entities, playerId, gBaseSpeed * 1.5, 5.0f );
                         case NONE_PICKUP:
                             break;
                     }
+                    break;
 
                 }
             }

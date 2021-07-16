@@ -88,3 +88,16 @@ Create the corresponsding `res/levels/level#` directory of the level to edit if 
 - These are texture atlases intended to be used throughout the entire game.
 - The rows and cols should be specified so that the sprite clips will be broken up appropriately
 - At each texture atlas specified, it will be assigned an incrementing ID from `0, 1, 2, ... ` and so on. This ID is to be referenced in other places where specifying what texture atlas to use. For example, in `res/animated_sprites`. By specifying the ID here, you are telling the animated sprite to point to that texture atlas.
+
+Credits
+=======
+
+- Programming: John Blat 
+- Music:
+    - **Rock Paper Funk Take Off** by Broken Groove
+    - **Don't Worry We've Got Warp Speed** by Broken Groove
+    - **Trust Relax Autopilot** by Broken Groove
+    - **DisFunkTional** bt ThatAndyGuy
+- Art:
+    - Stephen Bath
+    - Colton Powell

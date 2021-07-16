@@ -31,6 +31,8 @@ uint8_t g_NumGhostsEaten = 0;
 unsigned int g_GhostPointValues[] = { 400, 800, 1600, 3200 };
 
 
+unsigned int gBaseSpeed = 0;
+
 SDL_Window *gWindow = NULL;
 TTF_Font *gFont = NULL; 
 

@@ -182,7 +182,8 @@ void tm_render_with_screen_position_offset( SDL_Renderer *renderer, TileMap *tm 
                     DOT_SIZE
                 };
                 
-                SDL_SetRenderDrawColor(renderer, 200,150,0,255);
+                // TODO: Set this depending on the level. Keep global color values
+                SDL_SetRenderDrawColor(renderer, 234,255,0,255);
                 SDL_RenderFillRect( renderer, &dot_rect );
             }
         }

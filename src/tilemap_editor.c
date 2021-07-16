@@ -600,7 +600,7 @@ int main( int argc, char *argv[] ) {
         // render walls - no need to render normally because won't see it during actual game.
         
         if( showWalls || ( current_mode == WALL_MODE) ) {
-            SDL_SetRenderDrawColor( renderer, 255, 80, 50, 60 );
+            SDL_SetRenderDrawColor( renderer, 255, 255, 255, 150 );
             for( int row = 0; row < TILE_ROWS; ++row ) {
                 for( int col = 0; col < TILE_COLS; ++col ) {
                     if( tilemap.tm_walls[ row ][ col ] == 'x' ) {

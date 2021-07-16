@@ -6,8 +6,8 @@
 Mix_Music *g_Music = NULL;
 
 //const char *gGameMusicFilename = "res/sounds/D"
-//const char *gGameMusicFilename = "res/sounds/Dont-Worry-We-Got-Warp-Speed.mp3";
-const char *gGameMusicFilename = "res/sounds/That Andy Guy - DisFunkTional.ogg";
+const char *gGameMusicFilename = "res/sounds/Dont-Worry-We-Got-Warp-Speed.mp3";
+//const char *gGameMusicFilename = "res/sounds/That Andy Guy - DisFunkTional.ogg";
 
 const char *gMenuMusicFilename = "res/sounds/Trust-Relax-Autopilot.mp3";
 

@@ -53,6 +53,7 @@ typedef struct Entities {
     float              *activeTimer       [ MAX_NUM_ENTITIES ];
     unsigned int       *score             [ MAX_NUM_ENTITIES ];
     EntityId           *mirrorEntityRef   [ MAX_NUM_ENTITIES ];
+    float              *baseSpeedBoostTimer   [ MAX_NUM_ENTITIES ];
 } Entities;
 
 EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite );
@@ -73,5 +74,9 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
 void processTempMirrorPlayers( Entities *entities, float deltaTime );
 
 void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score ) ;
+
+void processSpeedBoostTimer( Entities *entities, float deltaTime ) ;
+
+void overwriteSpeedBoostTimer(Entities *entities,EntityId playerId, float speed, float duration ) ;
 
 #endif

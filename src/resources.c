@@ -8,6 +8,7 @@
 #include "render.h"
 #include "resources.h"
 #include "tiles.h"
+#include "globalData.h"
 
 
 const int MAX_FILENAME_SIZE = 64;
@@ -54,11 +55,11 @@ void initializePlayersFromFiles( Entities *entities, LevelConfig *levelConfig, u
     char *content = (char *)malloc( size + 1 );
     SDL_RWread( defaultSpeedReadContext, content, size, 1 );
     content[ size ] = '\0';
-    float base_speed = strtol(content, NULL , 10);
+    gBaseSpeed = strtol(content, NULL , 10);
     free( content );
     SDL_RWclose( defaultSpeedReadContext );
 
-    levelConfig->baseSpeed = base_speed;
+    levelConfig->baseSpeed = gBaseSpeed;
 
     char *playerSpritesFilename = "res/player_animated_sprites";
     FILE *f = fopen( playerSpritesFilename, "r" );
@@ -556,6 +557,7 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
         // -> map to enums
         const char *FRUIT_PICKUP_STR = "FRUIT_PICKUP";
         const char *MIRROR_PICKUP_STR = "MIRROR_PICKUP";
+        const char *SPEED_BOOST_PICKUP_STR = "SPEED_BOOST_PICKUP";
 
         beginningIdx = lineIdx;
 
@@ -573,6 +575,9 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
         }
         else if( strncmp(pickupTypeStr, MIRROR_PICKUP_STR, size ) == 0 ) {
             levelConfig->pickupConfigs[ pickupIdx ].pickupType = MIRROR_PICKUP;
+        }
+        else if( strncmp( pickupTypeStr, SPEED_BOOST_PICKUP_STR, size ) == 0 ){
+            levelConfig->pickupConfigs[ pickupIdx ].pickupType = SPEED_BOOST_PICKUP;
         }
 
         // new line? new pickup

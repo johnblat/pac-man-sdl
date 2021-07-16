@@ -495,6 +495,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     cooldownProcess( entities, deltaTime );
 
     processTempMirrorPlayers( entities, deltaTime);
+    processSpeedBoostTimer( entities, deltaTime );
 
     SDL_DestroyTexture( gCooldownTexture );
     char coolDownNumberText[2];
@@ -588,8 +589,9 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
                             }
                         }
+                        break;
                     }
-                    break;
+                    
                 }
 
                 // collide with ghost mirror player
