@@ -50,10 +50,11 @@ typedef struct Entities {
     SDL_GameController *gameControllers   [ MAX_NUM_ENTITIES ];
     PickupType         *pickupTypes       [ MAX_NUM_ENTITIES ];
     unsigned int       *numDots           [ MAX_NUM_ENTITIES ];
-    float              *activeTimer       [ MAX_NUM_ENTITIES ];
-    unsigned int       *score             [ MAX_NUM_ENTITIES ];
-    EntityId           *mirrorEntityRef   [ MAX_NUM_ENTITIES ];
-    float              *baseSpeedBoostTimer   [ MAX_NUM_ENTITIES ];
+    float              *activeTimers       [ MAX_NUM_ENTITIES ];
+    unsigned int       *scores             [ MAX_NUM_ENTITIES ];
+    EntityId           *mirrorEntityRefs   [ MAX_NUM_ENTITIES ];
+    float              *speedBoostTimers   [ MAX_NUM_ENTITIES ];
+    float              *invinsibilityTimers[MAX_NUM_ENTITIES];
 } Entities;
 
 EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite );

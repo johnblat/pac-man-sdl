@@ -145,7 +145,7 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
 
     entities->positions[ entityId ] = (Position * ) malloc( sizeof( Position ) );
     entities->actors[ entityId ] = (Actor * ) malloc( sizeof( Actor ) );
-    entities->activeTimer[ entityId ] = (float *) malloc(sizeof(float));
+    entities->activeTimers[ entityId ] = (float *) malloc(sizeof(float));
     entities->pickupTypes[ entityId] = (PickupType *)malloc(sizeof( PickupType )) ;
     entities->numDots[ entityId ] = (unsigned int *) malloc( sizeof( unsigned int ) );
 
@@ -163,14 +163,14 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
 
     entities->animatedSprites[ entityId ] = init_animation( 0, 1, 1, 1 ); // need to set texture atlas later. This is an initial invalid texture atlas id.
 
-    *entities->activeTimer[ entityId ] = 0.0f;
+    *entities->activeTimers[ entityId ] = 0.0f;
     *entities->pickupTypes[ entityId ] = NONE_PICKUP; // this will be skipped over. Its a NULL-like value for the pickup type
     *entities->numDots[ entityId ] = 0;
 
     entities->renderDatas[ entityId ] = renderDataInit();
 
-    entities->score[ entityId ] = (unsigned int *)malloc( sizeof(unsigned int));
-    *entities->score[ entityId ] = 0;
+    entities->scores[ entityId ] = (unsigned int *)malloc( sizeof(unsigned int));
+    *entities->scores[ entityId ] = 0;
 
     return entityId;
 
@@ -183,7 +183,7 @@ EntityId createFruit( Entities *entities, LevelConfig *levelConfig, AnimatedSpri
 
     entities->positions[ entityId ] = (Position * ) malloc( sizeof( Position ) );
     entities->actors[ entityId ] = (Actor * ) malloc( sizeof( Actor ) );
-    entities->activeTimer[ entityId ] = (float *) malloc(sizeof(float));
+    entities->activeTimers[ entityId ] = (float *) malloc(sizeof(float));
     entities->pickupTypes[ entityId] = (PickupType *)malloc(sizeof( PickupType )) ;
     entities->numDots[ entityId ] = (unsigned int *) malloc( sizeof( unsigned int ) );
 
@@ -202,7 +202,7 @@ EntityId createFruit( Entities *entities, LevelConfig *levelConfig, AnimatedSpri
 
     entities->animatedSprites[ entityId ] = animatedSprite;
 
-    *entities->activeTimer[ entityId ] = 10.0f;
+    *entities->activeTimers[ entityId ] = 10.0f;
     *entities->pickupTypes[ entityId ] = FRUIT_PICKUP;
     *entities->numDots[ entityId ] = numDots;
 
@@ -305,11 +305,11 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
 
 void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score ) {
     for( int eid = 0; eid < g_NumEntities; eid++ ) {
-        if( entities->mirrorEntityRef[ eid ] == NULL ) {
+        if( entities->mirrorEntityRefs[ eid ] == NULL ) {
             continue;
         }
         // dont process if inactive
-        if( *entities->activeTimer[eid] <= 0.0f ) {
+        if( *entities->activeTimers[eid] <= 0.0f ) {
             continue;
         }
         if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
@@ -359,8 +359,8 @@ EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float ac
     entities->positions[entityId] = (Position *)malloc(sizeof(Position));
     entities->actors[ entityId ] = (Actor *)malloc(sizeof(Actor));
     entities->animatedSprites[ entityId ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
-    entities->mirrorEntityRef[ entityId ] = (EntityId *)malloc(sizeof(EntityId));
-    entities->activeTimer[entityId]=(float *)malloc(sizeof(float));
+    entities->mirrorEntityRefs[ entityId ] = (EntityId *)malloc(sizeof(EntityId));
+    entities->activeTimers[entityId]=(float *)malloc(sizeof(float));
 
     entities->actors[entityId]->current_tile = playerActor->current_tile;
     entities->actors[entityId]->direction = playerActor->direction;
@@ -378,8 +378,8 @@ EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float ac
     entities->renderDatas[ entityId ] = renderDataInit( );
     entities->renderDatas[entityId]->alphaMod = 150;
 
-    *entities->mirrorEntityRef[entityId] = playerId;
-    *entities->activeTimer[entityId] = activeTime;
+    *entities->mirrorEntityRefs[entityId] = playerId;
+    *entities->activeTimers[entityId] = activeTime;
 
     return entityId;
 }
@@ -389,11 +389,11 @@ EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float ac
 */
 EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerId, float activeTime ) {
     for( int eid = 0 ; eid < g_NumEntities; eid++ ) {
-        if( entities->mirrorEntityRef[eid] == NULL ) {
+        if( entities->mirrorEntityRefs[eid] == NULL ) {
             continue;
         }
         // can overwrite
-        if( *entities->activeTimer[eid] <= 0.0f ) {
+        if( *entities->activeTimers[eid] <= 0.0f ) {
             //EntityId entityId = ++g_NumEntities;
 
             Actor *playerActor = entities->actors[playerId];
@@ -401,8 +401,8 @@ EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerI
 
             entities->actors[ eid ] = (Actor *)malloc(sizeof(Actor));
             entities->animatedSprites[ eid ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
-            entities->mirrorEntityRef[ eid ] = (EntityId *)malloc(sizeof(EntityId));
-            entities->activeTimer[eid]=(float *)malloc(sizeof(float));
+            entities->mirrorEntityRefs[ eid ] = (EntityId *)malloc(sizeof(EntityId));
+            entities->activeTimers[eid]=(float *)malloc(sizeof(float));
 
             entities->actors[eid]->current_tile = playerActor->current_tile;
             entities->actors[eid]->direction = playerActor->direction;
@@ -420,8 +420,8 @@ EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerI
             entities->renderDatas[ eid ] = renderDataInit( );
             entities->renderDatas[eid]->alphaMod = 150;
 
-            *entities->mirrorEntityRef[eid] = playerId;
-            *entities->activeTimer[eid] = activeTime;
+            *entities->mirrorEntityRefs[eid] = playerId;
+            *entities->activeTimers[eid] = activeTime;
 
             return eid;
         }
@@ -434,36 +434,36 @@ EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerI
 }
 
 void overwriteSpeedBoostTimer(Entities *entities,EntityId playerId, float speed, float duration ) {
-    if( entities->baseSpeedBoostTimer[playerId] == NULL ) {
-        entities->baseSpeedBoostTimer[playerId] = (float *)malloc(sizeof(float));
+    if( entities->speedBoostTimers[playerId] == NULL ) {
+        entities->speedBoostTimers[playerId] = (float *)malloc(sizeof(float));
     }
-    *entities->baseSpeedBoostTimer[playerId] = duration;
+    *entities->speedBoostTimers[playerId] = duration;
 }
 
 void processSpeedBoostTimer( Entities *entities, float deltaTime ) {
     for( int eid = 0; eid < g_NumEntities; eid++) {
-        if( entities->baseSpeedBoostTimer[ eid ] == NULL ) {
+        if( entities->speedBoostTimers[ eid ] == NULL ) {
             continue;
         }
-        if(*entities->baseSpeedBoostTimer[eid] >= 0.0f ) {
+        if(*entities->speedBoostTimers[eid] >= 0.0f ) {
             entities->actors[ eid ]->speed_multp += 1.5;
-            *entities->baseSpeedBoostTimer[eid] -= deltaTime;
+            *entities->speedBoostTimers[eid] -= deltaTime;
         }
     }
 }
 
 void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
     for( int eid = 0; eid < g_NumEntities; eid++ ) {
-        if( entities->mirrorEntityRef[ eid ] == NULL ) {
+        if( entities->mirrorEntityRefs[ eid ] == NULL ) {
             continue;
         }
 
-        if( *entities->activeTimer[eid] <= 0.0f ) {
+        if( *entities->activeTimers[eid] <= 0.0f ) {
             entities->renderDatas[ eid ]->alphaMod = 0;
             continue;
         }
 
-        EntityId playerId = *entities->mirrorEntityRef[ eid ];
+        EntityId playerId = *entities->mirrorEntityRefs[ eid ];
         Actor *playerActor = entities->actors[playerId];
         AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
 
@@ -545,18 +545,18 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
         entities->animatedSprites[eid]->num_frames_col = playerAnimatedSprite->num_frames_col;
         entities->animatedSprites[eid]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
 
-        *entities->activeTimer[ eid ] -= deltaTime;        
+        *entities->activeTimers[ eid ] -= deltaTime;        
 
     }
 }
 
 void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime ) {
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-        if( entities->pickupTypes[ eid ] == NULL || entities->numDots[ eid ] == NULL || entities->activeTimer[ eid ] == NULL ) {
+        if( entities->pickupTypes[ eid ] == NULL || entities->numDots[ eid ] == NULL || entities->activeTimers[ eid ] == NULL ) {
             continue;
         }
 
-        if( *entities->activeTimer[ eid ] <= 0.0f ){
+        if( *entities->activeTimers[ eid ] <= 0.0f ){
             entities->renderDatas[ eid ]->alphaMod = 0;
             // SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
             // SDL_SetTextureAlphaMod( texture, 0 );
@@ -566,7 +566,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
         // pickup is active
         int numDotsEaten = g_StartingNumDots - numDotsLeft;
         if( *entities->numDots[ eid ]  <= numDotsEaten ) {
-            *entities->activeTimer[ eid ] -= deltaTime;
+            *entities->activeTimers[ eid ] -= deltaTime;
             entities->renderDatas[ eid ]->alphaMod = 255;
             // SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
             // SDL_SetTextureAlphaMod( texture, 255 );
@@ -576,8 +576,8 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                 playerId = playerIds[ i ];
                 // player picks up
                 if( points_equal( entities->actors[ playerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
-                    *entities->activeTimer[ eid ] = 0.0f;
-                    score->score_number += *entities->score[ eid ];
+                    *entities->activeTimers[ eid ] = 0.0f;
+                    score->score_number += *entities->scores[ eid ];
 
                      for( int i = 0; i < g_NumTimedMessages; i++ ) {
                         if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
@@ -612,6 +612,10 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                             break;
                         case SPEED_BOOST_PICKUP:
                             overwriteSpeedBoostTimer( entities, playerId, gBaseSpeed * 1.5, 5.0f );
+                        case SHIELD_PICKUP:
+                            break;
+                        case STOP_GHOSTS_PICKUP:
+                            break;
                         case NONE_PICKUP:
                             break;
                     }

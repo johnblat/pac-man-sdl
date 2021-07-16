@@ -6,6 +6,8 @@ typedef enum PickupType {
     FRUIT_PICKUP,
     MIRROR_PICKUP,
     SPEED_BOOST_PICKUP,
+    STOP_GHOSTS_PICKUP,
+    SHIELD_PICKUP,
     NONE_PICKUP
 } PickupType;
 

@@ -165,7 +165,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         }
 
         *entities->pickupTypes[ eid ] = NONE_PICKUP;
-        *entities->activeTimer[ eid ] = 0.0f;
+        *entities->activeTimers[ eid ] = 0.0f;
 
     }
 
@@ -187,9 +187,9 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
 
         *entities->pickupTypes[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].pickupType;
-        *entities->activeTimer[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].activeTime;
+        *entities->activeTimers[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].activeTime;
         *entities->numDots[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].numDots;
-        *entities->score[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].scoreReward;
+        *entities->scores[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].scoreReward;
         entities->animatedSprites[ eid ]->texture_atlas_id = levelConfig->pickupConfigs[ pickupIdx ].textureAtlasId;
         entities->animatedSprites[ eid ]->default_texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
 
@@ -598,10 +598,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 //collide with mirror temp players
                 for( int i = 0; i < g_NumEntities; i++ ) {
                     
-                    if( entities->mirrorEntityRef[ i ] == NULL ) {
+                    if( entities->mirrorEntityRefs[ i ] == NULL ) {
                         continue;
                     }
-                    if( *entities->activeTimer[i] <= 0.0f ) {
+                    if( *entities->activeTimers[i] <= 0.0f ) {
                         continue;
                     }
 
@@ -673,7 +673,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     // process power pellet pickups
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid] != POWER_PELLET_PICKUP ) { // its a power pellet pickup
+        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid] != POWER_PELLET_PICKUP  || entities->numDots[eid] != NULL) { // its a power pellet pickup. Not a temporary one
             continue;
         }
 
@@ -713,10 +713,103 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         //collide with mirror temp players
         for( int i = 0; i < g_NumEntities; i++ ) {
             
-            if( entities->mirrorEntityRef[ i ] == NULL ) {
+            if( entities->mirrorEntityRefs[ i ] == NULL ) {
                 continue;
             }
-            if( *entities->activeTimer[i] <= 0.0f ) {
+            if( *entities->activeTimers[i] <= 0.0f ) {
+                continue;
+            }
+
+            EntityId mirroredTempPlayerId = i;
+            // mirrored player eats power pellet
+            if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
+                gScore.score_number += 20;
+                g_NumGhostsEaten = 0;
+                // move it outside of the world area for now.
+                // TODO: deactivate this somehow
+                entities->actors[ eid ]->current_tile.x = -1;
+                entities->actors[ eid ]->current_tile.y = -1;
+                entities->actors[ eid ]->world_position.x = -100;
+                entities->actors[ eid ]->world_position.y = -100;
+                entities->actors[ eid ]->world_center_point.x = -100;
+                entities->actors[ eid ]->world_center_point.y = -100;
+                g_NumDots--;
+
+                // make ghosts all vulnerable state
+                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                    if( entities->ghostStates[ eid ] == NULL ) {
+                        continue;
+                    }
+                    if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
+
+                        *entities->ghostStates[ eid ] = STATE_VULNERABLE;
+                        vulnerable_enter( entities, eid );
+                    }
+                    
+                }   
+                gGhostVulnerableTimer = 20.0f;   
+            }
+
+        }
+
+    }
+
+    // process temp power pellets
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid] != POWER_PELLET_PICKUP  || entities->numDots[eid] == NULL) { // its a temporary power pellet pickup. 
+            continue;
+        }
+        int numDotsEaten = g_StartingNumDots - g_NumDots;
+        if( *entities->numDots[eid] >= numDotsEaten ) { // not ready
+            continue;
+        }
+        
+        if( *entities->activeTimers[eid] <= 0.0f) { // its' dead
+            continue;
+        }
+
+        *entities->activeTimers[eid] -= deltaTime;
+
+        // collide with players
+        for( int i = 0; i < gNumPlayers; i++ ) {
+            EntityId playerId = gPlayerIds[ i ];
+            // player eats power pellet
+            if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
+                gScore.score_number += 20;
+                g_NumGhostsEaten = 0;
+                // move it outside of the world area for now.
+                // TODO: deactivate this somehow
+                entities->actors[ eid ]->current_tile.x = -1;
+                entities->actors[ eid ]->current_tile.y = -1;
+                entities->actors[ eid ]->world_position.x = -100;
+                entities->actors[ eid ]->world_position.y = -100;
+                entities->actors[ eid ]->world_center_point.x = -100;
+                entities->actors[ eid ]->world_center_point.y = -100;
+                g_NumDots--;
+
+                // make ghosts all vulnerable state
+                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                    if( entities->ghostStates[ eid ] == NULL ) {
+                        continue;
+                    }
+                    if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
+
+                        *entities->ghostStates[ eid ] = STATE_VULNERABLE;
+                        vulnerable_enter( entities, eid );
+                    }
+                    
+                }   
+                gGhostVulnerableTimer = 20.0f;   
+            }
+        }
+        
+        //collide with mirror temp players
+        for( int i = 0; i < g_NumEntities; i++ ) {
+            
+            if( entities->mirrorEntityRefs[ i ] == NULL ) {
+                continue;
+            }
+            if( *entities->activeTimers[i] <= 0.0f ) {
                 continue;
             }
 
@@ -1162,10 +1255,11 @@ int main( int argc, char *argv[] ) {
         entities.inputMasks       [ i ] = NULL;
         entities.pickupTypes      [ i ] = NULL;
         entities.dashCooldownStocks [ i ] = NULL;
-        entities.activeTimer [ i ] = NULL;
+        entities.activeTimers [ i ] = NULL;
         entities.numDots [ i ] = NULL;
-        entities.score [ i ] = NULL;
-        entities.mirrorEntityRef[ i ] = NULL;
+        entities.scores [ i ] = NULL;
+        entities.mirrorEntityRefs[ i ] = NULL;
+
     }
     
     // initialize default keybindings
@@ -1658,9 +1752,9 @@ int main( int argc, char *argv[] ) {
             free(entities.dashCooldownStocks[i]);
             entities.dashCooldownStocks[i] = NULL;
         }
-        if( entities.activeTimer[i] != NULL ) {
-            free(entities.activeTimer[i]);
-            entities.activeTimer[i] = NULL;
+        if( entities.activeTimers[i] != NULL ) {
+            free(entities.activeTimers[i]);
+            entities.activeTimers[i] = NULL;
         }
         if( entities.numDots[i] != NULL ) {
             free(entities.numDots[i]);

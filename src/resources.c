@@ -558,6 +558,10 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
         const char *FRUIT_PICKUP_STR = "FRUIT_PICKUP";
         const char *MIRROR_PICKUP_STR = "MIRROR_PICKUP";
         const char *SPEED_BOOST_PICKUP_STR = "SPEED_BOOST_PICKUP";
+        const char *POWER_PELLET_PICKUP_STR = "POWER_PELLET_PICKUP";
+        const char *STOP_GHOSTS_PICKUP_STR = "STOP_GHOSTS_PICKUP";
+        const char *SHIELD_PICKUP_STR = "SHIELD_PICKUP";
+
 
         beginningIdx = lineIdx;
 
@@ -578,6 +582,15 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
         }
         else if( strncmp( pickupTypeStr, SPEED_BOOST_PICKUP_STR, size ) == 0 ){
             levelConfig->pickupConfigs[ pickupIdx ].pickupType = SPEED_BOOST_PICKUP;
+        }
+        else if( strncmp( pickupTypeStr, POWER_PELLET_PICKUP_STR, size ) == 0 ){
+            levelConfig->pickupConfigs[ pickupIdx ].pickupType = POWER_PELLET_PICKUP;
+        }
+        else if( strncmp( pickupTypeStr, SHIELD_PICKUP_STR, size ) == 0 ){
+            levelConfig->pickupConfigs[ pickupIdx ].pickupType = SHIELD_PICKUP;
+        }
+        else if( strncmp( pickupTypeStr, STOP_GHOSTS_PICKUP_STR, size ) == 0 ){
+            levelConfig->pickupConfigs[ pickupIdx ].pickupType = STOP_GHOSTS_PICKUP;
         }
 
         // new line? new pickup
