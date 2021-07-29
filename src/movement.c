@@ -148,6 +148,9 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
         if( inputMasks[ i ] == NULL || actors[ MAX_NUM_ENTITIES ] == NULL ) {
             continue;
         }
+        if( entities->stopTimers[ i ] != NULL && *entities->stopTimers[i] > 0.0f ) {
+            continue;
+        }
         // should process
         // don't allow changing direciton if pacman is more than half of the tile
         trySetDirection( entities, i, tilemap );
@@ -416,7 +419,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
         if( actors[ i ]->velocity.x > 0 && actors[ i ]->velocity.y > 0 ) { // down-right
             entities->animatedSprites[ i ]->current_anim_row = 6;
         }
-        if( actors[ i ]->velocity.x < 0 && actors[ 0 ]->velocity.y > 0 ) { // down-left
+        if( actors[ i ]->velocity.x < 0 && actors[ i ]->velocity.y > 0 ) { // down-left
             entities->animatedSprites[ i ]->current_anim_row = 7;
         }
 
@@ -650,7 +653,6 @@ void ghost_move( Actor **actors, EntityId ghostId, TileMap *tm, float delta_time
 }
 
 void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
-    
 
     if( pacmonster->direction == DIR_UP ) {
         pacmonster->next_tile.x = pacmonster->current_tile.x;

@@ -276,7 +276,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     }
 
     // initialize screen position
-    tilemap->tm_screen_position.x = 0;
+    tilemap->tm_screen_position.x = TILE_SIZE/2;
     tilemap->tm_screen_position.y = TILE_SIZE * 2; 
 
     char *res_level_dir = "res/levels/";

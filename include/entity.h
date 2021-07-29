@@ -12,7 +12,7 @@
 #include "pickup.h"
 #include "input.h"
 
-#define MAX_NUM_ENTITIES 16
+#define MAX_NUM_ENTITIES 32
 #define INVALID_ENTITY_ID MAX_NUM_ENTITIES
 typedef unsigned int EntityId;
 extern unsigned int g_NumEntities;
@@ -85,9 +85,13 @@ void overwriteSpeedBoostTimer(Entities *entities,EntityId playerId, float speed,
 
 void stopGhostsForDuration(Entities *entities, float duration);
 
+void stopEntityForDuration(Entities *entities, EntityId eid, float duration );
+
 void processStopTimers(Entities *entities, float deltaTime );
 
 void makePlayerInvincibleForDuration( Entities *entities, EntityId playerId, float duration);
 void processInvincibilityTimers( Entities *entities, float deltaTime) ;
+
+
 
 #endif

@@ -31,6 +31,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->inputMasks     [ entityId ] = (uint8_t * ) malloc(sizeof( uint8_t ) );
     entities->dashCooldownStocks[ entityId ] = (CooldownStock *)malloc( sizeof( CooldownStock ) );
     entities->invincibilityTimers[entityId] = (float *)malloc(sizeof(float));
+    entities->stopTimers[entityId] = (float *)malloc(sizeof(float));
 
     //initialize
     // position
@@ -86,6 +87,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->dashCooldownStocks[entityId]->numStockCap = 3;
 
     *entities->invincibilityTimers[entityId] = 0.0f;
+    *entities->stopTimers[entityId] = 0.0f;
     
 
     return entityId;
@@ -562,8 +564,15 @@ void stopGhostsForDuration(Entities *entities, float duration) {
     EntityId gid;
     for( int i = 0; i < gNumGhosts; i++ ) {
         gid = gGhostIds[ i ];
-        *entities->stopTimers[gid] = duration;
+        *entities->stopTimers[gid] += duration;
     }
+}
+
+void stopEntityForDuration(Entities *entities, EntityId eid, float duration ) {
+    if( entities->stopTimers[eid] == NULL ) {
+        return;
+    }
+    *entities->stopTimers[eid] += duration;
 }
 
 void processStopTimers(Entities *entities, float deltaTime ) {

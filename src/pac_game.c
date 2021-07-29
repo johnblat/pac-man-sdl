@@ -130,11 +130,6 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         }
     }
 
-    // add power pellets to number of dots
-    // set power pellets 
-    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-
-    }
     // for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
     //     if( !points_equal( tilemap->tm_power_pellet_tiles[i], TILE_NONE ) ) {
     //         g_NumDots++;
@@ -558,7 +553,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     //     }
                     // }
                 }
-
+                SDL_bool stateChanged = SDL_FALSE;
                 // collide with players
                 EntityId playerId;
                 for( int i = 0; i < gNumPlayers; ++i ) {
@@ -598,11 +593,18 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
                             }
                         }
+                        stopGhostsForDuration( entities, 0.2f);
+                        stopEntityForDuration( entities, playerId, 0.2f);
+                        stateChanged = SDL_TRUE;
                         break;
                     }
                     
                 }
 
+                // don't run again cause in different state
+                if( stateChanged ) {
+                    break;
+                }
                 // collide with ghost mirror player
                 //collide with mirror temp players
                 for( int i = 0; i < g_NumEntities; i++ ) {
@@ -701,7 +703,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 entities->actors[ eid ]->world_position.y = -100;
                 entities->actors[ eid ]->world_center_point.x = -100;
                 entities->actors[ eid ]->world_center_point.y = -100;
-                //g_NumDots--;
+                g_NumDots--;
 
                 // make ghosts all vulnerable state
                 for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
@@ -715,7 +717,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 20.0f;   
+                gGhostVulnerableTimer = 10.0f;   
             }
         }
         
@@ -756,7 +758,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 20.0f;   
+                gGhostVulnerableTimer = 10.0f;   
             }
 
         }
@@ -794,7 +796,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 entities->actors[ eid ]->world_position.y = -100;
                 entities->actors[ eid ]->world_center_point.x = -100;
                 entities->actors[ eid ]->world_center_point.y = -100;
-                g_NumDots--;
+                //g_NumDots--;
 
                 // make ghosts all vulnerable state
                 for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
@@ -808,7 +810,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 20.0f;   
+                gGhostVulnerableTimer = 10.0f;   
             }
         }
         
@@ -849,7 +851,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 20.0f;   
+                gGhostVulnerableTimer = 10.0f;   
             }
 
         }

@@ -1,0 +1,10 @@
+# INFO:
+#    This determines how big the tilemap editor 
+#    should expect the tileset to be.
+#    It will ensure the tile selection panel with
+#    be the size needed to fit the tileset
+#
+# rows 
+# cols
+4 
+20
