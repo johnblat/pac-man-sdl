@@ -31,7 +31,7 @@ unsigned int g_NumDots = 0;
 unsigned int g_StartingNumDots = 0;
 
 uint8_t g_NumGhostsEaten = 0;
-unsigned int g_GhostPointValues[] = { 400, 800, 1600, 3200 };
+unsigned int g_GhostPointValues[] = { 200, 400, 800, 1600 };
 
 
 unsigned int gBaseSpeed = 0;

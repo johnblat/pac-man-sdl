@@ -693,7 +693,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             EntityId playerId = gPlayerIds[ i ];
             // player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
-                gScore.score_number += 20;
+                gScore.score_number += *entities->scores[eid];
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
@@ -734,7 +734,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             EntityId mirroredTempPlayerId = i;
             // mirrored player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
-                gScore.score_number += 20;
+                gScore.score_number += *entities->scores[eid];
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
@@ -786,7 +786,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             EntityId playerId = gPlayerIds[ i ];
             // player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
-                gScore.score_number += 20;
+                gScore.score_number += *entities->scores[ eid ];
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
@@ -827,7 +827,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             EntityId mirroredTempPlayerId = i;
             // mirrored player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
-                gScore.score_number += 20;
+                gScore.score_number += *entities->scores[eid];
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow

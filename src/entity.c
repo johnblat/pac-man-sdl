@@ -264,6 +264,7 @@ EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, S
     entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
     entities->actors        [ entityId ] = (Actor * ) malloc(sizeof(Actor)); // should be deprecated
     entities->pickupTypes   [ entityId ] = ( PickupType *) malloc( sizeof( PickupType ) );
+    entities->scores   [ entityId ] = ( unsigned int *)malloc(sizeof(unsigned int));
 
     entities->positions[ entityId ]->current_tile = tile;
     entities->positions[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( tile ).x + TILE_SIZE/2;
@@ -282,6 +283,7 @@ EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, S
     entities->renderDatas[ entityId ] = renderDataInit( );
 
     *entities->pickupTypes [ entityId ] = POWER_PELLET_PICKUP;
+    *entities->scores[entityId] = 50;
 
     return entityId;
 
@@ -303,7 +305,7 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
             unsigned int n = *num_dots - 1;
             *num_dots = n;
             
-            score->score_number += 20;
+            score->score_number += 10;
 
         }
     }
@@ -329,7 +331,7 @@ void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS
 
             g_NumDots -= 1;
             
-            score->score_number += 20;
+            score->score_number += 10;
 
         }
 
@@ -637,7 +639,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                         if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
                             g_TimedMessages[ i ].remainingTime = 0.85f;
                             g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities->actors[ playerId ]->current_tile );
-                            snprintf( g_TimedMessages[ i ].message, 8, "%d", 500 );
+                            snprintf( g_TimedMessages[ i ].message, 8, "%d", *entities->scores[eid] );
                             g_TimedMessages[ i ].color.r = 255 ;
                             g_TimedMessages[ i ].color.g = 255;
                             g_TimedMessages[ i ].color.b = 255;
