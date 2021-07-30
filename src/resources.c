@@ -473,7 +473,7 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {
     }
 }
 
-void load_ghost_mode_times_from_config_file( uint8_t *ghost_mode_times, int num_periods, char *filename_config ) {
+void load_ghost_mode_times_from_config_file( uint32_t *ghost_mode_times, int num_periods, char *filename_config ) {
     //char *filename_config = "res/ghost_mode_times";
     FILE *f;
     f = fopen( filename_config, "r");

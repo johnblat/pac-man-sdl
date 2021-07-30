@@ -18,7 +18,7 @@ extern SDL_Point ghost_pen_tile;
  * *************/
 #define NUM_SCATTER_CHASE_PERIODS 9
 extern uint8_t g_current_scatter_chase_period;
-extern uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ];
+extern uint32_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ];
 //uint8_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 2, 2, 2, 2, 2, 2, 2, 0 };
 typedef enum {
     MODE_CHASE,     // use default behavior

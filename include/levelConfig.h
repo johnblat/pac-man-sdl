@@ -16,7 +16,7 @@ typedef struct PickupConfig {
 } PickupConfig;
 
 typedef struct LevelConfig {
-    uint8_t *scatterChasePeriodSeconds;
+    uint32_t *scatterChasePeriodSeconds;
     uint8_t numScatterChasePeriods;
     SDL_Point ghostPenTile;
     SDL_Point pacStartingTile;

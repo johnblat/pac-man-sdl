@@ -84,7 +84,14 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         return SDL_TRUE;
     }
 
+    // reset ghost periods 
+    g_current_ghost_mode = MODE_SCATTER;
+    g_current_scatter_chase_period = 0;
+    gGhostModeTimer = 0.0f;
+
     load_current_level_off_disk( levelConfig, tilemap, renderer );
+
+    
 
     // pacman
     // reset players
@@ -936,7 +943,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         else {
             g_current_ghost_mode = MODE_CHASE;
             for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
-                if( entities->ghostStates[ i ] != NULL && entities->ghostStates[ i ] == STATE_NORMAL ) {
+                if( entities->ghostStates[ i ] != NULL && *entities->ghostStates[ i ] == STATE_NORMAL ) {
                     entities->actors[ i ]->direction = opposite_directions[ entities->actors[ i ]->direction ];
                     entities->actors[ i ]->next_tile = entities->actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
                 }
