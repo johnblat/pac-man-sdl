@@ -27,7 +27,8 @@ TextureAtlas g_texture_atlases[ MAX_TEXTURE_ATLASES ];
 extern uint8_t num_texture_atlases;
 
 typedef struct RenderData {
-    Uint8 current_sprite_clip;
+    Uint8 textureAtlasId;
+    Uint8 spriteClipIdx;
     float rotation;
     SDL_Rect dest_rect;
     SDL_RendererFlip flip;
@@ -40,6 +41,15 @@ int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char
 RenderData *renderDataInit(  ) ;
 
 void updateScoreTexture( Score *score, SDL_Renderer *renderer );
+
+/**
+ * Sorts the renderDatas based on their Y position in the destRects
+ * Smaller Ys are behind Larger Ys
+ * The bigger the Y, the closer it is to you!
+ * 
+ * Returns numebr of sorted renderDatas
+ */
+int render_sort( RenderData **renderDatas, RenderData **renderDatasSortArr );
 
 
 #endif

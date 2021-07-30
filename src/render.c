@@ -61,6 +61,43 @@ int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char
     return ++num_texture_atlases;
 }
 
+int render_sort( RenderData **renderDatas, RenderData **renderDatasSortArr )
+{
+	if(MAX_NUM_ENTITIES <= 1)
+		return 0 ;
+		
+
+    // clear the sort arr
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        renderDatasSortArr[ i ] = NULL;
+    }
+
+    // put in initial values into sort arr
+    unsigned int numRenderDatasCopied = 0;
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        if( renderDatas[i] == NULL ) {
+            continue;
+        }
+        renderDatasSortArr[numRenderDatasCopied] = renderDatas[i];
+        numRenderDatasCopied++;
+    }
+	
+    // sort the sort arr
+	for(int i = 1; i < numRenderDatasCopied; i++)
+	{
+		int j = i - 1;
+        RenderData *tempPtr = renderDatasSortArr[i];
+
+		while( ( j >= 0 ) && ( renderDatasSortArr[ j ]->dest_rect.y > tempPtr->dest_rect.y ) )
+		{
+			renderDatasSortArr[j + 1] = renderDatasSortArr[j];
+			j--;
+		}
+		renderDatasSortArr[j+1] = tempPtr;
+	}
+
+    return numRenderDatasCopied;
+}
 
 RenderData *renderDataInit( ) {
     
@@ -73,7 +110,7 @@ RenderData *renderDataInit( ) {
 
     render_clip->rotation = 0.0f;
 
-    render_clip->current_sprite_clip = 0;
+    render_clip->textureAtlasId = 0;
 
     render_clip->flip = SDL_FLIP_NONE;
 
@@ -84,6 +121,7 @@ RenderData *renderDataInit( ) {
 }
 
 void renderDataForAnimatedSpriteProcess( SDL_Renderer *renderer, Entities *entities)  {
+    // set values from animated sprite
     for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
         if( entities->renderDatas[ eid ] == NULL || entities->animatedSprites[ eid ] == NULL ) {
             continue;
@@ -94,15 +132,29 @@ void renderDataForAnimatedSpriteProcess( SDL_Renderer *renderer, Entities *entit
         uint8_t clip_idx = (  ( anim_row * num_frames_col ) + anim_frame_col );
 
         uint8_t texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
-        SDL_Rect src_rect = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx ];
-        SDL_Rect *dest_rect = &entities->renderDatas[ eid ]->dest_rect;
-        float rotation = entities->renderDatas[ eid ]->rotation;
-        SDL_RendererFlip flip = entities->renderDatas[ eid ]->flip;
-
-        SDL_SetTextureAlphaMod( g_texture_atlases[ texture_atlas_id ].texture,  entities->renderDatas[ eid ]->alphaMod ); 
         
+        entities->renderDatas[eid]->textureAtlasId = texture_atlas_id;
+        entities->renderDatas[ eid ]->spriteClipIdx = clip_idx;
 
-        SDL_RenderCopyEx( renderer, g_texture_atlases[ texture_atlas_id ].texture, &src_rect, dest_rect, rotation, NULL, flip );
+        
+    }
+    
+    // sort the renderDatas based on how close they are to the bottom of screen
+    RenderData *renderDatasSortArr[MAX_NUM_ENTITIES];
+    int numSortedRenderDatas = render_sort(entities->renderDatas, renderDatasSortArr );
+
+    // render
+    for( int i = 0; i < numSortedRenderDatas; i++ ) {
+        uint8_t textureAtlasId = renderDatasSortArr[ i ]->textureAtlasId;
+        Uint8  clip_idx = renderDatasSortArr[i]->spriteClipIdx;
+        SDL_Rect src_rect = g_texture_atlases[ textureAtlasId ].sprite_clips[ clip_idx ];
+        SDL_Rect *dest_rect = &renderDatasSortArr[ i ]->dest_rect;
+        float rotation = renderDatasSortArr[ i ]->rotation;
+        SDL_RendererFlip flip = renderDatasSortArr[ i ]->flip;
+
+        SDL_SetTextureAlphaMod( g_texture_atlases[ textureAtlasId ].texture,  renderDatasSortArr[ i ]->alphaMod ); 
+
+        SDL_RenderCopyEx( renderer, g_texture_atlases[ textureAtlasId ].texture, &src_rect, dest_rect, rotation, NULL, flip );
     }
 }
 
