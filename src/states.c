@@ -60,6 +60,23 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
     surrounding_tiles[ DIR_LEFT ] = tile_left;
     surrounding_tiles[ DIR_RIGHT ] = tile_right;
 
+    // wrap around tilemaps Issue 150
+    for( int i = 0; i < 4; i++ ) {
+        if( surrounding_tiles[ i ].x < 0 ) {
+            surrounding_tiles[ i ].x = 47;
+        }
+        else if( surrounding_tiles[ i ].x > 47 ) {
+            surrounding_tiles[ i ].x = 0;
+        }
+        else if( surrounding_tiles[ i ].y < 0 ) {
+            surrounding_tiles[ i ].y = 22;
+        }
+        else if( surrounding_tiles[ i ].y > 22) {
+            surrounding_tiles[ i ].y = 0;
+        }
+    }
+
+
     Direction randomDirection = rand() % 4; // 4 directions besides DIR_NONE
 
     // just choosing first open tile ghost sees
