@@ -570,11 +570,17 @@ void stopGhostsForDuration(Entities *entities, float duration) {
     }
 }
 
-void stopEntityForDuration(Entities *entities, EntityId eid, float duration ) {
-    if( entities->stopTimers[eid] == NULL ) {
-        return;
+
+void stopPlayersForDuration(Entities *entities, EntityId *playerIds, unsigned int numPlayers, float duration ) {
+    EntityId pid = 0;
+    for( int i = 0; i < numPlayers; i++ ) {
+        pid = playerIds[ i ];
+        if( entities->stopTimers[pid] == NULL ) {
+            continue;
+        }
+        *entities->stopTimers[pid] += duration;
+
     }
-    *entities->stopTimers[eid] += duration;
 }
 
 void processStopTimers(Entities *entities, float deltaTime ) {

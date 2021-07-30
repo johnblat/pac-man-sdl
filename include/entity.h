@@ -85,7 +85,7 @@ void overwriteSpeedBoostTimer(Entities *entities,EntityId playerId, float speed,
 
 void stopGhostsForDuration(Entities *entities, float duration);
 
-void stopEntityForDuration(Entities *entities, EntityId eid, float duration );
+void stopPlayersForDuration(Entities *entities, EntityId *playerIds, unsigned int numPlayers, float duration );
 
 void processStopTimers(Entities *entities, float deltaTime );
 

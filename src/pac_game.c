@@ -601,7 +601,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                             }
                         }
                         stopGhostsForDuration( entities, 0.2f);
-                        stopEntityForDuration( entities, playerId, 0.2f);
+                        stopPlayersForDuration(entities, gPlayerIds, gNumPlayers, 0.2f );
+                        //stopEntityForDuration( entities, playerId, 0.2f);
                         stateChanged = SDL_TRUE;
                         break;
                     }
@@ -657,6 +658,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
                             }
                         }
+                        stopGhostsForDuration( entities, 0.2f);
+                        stopPlayersForDuration(entities, gPlayerIds, gNumPlayers, 0.2f );
                     }
                     break;
                 }
@@ -1509,7 +1512,7 @@ int main( int argc, char *argv[] ) {
 
 
     // INIT Players
-    int numPlayers = 1;
+    int numPlayers = 2;
     initializePlayersFromFiles( &entities, &levelConfig, numPlayers );
     
     // init ghosts
