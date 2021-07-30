@@ -12,6 +12,7 @@
 #include "sounds.h"
 #include <stdio.h>
 #include "resources.h"
+#include "math.h"
 
 
 SDL_Point ghost_pen_tile = {23, 11};
@@ -59,9 +60,15 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
     surrounding_tiles[ DIR_LEFT ] = tile_left;
     surrounding_tiles[ DIR_RIGHT ] = tile_right;
 
+    Direction randomDirection = rand() % 4; // 4 directions besides DIR_NONE
+
     // just choosing first open tile ghost sees
     Direction direction_to_go = opposite_directions[ entities->actors[ ghostId ]->direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
-     for( int i = 0; i < 4; ++i ) {
+
+    // handle situation if random tile chosen is a wall
+    
+   
+    for( int i = 0; i < 4; ++i ) {
         if( tm->tm_walls[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ] == 'x' ) { 
             continue;
         }
@@ -79,6 +86,19 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
         break;
 
     }
+    
+
+    if( tm->tm_walls[ surrounding_tiles[randomDirection].y ][ surrounding_tiles[randomDirection].x ] != 'x') {
+        if( 
+            !points_equal(surrounding_tiles[ randomDirection ], tm->one_way_tile) 
+            && randomDirection != DIR_DOWN) {
+                if( randomDirection != opposite_directions[ entities->actors[ ghostId ]->direction  ] ) {
+                    direction_to_go = randomDirection;
+                }
+            }
+        
+    }
+     
     entities->actors[ ghostId ]->direction = direction_to_go;
     entities->actors[ ghostId ]->next_tile.x = surrounding_tiles[ direction_to_go ].x;
     entities->actors[ ghostId ]->next_tile.y = surrounding_tiles[ direction_to_go ].y;
