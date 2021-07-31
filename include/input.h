@@ -4,6 +4,7 @@
 #include <SDL2/SDL_gamecontroller.h>
 #include <SDL2/SDL.h>
 
+#define MAX_NUM_GAME_CONTROLLERS 4
 
 unsigned int g_NumJoysticks = 0;
 unsigned int g_NumGamepads = 0;

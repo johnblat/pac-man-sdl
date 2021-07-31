@@ -256,6 +256,49 @@ inline void mainMenuProcess( LevelConfig *levelConfig, Entities *entities, TileM
                 SDL_SetWindowFullscreen( gWindow, windowFlags ^= SDL_WINDOW_FULLSCREEN );
             }
         }
+        if( event->type == SDL_CONTROLLERDEVICEADDED ) {
+            if( ! (g_NumGamepads>=MAX_NUM_GAME_CONTROLLERS ) ) {
+                Sint32 joyStickDeviceId = event->cdevice.which;
+                if(SDL_IsGameController(joyStickDeviceId)) {
+                    // is the game controller already exist
+                    
+                    
+                    // look for first open gamepad slot
+                    for( int i = 0; i < MAX_NUM_GAME_CONTROLLERS; i++ ) {
+
+                        if( g_GameControllers[ i ] == NULL ) {
+                            g_GameControllers[ i ] = SDL_GameControllerOpen( joyStickDeviceId );
+                            if( !SDL_GameControllerGetAttached( g_GameControllers[ g_NumGamepads ] ) ) {
+                                fprintf(stderr, "Wrong!\n");
+                            }
+                            printf("Controller added: %s\n", SDL_GameControllerName(g_GameControllers[ g_NumGamepads ] ));
+                            g_NumGamepads++;
+                            break;
+                        }
+                    }
+                    
+                }
+            }
+            else {
+                printf("Too Many Controllers Added! Can't add this one!\n");
+            }
+        }
+        if( event->type == SDL_CONTROLLERDEVICEREMOVED ) {
+            Sint32 joyStickDeviceId = event->cdevice.which;
+            //if(SDL_IsGameController(joyStickDeviceId)) {
+                for( int i = 0; i < MAX_NUM_GAME_CONTROLLERS; i++ ) {
+                    SDL_Joystick *joy = SDL_GameControllerGetJoystick( g_GameControllers[ i ] );
+                    
+                    if( joyStickDeviceId == SDL_JoystickInstanceID( joy ) ) {
+                        printf("Controller removed\n" );
+                        SDL_GameControllerClose( g_GameControllers[ i ] );
+                        g_GameControllers[ i ] = NULL;
+                        g_NumGamepads--;
+
+                    }
+                }
+            //}
+        }
         
             
         if( event->type == SDL_CONTROLLERBUTTONUP ) {
