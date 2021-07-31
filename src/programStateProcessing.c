@@ -6,6 +6,7 @@
 #include "sounds.h"
 #include "gamePlayingState.h"
 #include "menuState.h"
+#include "menu.h"
 #include "globalData.h"
 
 void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfig *levelConfig ) {
@@ -40,6 +41,7 @@ void mainMenuProgramStateEnter() {
     g_Music = Mix_LoadMUS( gMenuMusicFilename );
     Mix_PlayMusic( g_Music, -1 );
     gProgramState = MENU_PROGRAM_STATE;
+    gMenuState = TITLE_SCREEN_MENU_STATE;
     gCurrentLevel = 0;
     //load_current_level_off_disk( levelConfig, tilemap, gRenderer);
     return;
@@ -51,7 +53,7 @@ void menuProgramStateProcess( SDL_Event *event, Entities *entities, LevelConfig 
             titleScreenProcess(levelConfig, entities, tilemap, event, startMenuBlink, deltaTime );
             break;
         case MAIN_MENU_SCREEN_MENU_STATE:
-            printf("Main Menu State \n");
+            mainMenuScreenProcess(event, entities, tilemap, levelConfig, startMenuBlink, deltaTime);
             break;
         default:
             printf("Not a valid menu State. State = %d\n", gMenuState );

@@ -386,14 +386,16 @@ int main( int argc, char *argv[] ) {
     } 
 
     // TODO: Compress this initialization into a function
-    SDL_Surface *mainMenuTextSurface = TTF_RenderText_Solid( gFont, gMainMenuText, white );
-    gMainMenuTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuTextSurface );
-    gMainMenuTextDestRect.x = SCREEN_WIDTH / 2 - mainMenuTextSurface->w/2 ;
-    gMainMenuTextDestRect.y =  SCREEN_HEIGHT/2 - mainMenuTextSurface->h/2;
-    gMainMenuTextDestRect.w =  mainMenuTextSurface->w;
-    gMainMenuTextDestRect.h =  mainMenuTextSurface->h;
+    SDL_Surface *mainMenuTextSurface = TTF_RenderText_Solid( gFont, gTitleScreenText, white );
+    gTitleScreenTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuTextSurface );
+    gTitleScreenTextDestRect.x = SCREEN_WIDTH / 2 - mainMenuTextSurface->w/2 ;
+    gTitleScreenTextDestRect.y =  SCREEN_HEIGHT/2 - mainMenuTextSurface->h/2;
+    gTitleScreenTextDestRect.w =  mainMenuTextSurface->w;
+    gTitleScreenTextDestRect.h =  mainMenuTextSurface->h;
     SDL_FreeSurface( mainMenuTextSurface );
     mainMenuTextSurface = NULL;
+
+    initMainMenuScreenStuff();
 
     initGamePlayingStuff();
 

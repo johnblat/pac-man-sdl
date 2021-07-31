@@ -2,6 +2,7 @@
 #define MENU_H
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include "programState.h"
 #include "interpolation.h"
@@ -16,11 +17,18 @@ typedef enum MainMenuSelection {
 int gCurrentMainMenuSelection = PLAY_GAME;
 
 
-// Main Menu
-char *gMainMenuText = "Press START to Play!";
-SDL_Texture *gMainMenuTextTexture = NULL;
-SDL_Rect gMainMenuTextDestRect;
+// Title Screen
+char *gTitleScreenText = "Press START to Play!";
+SDL_Texture *gTitleScreenTextTexture = NULL;
+SDL_Rect gTitleScreenTextDestRect;
 
+// Main Menu Screen
+char *gMainMenuPlayGameText = "Play Game";
+char *gMainMenuExitText = "Exit";
+SDL_Texture *gMainMenuPlayGameTextTexture = NULL;
+SDL_Texture *gMainMenuExitTextTexture = NULL;
+SDL_Rect gMainMenuPlayGameTextDestRect;
+SDL_Rect gMainMenuExitTextDestRect;
 
 // End Main Menu
 
@@ -32,8 +40,29 @@ void exitGameChosen( ) {
 
 }
 
-void mainMenuInputProcess( SDL_Event *event, Entities *entities, TileMap *tilemap, LevelConfig *levelConfig  ) {
 
+void initMainMenuScreenStuff(){
+    SDL_Surface *mainMenuPlayGameTextSurface = TTF_RenderText_Solid( gFont, gMainMenuPlayGameText, white );
+    gMainMenuPlayGameTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuPlayGameTextSurface );
+    gMainMenuPlayGameTextDestRect.w = mainMenuPlayGameTextSurface->w;
+    gMainMenuPlayGameTextDestRect.h = mainMenuPlayGameTextSurface->h;
+    gMainMenuPlayGameTextDestRect.x = SCREEN_WIDTH / 2 - ( gMainMenuPlayGameTextDestRect.w / 2 );
+    gMainMenuPlayGameTextDestRect.y = 450;
+    SDL_FreeSurface( mainMenuPlayGameTextSurface );
+    mainMenuPlayGameTextSurface = NULL;
+
+    SDL_Surface *mainMenuExitTextSurface = TTF_RenderText_Solid( gFont, gMainMenuExitText, white );
+    gMainMenuExitTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuExitTextSurface );
+    gMainMenuExitTextDestRect.w = mainMenuExitTextSurface->w;
+    gMainMenuExitTextDestRect.h = mainMenuExitTextSurface->h;
+    gMainMenuExitTextDestRect.x = SCREEN_WIDTH / 2 - ( gMainMenuExitTextDestRect.w / 2 );
+    gMainMenuExitTextDestRect.y = 450 + 100 ;
+    SDL_FreeSurface( mainMenuExitTextSurface );
+    mainMenuExitTextSurface = NULL;
+}
+
+
+void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilemap, LevelConfig *levelConfig, Blink *blink, float deltaTime ) {
     SDL_bool move_up = SDL_FALSE;
     SDL_bool move_down = SDL_FALSE;
     SDL_bool selected = SDL_FALSE;
@@ -83,13 +112,43 @@ void mainMenuInputProcess( SDL_Event *event, Entities *entities, TileMap *tilema
                 gamePlayProgramStateEnter(entities, tilemap, levelConfig);
                 break;
             case EXIT:
+                gProgramState = EXIT_STATE;
+                printf("clicked exit!\n");
                 break;
             default:
                 printf("Main Menu: Don't know what to select! Selected value: %d\n", gCurrentMainMenuSelection );
                 break;
         }
     }
-    
+
+    // blink the selection that is the current one
+    blinkProcess( blink, deltaTime );
+
+    SDL_SetTextureAlphaMod( gMainMenuPlayGameTextTexture, 255 );
+    SDL_SetTextureAlphaMod( gMainMenuExitTextTexture, 255 );
+
+    switch( gCurrentMainMenuSelection ) {
+        case PLAY_GAME:
+            SDL_SetTextureAlphaMod(gMainMenuPlayGameTextTexture, blink->values[ blink->current_value_idx ] );
+            break;
+        case EXIT:
+            SDL_SetTextureAlphaMod( gMainMenuExitTextTexture, blink->values[ blink->current_value_idx ] );
+            break;
+        default:
+            printf("not good value for selection. gCurrentMainMenuSelection = %d\n", gCurrentMainMenuSelection );
+            break;
+    }
+
+    // render
+    SDL_SetRenderDrawColor( gRenderer, 20,20,20,255);
+    SDL_RenderClear( gRenderer );
+
+    SDL_RenderCopy( gRenderer, gMainMenuPlayGameTextTexture, NULL, &gMainMenuPlayGameTextDestRect);
+    SDL_RenderCopy( gRenderer, gMainMenuExitTextTexture, NULL, &gMainMenuExitTextDestRect);
+
+    SDL_RenderPresent( gRenderer );
+
+
 }
 
 
@@ -102,7 +161,9 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
         }
         if( event->type == SDL_KEYUP ) {
             if( event->key.keysym.sym == SDLK_RETURN ) {
-                gamePlayProgramStateEnter( entities, tilemap, levelConfig );
+                startMenuBlink->blinkRate = 0.2;
+                gMenuState = MAIN_MENU_SCREEN_MENU_STATE;
+                //gamePlayProgramStateEnter( entities, tilemap, levelConfig );
                 break;
             }
             if( event->key.keysym.sym == SDLK_ESCAPE ) {
@@ -164,7 +225,8 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
                 
                 if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(g_GameControllers[ i ]))) {
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
-                        gamePlayProgramStateEnter( entities, tilemap, levelConfig );
+                        gMenuState = MAIN_MENU_SCREEN_MENU_STATE;
+                        //gamePlayProgramStateEnter( entities, tilemap, levelConfig );
                         break;                                    
                     }
                 }
@@ -174,19 +236,16 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
 
     blinkProcess( startMenuBlink, deltaTime );
 
-    SDL_SetTextureAlphaMod( gMainMenuTextTexture, startMenuBlink->values[ startMenuBlink->current_value_idx ] );
+    SDL_SetTextureAlphaMod( gTitleScreenTextTexture, startMenuBlink->values[ startMenuBlink->current_value_idx ] );
 
     SDL_SetRenderDrawColor( gRenderer, 20,20,20,255);
     SDL_RenderClear( gRenderer );
 
     // display message
 
-    SDL_RenderCopy( gRenderer, gMainMenuTextTexture, NULL, &gMainMenuTextDestRect);
+    SDL_RenderCopy( gRenderer, gTitleScreenTextTexture, NULL, &gTitleScreenTextDestRect);
     SDL_RenderPresent( gRenderer );
 }
 
-
-char *gPlayGameText = "Play Game";
-char *gExitText = "Exit";
 
 #endif
