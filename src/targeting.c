@@ -120,6 +120,9 @@ EntityId closestEntityToEntity( Entities *entities, EntityId entityId, EntityId 
     float currentDistance = 0.0f;
     for( int i = 0; i < numEntities; i++ ) {
         currentEntityId = entityIds[ i ];
+        if ( entities->isActive[currentEntityId] != NULL && *entities->isActive[currentEntityId] == SDL_FALSE ) {
+            continue;
+        }
         currentDistance = distance( entities->actors[ entityId ]->world_center_point.x, entities->actors[ entityId ]->world_center_point.y, entities->actors[ currentEntityId ]->world_center_point.x, entities->actors[ currentEntityId ]->world_center_point.y );
         if( currentDistance < closestDistance ) {
             closestDistance = currentDistance;

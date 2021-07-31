@@ -49,7 +49,7 @@ void updateScoreTexture( Score *score, SDL_Renderer *renderer );
  * 
  * Returns numebr of sorted renderDatas
  */
-int render_sort( RenderData **renderDatas, RenderData **renderDatasSortArr );
+int render_sort( SDL_bool **isActive, RenderData **renderDatas, RenderData **renderDatasSortArr );
 
 
 #endif

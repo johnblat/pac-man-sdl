@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include "resources.h"
 #include "math.h"
+#include "globalData.h"
 
 
 SDL_Point ghost_pen_tile = {23, 11};
@@ -243,6 +244,9 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
         if( *entities->invincibilityTimers[playerId] > 0.0f ) {
             continue;
         }
+        if( *entities->isActive[playerId] == SDL_FALSE ) {
+            continue;
+        }
         if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
             Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
 
@@ -270,6 +274,15 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
             //actor_set_current_tile( entities->actors[ playerId ] );
             entities->actors[ playerId ]->next_tile = entities->actors[ playerId ]->current_tile;
             *entities->invincibilityTimers[ playerId ] = 5.0f;
+
+            if(gLivesRemaining > 0 ){
+                gLivesRemaining--;
+                printf("Lives Remaining = %d\n", gLivesRemaining );
+            }
+            if( gLivesRemaining == 0 ) {
+                *entities->isActive[playerId] = SDL_FALSE;
+                printf("Player Out = %d. Eid = %d\n", i, playerId );
+            }
         }
     }
     

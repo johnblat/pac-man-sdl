@@ -32,6 +32,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->dashCooldownStocks[ entityId ] = (CooldownStock *)malloc( sizeof( CooldownStock ) );
     entities->invincibilityTimers[entityId] = (float *)malloc(sizeof(float));
     entities->stopTimers[entityId] = (float *)malloc(sizeof(float));
+    entities->isActive[entityId] = (SDL_bool *)malloc(sizeof(SDL_bool));
 
     //initialize
     // position
@@ -89,6 +90,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     *entities->invincibilityTimers[entityId] = 0.0f;
     *entities->stopTimers[entityId] = 0.0f;
     
+    *entities->isActive[ entityId ] = SDL_TRUE;
 
     return entityId;
 }
@@ -294,6 +296,9 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
     for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
         if( entities->inputMasks[ eid ] == NULL ) {
             continue; // only entities with input ability should collect dots
+        }
+        if( *entities->isActive[eid] == SDL_FALSE ) {
+            continue;
         }
         if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
      
@@ -636,6 +641,9 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
             EntityId playerId;
             for( int i = 0; i < numPlayers; i++ ) {
                 playerId = playerIds[ i ];
+                if( *entities->isActive[playerId] == SDL_FALSE ) {
+                    continue;
+                }
                 // player picks up
                 if( points_equal( entities->actors[ playerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
                     *entities->activeTimers[ eid ] = 0.0f;

@@ -4,10 +4,17 @@
 #include <SDL2/SDL.h>
 #include <inttypes.h>
 #include <entity.h>
+#include "jb_types.h"
+#include "programState.h"
+#include "gamePlayingState.h"
 
 SDL_bool g_show_debug_info = SDL_FALSE;
 
 SDL_bool gIsFullscreen = SDL_FALSE;
+
+unsigned int gCurrentLevel;
+
+Score gScore;
 
 int gQuit = 0;
 
@@ -36,8 +43,15 @@ unsigned int g_GhostPointValues[] = { 200, 400, 800, 1600 };
 
 unsigned int gBaseSpeed = 0;
 
+unsigned int gLivesRemaining = 0;
+
 SDL_Window *gWindow = NULL;
 TTF_Font *gFont = NULL; 
+
+// STATES
+ProgramState gProgramState = MENU_PROGRAM_STATE;
+MenuState gMenuState = TITLE_SCREEN_MENU_STATE;
+GamePlayingState gGamePlayingState = GAME_PLAYING;
 
 
 #endif 

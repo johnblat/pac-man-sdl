@@ -11,7 +11,7 @@
 
 
 
-unsigned int gCurrentLevel;
+
 unsigned int gNumLevels;
 
 static void build_resource_file_path( ); 

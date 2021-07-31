@@ -72,6 +72,8 @@ EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, S
 
 void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer );
 
+void cooldownProcess( Entities *entities, float deltaTime ) ;
+
 void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime );
 
 EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelConfig );

@@ -61,7 +61,7 @@ int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char
     return ++num_texture_atlases;
 }
 
-int render_sort( RenderData **renderDatas, RenderData **renderDatasSortArr )
+int render_sort( SDL_bool **isActive, RenderData **renderDatas, RenderData **renderDatasSortArr )
 {
 	if(MAX_NUM_ENTITIES <= 1)
 		return 0 ;
@@ -75,9 +75,15 @@ int render_sort( RenderData **renderDatas, RenderData **renderDatasSortArr )
     // put in initial values into sort arr
     unsigned int numRenderDatasCopied = 0;
     for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        // don't render things we can't even render
         if( renderDatas[i] == NULL ) {
             continue;
         }
+        // don't add deactivated entities' renderDatas
+        if( isActive[i] != NULL && *isActive[i] == SDL_FALSE ) {
+            continue;
+        }
+        
         renderDatasSortArr[numRenderDatasCopied] = renderDatas[i];
         numRenderDatasCopied++;
     }
@@ -141,10 +147,11 @@ void renderDataForAnimatedSpriteProcess( SDL_Renderer *renderer, Entities *entit
     
     // sort the renderDatas based on how close they are to the bottom of screen
     RenderData *renderDatasSortArr[MAX_NUM_ENTITIES];
-    int numSortedRenderDatas = render_sort(entities->renderDatas, renderDatasSortArr );
+    int numSortedRenderDatas = render_sort(entities->isActive, entities->renderDatas, renderDatasSortArr );
 
     // render
     for( int i = 0; i < numSortedRenderDatas; i++ ) {
+
         uint8_t textureAtlasId = renderDatasSortArr[ i ]->textureAtlasId;
         Uint8  clip_idx = renderDatasSortArr[i]->spriteClipIdx;
         SDL_Rect src_rect = g_texture_atlases[ textureAtlasId ].sprite_clips[ clip_idx ];

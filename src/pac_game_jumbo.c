@@ -8,3 +8,5 @@
 #include "tiles.c"
 #include "resources.c"
 #include "pac_game.c"
+#include "programStateProcessing.c"
+#include "gamePlayingState.c"
