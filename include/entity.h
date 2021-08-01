@@ -49,7 +49,7 @@ typedef struct Entities {
     CooldownStock      *dashCooldownStocks[ MAX_NUM_ENTITIES ];
     SDL_ScancodeToInputMask *keybinds    [ MAX_NUM_ENTITIES ]; // {      }, {    }, {        }
     uint8_t            *inputMasks        [ MAX_NUM_ENTITIES ];
-    SDL_GameController *gameControllers   [ MAX_NUM_ENTITIES ];
+    GameControllerId   *gameControllerIds   [ MAX_NUM_ENTITIES ]; // reference into the global list of game controllers
     PickupType         *pickupTypes       [ MAX_NUM_ENTITIES ];
     unsigned int       *numDots           [ MAX_NUM_ENTITIES ];
     float              *activeTimers       [ MAX_NUM_ENTITIES ];

@@ -289,10 +289,12 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         }
         if( event->type == SDL_CONTROLLERBUTTONDOWN ) {
             for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-                if( entities->gameControllers[ i ] == NULL || entities->inputMasks[ i ] == NULL ) {
+                if( entities->gameControllerIds[ i ] == NULL || entities->inputMasks[ i ] == NULL ) {
                     continue;
                 }
-                if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities->gameControllers[ i ]))) {
+                GameControllerId gcid = *entities->gameControllerIds[i];
+                SDL_GameController *gameController = g_GameControllers[ gcid ];
+                if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick( gameController ))) {
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
                         *entities->inputMasks[ i ] |= g_INPUT_UP;
                     }
@@ -315,10 +317,12 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         }
         if( event->type == SDL_CONTROLLERBUTTONUP ) {
             for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-                if( entities->gameControllers[ i ] == NULL || entities->inputMasks[ i ] == NULL ) {
+                if( entities->gameControllerIds[ i ] == NULL || entities->inputMasks[ i ] == NULL ) {
                     continue;
                 }
-                if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities->gameControllers[ i ]))) {
+                GameControllerId gcid = *entities->gameControllerIds[i];
+                SDL_GameController *gameController = g_GameControllers[ gcid ];
+                if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick( gameController ))) {
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
                         if( *entities->inputMasks[i] & g_INPUT_UP )
                             *entities->inputMasks[ i ] ^= g_INPUT_UP;
@@ -1160,10 +1164,12 @@ inline void gamePausedProcess( Entities *entities, SDL_Event *event, LevelConfig
         }
         if( event->type == SDL_CONTROLLERBUTTONUP ) {
             for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-                if( entities->gameControllers[ i ] == NULL || entities->inputMasks[ i ] == NULL ) {
+                if( entities->gameControllerIds[ i ] == NULL || entities->inputMasks[ i ] == NULL ) {
                     continue;
                 }
-                if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(entities->gameControllers[ i ]))) {
+                GameControllerId gcid = *entities->gameControllerIds[i];
+                SDL_GameController *gameController = g_GameControllers[ gcid ];
+                if( event->cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gameController))) {
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
                         gGamePlayingState = GAME_PLAYING;
                         break;

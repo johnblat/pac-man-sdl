@@ -26,6 +26,8 @@ SDL_ScancodeToInputMask gkeyBindings[ 5 ];
 
 SDL_GameController *g_GameControllers[] = {NULL, NULL, NULL, NULL};
 
+typedef unsigned int GameControllerId;
+
 void addKeyBinding(unsigned int keyBindId, SDL_Scancode scancode, InputMask inputMask ) {
     gkeyBindings[ keyBindId ].scancode = scancode;
     gkeyBindings[ keyBindId ].inputMask = inputMask;

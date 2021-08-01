@@ -326,12 +326,13 @@ int main( int argc, char *argv[] ) {
     // add controllers to players
     uint32_t playerIdx = 0;
 
-    for( int i = playerIdx; i < g_NumGamepads; i++ ) {
+    for( unsigned int i = playerIdx; i < g_NumGamepads; i++ ) {
 
         if( i > gNumPlayers ) {
             break;
         }
-        entities.gameControllers[ gPlayerIds[ i ] ] = g_GameControllers[ i ];
+        entities.gameControllerIds[ gPlayerIds[ i ] ] = (GameControllerId *)malloc(sizeof(GameControllerId));
+        *entities.gameControllerIds[ gPlayerIds[ i ] ] =  i ;
         playerIdx++;
     }
 
