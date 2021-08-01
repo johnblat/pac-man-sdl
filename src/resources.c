@@ -524,7 +524,7 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
     unsigned int lineIdx = 0;
     unsigned int pickupIdx = 0;
 
-    while( fgets( currentLine, 256, f ) != NULL ) {
+    while( ( fgets( currentLine, 256, f ) != NULL ) && (! ( pickupIdx > 3 ) ) ) { // can't hold more than 4 pickups per level
         if( currentLine[ 0 ] == '#' ) {
             continue;
         }

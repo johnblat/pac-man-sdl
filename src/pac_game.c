@@ -78,6 +78,7 @@ int main( int argc, char *argv[] ) {
         entities.scores [ i ] = NULL;
         entities.mirrorEntityRefs[ i ] = NULL;
         entities.invincibilityTimers[i] = NULL;
+        entities.isActive[i] = NULL;
 
     }
     
@@ -301,7 +302,7 @@ int main( int argc, char *argv[] ) {
 
 
     // INIT Players
-    int numPlayers = 2;
+    int numPlayers = 1;
     initializePlayersFromFiles( &entities, &levelConfig, numPlayers );
     
     // init ghosts
