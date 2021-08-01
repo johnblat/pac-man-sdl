@@ -9,7 +9,8 @@
 
 typedef enum MenuState {
     TITLE_SCREEN_MENU_STATE,
-    MAIN_MENU_SCREEN_MENU_STATE
+    MAIN_MENU_SCREEN_MENU_STATE,
+    JOIN_GAME_MENU_STATE
 } MenuState;
 
 

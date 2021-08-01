@@ -51,5 +51,5 @@ void updateScoreTexture( Score *score, SDL_Renderer *renderer );
  */
 int render_sort( SDL_bool **isActive, RenderData **renderDatas, RenderData **renderDatasSortArr );
 
-
+SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color color, int screenPosCenterX, int screenPosCenterY );
 #endif

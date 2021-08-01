@@ -398,7 +398,7 @@ int main( int argc, char *argv[] ) {
     mainMenuTextSurface = NULL;
 
     initMainMenuScreenStuff();
-
+    initJoinGameStuff();
     initGamePlayingStuff();
 
     Blink startMenuBlink = blinkInit( 0.33f, 255, 50);

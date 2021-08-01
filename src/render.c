@@ -9,6 +9,7 @@
 #include <assert.h>
 #include "animation.h"
 #include <string.h>
+#include "globalData.h"
 
 
 // const uint8_t MAX_TEXTURE_ATLASES = 10; 
@@ -205,4 +206,17 @@ void updateScoreTexture( Score *score, SDL_Renderer *renderer ) {
     score->score_render_dst_rect.h = score_surface->h;
 
     SDL_FreeSurface( score_surface );
+}
+
+SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color color, int screenPosCenterX, int screenPosCenterY ) {
+    SDL_Surface *surface = TTF_RenderText_Solid( gFont, text, color );
+    SDL_Texture *targetTexture = SDL_CreateTextureFromSurface( gRenderer, surface );
+    destRect->w = surface->w;
+    destRect->h = surface->h;
+    destRect->x = screenPosCenterX - ( destRect->w / 2 ); 
+    destRect->y = screenPosCenterY - ( destRect->h / 2 );
+    SDL_FreeSurface( surface );
+    surface = NULL;
+
+    return targetTexture;
 }

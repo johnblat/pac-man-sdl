@@ -46,32 +46,9 @@ float gLevelEndTimer = 0.0f;
 
 
 void initGamePlayingStuff( ) {
-    SDL_Surface *pauseTextSurface = TTF_RenderText_Solid( gFont, gPauseText, pac_color );
-    gPauseTextTexture = SDL_CreateTextureFromSurface( gRenderer, pauseTextSurface);
-    gPauseTextDestRect.x = SCREEN_WIDTH / 2 - pauseTextSurface->w/2; 
-    gPauseTextDestRect.y = SCREEN_HEIGHT/2 - pauseTextSurface->h/2;
-    gPauseTextDestRect.w = pauseTextSurface->w;
-    gPauseTextDestRect.h = pauseTextSurface->h;
-    SDL_FreeSurface( pauseTextSurface );
-    pauseTextSurface = NULL;
-
-    SDL_Surface *levelStartTextSurface = TTF_RenderText_Solid( gFont, gLevelStartText, white );
-    gLevelStartTextTexture = SDL_CreateTextureFromSurface( gRenderer, levelStartTextSurface);
-    gLevelStartTextRect.x = SCREEN_WIDTH / 2 -levelStartTextSurface->w/2; 
-    gLevelStartTextRect.y = SCREEN_HEIGHT/2 - levelStartTextSurface->h/2;
-    gLevelStartTextRect.w = levelStartTextSurface->w;
-    gLevelStartTextRect.h = levelStartTextSurface->h;
-    SDL_FreeSurface( levelStartTextSurface );
-    levelStartTextSurface = NULL;
-
-    SDL_Surface *levelEndTextSurface = TTF_RenderText_Solid( gFont, gLevelEndText, white );
-    gLevelEndTextTexture = SDL_CreateTextureFromSurface( gRenderer, levelEndTextSurface);
-    gLevelEndTextRect.x = SCREEN_WIDTH / 2 -levelEndTextSurface->w/2; 
-    gLevelEndTextRect.y = SCREEN_HEIGHT/2 - levelEndTextSurface->h/2;
-    gLevelEndTextRect.w = levelEndTextSurface->w;
-    gLevelEndTextRect.h = levelEndTextSurface->h;
-    SDL_FreeSurface( levelEndTextSurface );
-    levelEndTextSurface = NULL;
+    gPauseTextTexture = createTextTexture(&gPauseTextDestRect, gPauseText, pac_color, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    gLevelStartTextTexture = createTextTexture(&gLevelStartTextRect, gLevelStartText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+    gLevelEndTextTexture = createTextTexture(&gLevelEndTextRect, gLevelEndText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 );
 }
 
 void gamePlayingStateProcess( SDL_Event *event, Entities *entities, TileMap *tilemap, LevelConfig *levelConfig, float deltaTime ){

@@ -55,6 +55,9 @@ void menuProgramStateProcess( SDL_Event *event, Entities *entities, LevelConfig 
         case MAIN_MENU_SCREEN_MENU_STATE:
             mainMenuScreenProcess(event, entities, tilemap, levelConfig, startMenuBlink, deltaTime);
             break;
+        case JOIN_GAME_MENU_STATE:
+            joinGameProcess(event, levelConfig, entities, tilemap, startMenuBlink, deltaTime );
+            break;
         default:
             printf("Not a valid menu State. State = %d\n", gMenuState );
             break;

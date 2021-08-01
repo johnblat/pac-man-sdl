@@ -7,6 +7,7 @@
 #include "programState.h"
 #include "interpolation.h"
 #include "globalData.h"
+#include "render.h"
 
 typedef enum MainMenuSelection {
     PLAY_GAME,
@@ -32,6 +33,51 @@ SDL_Rect gMainMenuExitTextDestRect;
 
 // End Main Menu
 
+// Join Game
+
+
+SDL_Rect gP1JoinPanelRect;
+SDL_Rect gP2JoinPanelRect;
+SDL_Rect gP3JoinPanelRect;
+SDL_Rect gP4JoinPanelRect;
+char *gJoinGameText = "Join Game";
+char *gP1Text = "P1";
+char *gP2Text = "P2";
+char *gP3Text = "P3";
+char *gP4Text = "P4";
+char *gPressAToJoinText = "Press ( A ) to Join!";
+char *gReadyText = "Ready!";
+char *gPressStartWhenReadyText = "Press Start When All Players Ready!";
+SDL_Texture *gJoinGameTextTexture = NULL;
+SDL_Texture *gP1TextTexture = NULL;
+SDL_Texture *gP2TextTexture = NULL;
+SDL_Texture *gP3TextTexture = NULL;
+SDL_Texture *gP4TextTexture = NULL;
+SDL_Texture *gPressAToJoinTextTexture = NULL;
+SDL_Texture *gReadyTextTexture = NULL;
+SDL_Texture *gPressStartWhenReadyTextTexture = NULL;
+SDL_Rect gJoinGameTextRect;
+SDL_Rect gP1TextRect;
+SDL_Rect gP2TextRect;
+SDL_Rect gP3TextRect;
+SDL_Rect gP4TextRect;
+SDL_Rect gP1PressAToJoinTextRect;
+SDL_Rect gP2PressAToJoinTextRect;
+SDL_Rect gP3PressAToJoinTextRect;
+SDL_Rect gP4PressAToJoinTextRect;
+SDL_Rect gP1ReadyTextRect;
+SDL_Rect gP2ReadyTextRect;
+SDL_Rect gP3ReadyTextRect;
+SDL_Rect gP4ReadyTextRect;
+SDL_Rect gReadyRects[4];
+SDL_Rect gPressStartWhenReadyTextRect;
+
+
+
+
+
+// End Join Game
+
 void playGameChosen( ) {
 
 }
@@ -41,24 +87,43 @@ void exitGameChosen( ) {
 }
 
 
-void initMainMenuScreenStuff(){
-    SDL_Surface *mainMenuPlayGameTextSurface = TTF_RenderText_Solid( gFont, gMainMenuPlayGameText, white );
-    gMainMenuPlayGameTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuPlayGameTextSurface );
-    gMainMenuPlayGameTextDestRect.w = mainMenuPlayGameTextSurface->w;
-    gMainMenuPlayGameTextDestRect.h = mainMenuPlayGameTextSurface->h;
-    gMainMenuPlayGameTextDestRect.x = SCREEN_WIDTH / 2 - ( gMainMenuPlayGameTextDestRect.w / 2 );
-    gMainMenuPlayGameTextDestRect.y = 450;
-    SDL_FreeSurface( mainMenuPlayGameTextSurface );
-    mainMenuPlayGameTextSurface = NULL;
 
-    SDL_Surface *mainMenuExitTextSurface = TTF_RenderText_Solid( gFont, gMainMenuExitText, white );
-    gMainMenuExitTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuExitTextSurface );
-    gMainMenuExitTextDestRect.w = mainMenuExitTextSurface->w;
-    gMainMenuExitTextDestRect.h = mainMenuExitTextSurface->h;
-    gMainMenuExitTextDestRect.x = SCREEN_WIDTH / 2 - ( gMainMenuExitTextDestRect.w / 2 );
-    gMainMenuExitTextDestRect.y = 450 + 100 ;
-    SDL_FreeSurface( mainMenuExitTextSurface );
-    mainMenuExitTextSurface = NULL;
+void initJoinGameStuff() {
+    gJoinGameTextTexture = createTextTexture(&gJoinGameTextRect, gJoinGameText, white, SCREEN_WIDTH/2, 50 );
+    gP1TextTexture = createTextTexture(&gP1TextRect, gP1Text, white, SCREEN_WIDTH/4, SCREEN_HEIGHT/4 );
+    gP2TextTexture = createTextTexture(&gP2TextRect, gP2Text, white, (SCREEN_WIDTH/4) * 3 , SCREEN_HEIGHT/4 );
+    gP3TextTexture = createTextTexture(&gP3TextRect, gP3Text, white, SCREEN_WIDTH/4, ( SCREEN_HEIGHT/4) * 3 );
+    gP4TextTexture = createTextTexture(&gP4TextRect, gP4Text, white, (SCREEN_WIDTH/4) * 3, (SCREEN_HEIGHT/4) * 3 );
+
+    gReadyTextTexture = createTextTexture(&gP1ReadyTextRect, gReadyText, white, gP1TextRect.x+(gP1TextRect.w/2), gP1TextRect.y+ 50 );
+    gP2ReadyTextRect.x = gP2TextRect.x+(gP2TextRect.w/2);
+    gP2ReadyTextRect.y = gP2TextRect.y+50;
+    gP2ReadyTextRect.w = gP1ReadyTextRect.w;
+    gP2ReadyTextRect.h = gP1ReadyTextRect.h;
+
+
+    gP3ReadyTextRect.x = gP3TextRect.x+(gP3TextRect.w/2);
+    gP3ReadyTextRect.y = gP3TextRect.y+50;
+    gP3ReadyTextRect.w = gP3ReadyTextRect.w;
+    gP3ReadyTextRect.h = gP3ReadyTextRect.h;
+    
+    gP4ReadyTextRect.x = gP4TextRect.x+(gP4TextRect.w/2);
+    gP4ReadyTextRect.y = gP4TextRect.y+50;
+    gP4ReadyTextRect.w = gP4ReadyTextRect.w;
+    gP4ReadyTextRect.h = gP4ReadyTextRect.h;
+
+    gReadyRects[ 0 ] = gP1ReadyTextRect;
+    gReadyRects[ 1 ] = gP2ReadyTextRect;
+    gReadyRects[ 2 ] = gP3ReadyTextRect;
+    gReadyRects[ 3 ] = gP4ReadyTextRect;
+
+
+    gPressStartWhenReadyTextTexture = createTextTexture(&gPressStartWhenReadyTextRect, gPressStartWhenReadyText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+}
+
+void initMainMenuScreenStuff(){
+    gMainMenuPlayGameTextTexture = createTextTexture( &gMainMenuPlayGameTextDestRect, gMainMenuPlayGameText, white, SCREEN_WIDTH / 2, 450 );
+    gMainMenuExitTextTexture = createTextTexture( &gMainMenuExitTextDestRect, gMainMenuExitText, white, SCREEN_WIDTH / 2, 550 );
 }
 
 
@@ -109,7 +174,8 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
     else if( selected) {
         switch( gCurrentMainMenuSelection ) {
             case PLAY_GAME:
-                gamePlayProgramStateEnter(entities, tilemap, levelConfig);
+                gMenuState = JOIN_GAME_MENU_STATE;
+                //gamePlayProgramStateEnter(entities, tilemap, levelConfig);
                 break;
             case EXIT:
                 gProgramState = EXIT_STATE;
@@ -151,6 +217,114 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
 
 }
 
+void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *entities, TileMap *tilemap, Blink *blink, float deltaTime ) {
+    SDL_bool back_release = SDL_FALSE;
+    SDL_bool start_release = SDL_FALSE;
+
+    while( SDL_PollEvent( event ) != 0 ) {
+        if( event->type == SDL_QUIT ) {
+            gProgramState = EXIT_STATE;
+            break;
+        }
+        if( event->type == SDL_CONTROLLERDEVICEADDED ) {
+            if( ! (g_NumGamepads>=MAX_NUM_GAME_CONTROLLERS ) ) {
+                Sint32 joyStickDeviceId = event->cdevice.which;
+                if(SDL_IsGameController(joyStickDeviceId)) {
+                    // is the game controller already exist
+                    
+                    
+                    // look for first open gamepad slot
+                    for( int i = 0; i < MAX_NUM_GAME_CONTROLLERS; i++ ) {
+
+                        if( g_GameControllers[ i ] == NULL ) {
+                            g_GameControllers[ i ] = SDL_GameControllerOpen( joyStickDeviceId );
+                            if( !SDL_GameControllerGetAttached( g_GameControllers[ g_NumGamepads ] ) ) {
+                                fprintf(stderr, "Wrong!\n");
+                            }
+                            printf("Controller added: %s\n", SDL_GameControllerName(g_GameControllers[ g_NumGamepads ] ));
+                            g_NumGamepads++;
+                            break;
+                        }
+                    }
+                    
+                }
+            }
+            else {
+                printf("Too Many Controllers Added! Can't add this one!\n");
+            }
+        }
+        if( event->type == SDL_CONTROLLERDEVICEREMOVED ) {
+            Sint32 joyStickDeviceId = event->cdevice.which;
+            // look through global gameController array for matching joystick
+            for( int i = 0; i < MAX_NUM_GAME_CONTROLLERS; i++ ) {
+                SDL_Joystick *joy = SDL_GameControllerGetJoystick( g_GameControllers[ i ] );
+                
+                if( joyStickDeviceId == SDL_JoystickInstanceID( joy ) ) {
+                    printf("Controller removed\n" );
+                    SDL_GameControllerClose( g_GameControllers[ i ] );
+                    g_GameControllers[ i ] = NULL;
+                    g_NumGamepads--;
+
+                }
+            }
+        }
+
+        if( event->type == SDL_KEYUP ) {
+            if( event->key.keysym.sym == SDLK_x ) {
+                back_release = SDL_TRUE;
+            }
+            if ( event->key.keysym.sym == SDLK_RETURN ) {
+                start_release = SDL_TRUE;
+            }
+        }
+        if( event->type == SDL_CONTROLLERBUTTONUP ) {
+            if( event->cbutton.button == SDL_CONTROLLER_BUTTON_B ) {
+                back_release = SDL_TRUE;
+            }
+            else if( event->cbutton.button == SDL_CONTROLLER_BUTTON_A ) { // a player wants to join
+
+            }
+            else if( event->cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
+                start_release = SDL_TRUE;
+            }
+        }
+    }
+
+    // create player if button pressed
+    // increase gNumPlayers += 1
+    // give player the controller's id
+    //  or a keybind if the keyboard was pressed
+    if( back_release == SDL_TRUE ) {
+        gMenuState = MAIN_MENU_SCREEN_MENU_STATE;
+        return;
+    }
+    if( start_release == SDL_TRUE && gNumPlayers > 0 ) {
+        gamePlayProgramStateEnter( entities, tilemap, levelConfig );
+        return;
+    }
+
+    // render
+    SDL_SetRenderDrawColor( gRenderer, 20,20,20,255);
+    SDL_RenderClear( gRenderer );
+
+    SDL_RenderCopy( gRenderer, gJoinGameTextTexture, NULL, &gJoinGameTextRect);
+    SDL_RenderCopy( gRenderer, gP1TextTexture, NULL, &gP1TextRect);
+    SDL_RenderCopy( gRenderer, gP2TextTexture, NULL, &gP2TextRect);
+    SDL_RenderCopy( gRenderer, gP3TextTexture, NULL, &gP3TextRect);
+    SDL_RenderCopy( gRenderer, gP4TextTexture, NULL, &gP4TextRect);
+
+    for( int i = 0; i < gNumPlayers; i++ ) {
+        SDL_Rect readyRect = gReadyRects[ i ];
+        SDL_RenderCopy( gRenderer, gReadyTextTexture, NULL,  &readyRect );
+    }
+
+    SDL_RenderCopy(gRenderer, gPressStartWhenReadyTextTexture, NULL, &gPressStartWhenReadyTextRect );
+
+
+    SDL_RenderPresent( gRenderer );
+
+
+}
 
 void titleScreenProcess(LevelConfig *levelConfig, Entities *entities, TileMap *tilemap, SDL_Event *event, Blink *startMenuBlink, float deltaTime );
 inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, TileMap *tilemap, SDL_Event *event, Blink *startMenuBlink, float deltaTime ) {
