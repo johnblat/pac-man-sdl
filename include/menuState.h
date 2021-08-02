@@ -14,7 +14,7 @@ typedef enum MenuState {
 } MenuState;
 
 
-void mainMenuProgramStateEnter();
+void mainMenuProgramStateEnter(Entities *entities);
 
 void menuProgramStateProcess(SDL_Event *event, Entities *entities, LevelConfig *levelConfig, TileMap *tilemap, Blink *startMenuBlink, float deltaTime  );
 

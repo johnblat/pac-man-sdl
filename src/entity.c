@@ -90,7 +90,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     *entities->invincibilityTimers[entityId] = 0.0f;
     *entities->stopTimers[entityId] = 0.0f;
     
-    *entities->isActive[ entityId ] = SDL_TRUE;
+    *entities->isActive[ entityId ] = SDL_FALSE;
 
     return entityId;
 }

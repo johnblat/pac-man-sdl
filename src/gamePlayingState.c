@@ -336,7 +336,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     // GAME OVER?
     if( isGameOver( entities ) ) {
-        mainMenuProgramStateEnter();
+        mainMenuProgramStateEnter(entities);
+        
         return;
     }
 
@@ -345,7 +346,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         
         SDL_bool gameCleared = level_advance( levelConfig, tilemap, gRenderer, entities );
         if( gameCleared ) {
-            mainMenuProgramStateEnter();
+            mainMenuProgramStateEnter(entities);
             return;
         }
         Mix_HaltChannel( GHOST_SOUND_CHANNEL );
@@ -414,14 +415,15 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         SDL_Delay(300);
         SDL_bool gameCleared = level_advance( levelConfig, tilemap, gRenderer, entities );
         if( gameCleared ) {
-            Mix_HaltChannel( GHOST_SOUND_CHANNEL );
-            Mix_HaltChannel( GHOST_VULN_CHANNEL );
-            Mix_HaltMusic();
-            Mix_FreeMusic( g_Music );
-            g_Music = Mix_LoadMUS( gMenuMusicFilename );
-            Mix_PlayMusic( g_Music, -1 );
-            gProgramState = MENU_PROGRAM_STATE;
-            gCurrentLevel = 0;
+            mainMenuProgramStateEnter(entities);
+            // Mix_HaltChannel( GHOST_SOUND_CHANNEL );
+            // Mix_HaltChannel( GHOST_VULN_CHANNEL );
+            // Mix_HaltMusic();
+            // Mix_FreeMusic( g_Music );
+            // g_Music = Mix_LoadMUS( gMenuMusicFilename );
+            // Mix_PlayMusic( g_Music, -1 );
+            // gProgramState = MENU_PROGRAM_STATE;
+            // gCurrentLevel = 0;
             //load_current_level_off_disk( levelConfig, tilemap, gRenderer);
             return;
         }

@@ -68,7 +68,7 @@ void initializePlayersFromFiles( Entities *entities, LevelConfig *levelConfig, u
     }
 
     char line[ 64 ];
-    for( int i = 0; i < numPlayers; i++ ) {
+    for( int i = 0; i < 4; i++ ) { // gNumPlayers = 4
         do {
             fgets( line, 64, f );
         } while( line[ 0 ] == '#');

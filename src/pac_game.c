@@ -316,33 +316,7 @@ int main( int argc, char *argv[] ) {
 
 
     
-    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-        if( entities.inputMasks[ eid ] != NULL ) {
-            gPlayerIds[ gNumPlayers ] = eid;
-            gNumPlayers++;
-        }
-    }
-
-    // add controllers to players
-    uint32_t playerIdx = 0;
-
-    for( unsigned int i = playerIdx; i < g_NumGamepads; i++ ) {
-
-        if( i > gNumPlayers ) {
-            break;
-        }
-        entities.gameControllerIds[ gPlayerIds[ i ] ] = (GameControllerId *)malloc(sizeof(GameControllerId));
-        *entities.gameControllerIds[ gPlayerIds[ i ] ] =  i ;
-        playerIdx++;
-    }
-
-    int32_t numPlayersLeftToAssignControls = gNumPlayers - g_NumGamepads;
-    if(numPlayersLeftToAssignControls > 0 ) {
-        for( int i = playerIdx; i < gNumPlayers; i++ ) {
-            EntityId playerId = gPlayerIds[ i ];
-            entities.keybinds[ playerId ] = gkeyBindings;
-        }
-    }
+    
 
     // pre-initialize pickup entities ( non power pellet )
     for( int i = 0; i < MAX_PICKUPS_PER_LEVEL; i++ ) { // start with 4

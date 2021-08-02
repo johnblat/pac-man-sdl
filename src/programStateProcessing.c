@@ -33,7 +33,7 @@ void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfi
     }
 }
 
-void mainMenuProgramStateEnter() {
+void mainMenuProgramStateEnter(Entities *entities) {
     Mix_HaltChannel( GHOST_SOUND_CHANNEL );
     Mix_HaltChannel( GHOST_VULN_CHANNEL );
     Mix_HaltMusic();
@@ -43,6 +43,30 @@ void mainMenuProgramStateEnter() {
     gProgramState = MENU_PROGRAM_STATE;
     gMenuState = TITLE_SCREEN_MENU_STATE;
     gCurrentLevel = 0;
+
+    // deactivate all players
+    EntityId pid;
+    for( int i = 0; i < gNumPlayers; i++ ) {
+        pid = gPlayerIds[ i ];
+        *entities->isActive[ pid ] = SDL_FALSE;
+    }
+    gNumPlayers = 0;
+
+    // get rid of controllers because we use NULL to tell whether or not a player needs to be assigned a controller in the Join Game Screen
+    // TODO: Figure out a better way to do this
+    for( int eid = 0; eid < g_NumEntities; eid++ ) {
+        if( entities->gameControllerIds[eid]== NULL) {
+            continue;
+        }
+        free(entities->gameControllerIds[eid]);
+        entities->gameControllerIds[eid] = NULL;
+    }
+    // also set keybinds to null. Setting up join game needs this null to reason about it.
+    for( int eid = 0; eid < g_NumEntities;eid++ ) {
+        if( entities->keybinds[eid] != NULL ) {
+            entities->keybinds[eid] = NULL;
+        }
+    }
     //load_current_level_off_disk( levelConfig, tilemap, gRenderer);
     return;
 }

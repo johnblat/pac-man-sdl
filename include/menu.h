@@ -65,6 +65,7 @@ SDL_Rect gP1PressAToJoinTextRect;
 SDL_Rect gP2PressAToJoinTextRect;
 SDL_Rect gP3PressAToJoinTextRect;
 SDL_Rect gP4PressAToJoinTextRect;
+SDL_Rect gPressAToJoinTextRects[4];
 SDL_Rect gP1ReadyTextRect;
 SDL_Rect gP2ReadyTextRect;
 SDL_Rect gP3ReadyTextRect;
@@ -104,18 +105,41 @@ void initJoinGameStuff() {
 
     gP3ReadyTextRect.x = gP3TextRect.x+(gP3TextRect.w/2);
     gP3ReadyTextRect.y = gP3TextRect.y+50;
-    gP3ReadyTextRect.w = gP3ReadyTextRect.w;
-    gP3ReadyTextRect.h = gP3ReadyTextRect.h;
+    gP3ReadyTextRect.w = gP1ReadyTextRect.w;
+    gP3ReadyTextRect.h = gP1ReadyTextRect.h;
     
     gP4ReadyTextRect.x = gP4TextRect.x+(gP4TextRect.w/2);
     gP4ReadyTextRect.y = gP4TextRect.y+50;
-    gP4ReadyTextRect.w = gP4ReadyTextRect.w;
-    gP4ReadyTextRect.h = gP4ReadyTextRect.h;
+    gP4ReadyTextRect.w = gP1ReadyTextRect.w;
+    gP4ReadyTextRect.h = gP1ReadyTextRect.h;
 
     gReadyRects[ 0 ] = gP1ReadyTextRect;
     gReadyRects[ 1 ] = gP2ReadyTextRect;
     gReadyRects[ 2 ] = gP3ReadyTextRect;
     gReadyRects[ 3 ] = gP4ReadyTextRect;
+
+    gPressAToJoinTextTexture = createTextTexture(&gP1PressAToJoinTextRect, gPressAToJoinText, white, gP1TextRect.x+(gP1TextRect.w/2), gP1TextRect.y+ 50  );
+    gP2PressAToJoinTextRect.x = gP2TextRect.x-(gP1PressAToJoinTextRect.w/2);
+    gP2PressAToJoinTextRect.y = gP2TextRect.y+50;
+    gP2PressAToJoinTextRect.w = gP1PressAToJoinTextRect.w;
+    gP2PressAToJoinTextRect.h = gP1PressAToJoinTextRect.h;
+
+    gP3PressAToJoinTextRect.x = gP3TextRect.x-(gP1PressAToJoinTextRect.w/2);
+    gP3PressAToJoinTextRect.y = gP3TextRect.y+50;
+    gP3PressAToJoinTextRect.w = gP1PressAToJoinTextRect.w;
+    gP3PressAToJoinTextRect.h = gP1PressAToJoinTextRect.h;
+
+    gP4PressAToJoinTextRect.x = gP4TextRect.x-(gP1PressAToJoinTextRect.w/2);
+    gP4PressAToJoinTextRect.y = gP4TextRect.y+50;
+    gP4PressAToJoinTextRect.w = gP1PressAToJoinTextRect.w;
+    gP4PressAToJoinTextRect.h = gP1PressAToJoinTextRect.h;
+
+
+    gPressAToJoinTextRects[ 0 ] = gP1PressAToJoinTextRect;
+    gPressAToJoinTextRects[ 1 ] = gP2PressAToJoinTextRect;
+    gPressAToJoinTextRects[ 2 ] = gP3PressAToJoinTextRect;
+    gPressAToJoinTextRects[ 3 ] = gP4PressAToJoinTextRect;
+
 
 
     gPressStartWhenReadyTextTexture = createTextTexture(&gPressStartWhenReadyTextRect, gPressStartWhenReadyText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
@@ -226,7 +250,7 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
             gProgramState = EXIT_STATE;
             break;
         }
-        if( event->type == SDL_CONTROLLERDEVICEADDED ) {
+        else if( event->type == SDL_CONTROLLERDEVICEADDED ) {
             if( ! (g_NumGamepads>=MAX_NUM_GAME_CONTROLLERS ) ) {
                 Sint32 joyStickDeviceId = event->cdevice.which;
                 if(SDL_IsGameController(joyStickDeviceId)) {
@@ -253,7 +277,7 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
                 printf("Too Many Controllers Added! Can't add this one!\n");
             }
         }
-        if( event->type == SDL_CONTROLLERDEVICEREMOVED ) {
+        else if( event->type == SDL_CONTROLLERDEVICEREMOVED ) {
             Sint32 joyStickDeviceId = event->cdevice.which;
             // look through global gameController array for matching joystick
             for( int i = 0; i < MAX_NUM_GAME_CONTROLLERS; i++ ) {
@@ -269,26 +293,133 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
             }
         }
 
-        if( event->type == SDL_KEYUP ) {
+        else if( event->type == SDL_KEYUP ) {
             if( event->key.keysym.sym == SDLK_x ) {
                 back_release = SDL_TRUE;
             }
             if ( event->key.keysym.sym == SDLK_RETURN ) {
                 start_release = SDL_TRUE;
             }
+            if( event->key.keysym.sym == SDLK_z ) {
+                // full players?
+                if( gNumPlayers >= 4 ) {
+                    break;
+                }
+                // do any players already have a keybind
+                // if so don't assign
+                SDL_bool KeyboardAlreadyAssigned = SDL_FALSE;
+                for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+                    if( entities->keybinds[eid] == NULL ) {
+                        continue;
+                    }
+                    if( entities->keybinds[eid] != NULL ) {
+                        KeyboardAlreadyAssigned = SDL_TRUE;
+                    }
+                }
+
+                if( KeyboardAlreadyAssigned ) {
+                    break;
+                }
+
+                // keyboard not assigned
+                // entities->keybinds[]
+
+                // find first viable entity that doesn't have a keybind
+                for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+                    if( entities->inputMasks[eid] == NULL ) {
+                        continue;
+                    }
+                    // make sure it doesn't have a controller
+                    if( entities->gameControllerIds[eid] == NULL ) {
+                        entities->keybinds[eid] = gkeyBindings;
+                        gPlayerIds[ gNumPlayers ] = eid;
+                        gNumPlayers++; // add number of players
+                        break;
+                    }
+                }
+            }
         }
-        if( event->type == SDL_CONTROLLERBUTTONUP ) {
+        else if( event->type == SDL_CONTROLLERBUTTONUP ) {
             if( event->cbutton.button == SDL_CONTROLLER_BUTTON_B ) {
                 back_release = SDL_TRUE;
             }
             else if( event->cbutton.button == SDL_CONTROLLER_BUTTON_A ) { // a player wants to join
+                // full players?
+                if( gNumPlayers >= 4 ) {
+                    continue;
+                }
+                SDL_bool assigned = SDL_FALSE;
 
+                SDL_JoystickID eventJoyStickDeviceId = event->cdevice.which;
+                GameControllerId eventGameControllerId;
+
+                // which game controller pressed this button?
+                for( unsigned int gcid = 0; gcid < MAX_NUM_GAME_CONTROLLERS; gcid++ ) {
+                    
+                    SDL_JoystickID gameControllerJoyStickDeviceId = SDL_JoystickInstanceID( SDL_GameControllerGetJoystick( g_GameControllers[gcid] ) );
+                    // the event matched a registered game controller in the global array
+                    if( eventJoyStickDeviceId == gameControllerJoyStickDeviceId ) {
+                        eventGameControllerId = gcid;
+                        break;
+                    }
+                    //assigned = SDL_TRUE;
+                    
+                }
+
+                // is this game controller already assigned to a player?
+                for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++) {
+                    if( entities->inputMasks[eid] == NULL ) {
+                        continue;
+                    }
+                    if( entities->gameControllerIds[eid] == NULL ) {
+                        continue;
+                    }
+                    // its already assigned
+                    if( *entities->gameControllerIds[eid] == eventGameControllerId ) {
+                        assigned = SDL_TRUE;
+                        break;
+                    }
+                    
+                }
+
+                if( assigned ) {
+                    break;
+                }
+
+                // not already assigned
+                // look for a player entity
+                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+                    if( entities->inputMasks[ eid ] == NULL ) { // can be controlled
+                        continue;
+                    }
+                    if( entities->gameControllerIds[ eid ] != NULL ) { // already taken
+                        continue;
+                    }
+                    // it has a keyboard instead. Its basically assigned.
+                    if( entities->keybinds[eid] != NULL ) {
+                        assigned = SDL_TRUE;
+                        continue;
+                    }
+                    gPlayerIds[ gNumPlayers ] = eid;
+                    gNumPlayers++; // add number of players
+                    
+                    
+                    
+
+                    entities->gameControllerIds[ eid ] = (GameControllerId *)malloc(sizeof(GameControllerId));
+                    *entities->gameControllerIds[eid] = eventGameControllerId;
+                    break;
+                }
+                
             }
             else if( event->cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
                 start_release = SDL_TRUE;
             }
         }
     }
+
+    blinkProcess( blink, deltaTime );
+    SDL_SetTextureAlphaMod(gPressAToJoinTextTexture, blink->values[ blink->current_value_idx ] );
 
     // create player if button pressed
     // increase gNumPlayers += 1
@@ -316,6 +447,10 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
     for( int i = 0; i < gNumPlayers; i++ ) {
         SDL_Rect readyRect = gReadyRects[ i ];
         SDL_RenderCopy( gRenderer, gReadyTextTexture, NULL,  &readyRect );
+    }
+    for( int i = gNumPlayers; i < 4; i++ ) {
+        SDL_Rect pressAToJoinRect = gPressAToJoinTextRects[ i ];
+        SDL_RenderCopy( gRenderer, gPressAToJoinTextTexture, NULL, &pressAToJoinRect );
     }
 
     SDL_RenderCopy(gRenderer, gPressStartWhenReadyTextTexture, NULL, &gPressStartWhenReadyTextRect );
@@ -351,10 +486,18 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
         }
         if( event->type == SDL_CONTROLLERDEVICEADDED ) {
             if( ! (g_NumGamepads>=MAX_NUM_GAME_CONTROLLERS ) ) {
-                Sint32 joyStickDeviceId = event->cdevice.which;
+                SDL_JoystickID joyStickDeviceId = event->cdevice.which;
                 if(SDL_IsGameController(joyStickDeviceId)) {
                     // is the game controller already exist
-                    
+                    for( int i = 0; i < MAX_NUM_GAME_CONTROLLERS;i++) {
+                        if( g_GameControllers[i] == NULL ) {
+                            continue;
+                        }
+                        SDL_JoystickID gcJoystickId = SDL_JoystickInstanceID( SDL_GameControllerGetJoystick( g_GameControllers[ i ] ) );
+                        if( gcJoystickId == joyStickDeviceId ) {
+                            return;
+                        }
+                    }
                     
                     // look for first open gamepad slot
                     for( int i = 0; i < MAX_NUM_GAME_CONTROLLERS; i++ ) {
