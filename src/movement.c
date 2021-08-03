@@ -485,7 +485,7 @@ void moveActor( Actor *actor, Vector_f velocity ) {
 }
 
 float g_PAC_DASH_SPEED_MULTR = 2.5f;
-float g_PAC_DASH_TIME_MAX = 0.75f;
+float g_PAC_DASH_TIME_MAX = 1.0f;
 void dashTimersProcess( Entities *entities, float deltaTime ) {
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++) {
         if( entities->dashTimers[ eid ] == NULL || entities->chargeTimers[ eid ] == NULL || entities->slowTimers[ eid ] == NULL || entities->inputMasks[ eid ] == NULL ) { //skip if doesn't have dash timers

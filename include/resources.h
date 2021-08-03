@@ -37,6 +37,8 @@ void load_ghost_mode_times_from_config_file( uint32_t *ghost_mode_times, int num
 void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullResourcePath );
 
 void tryLoadGhostVulnerableDurationFromFile( LevelConfig *levelConfig, const char *fullResourcePath );
+
+void tryPlayNewLevelMusicFromFile( LevelConfig *levelConfig, const char *fullResourcePath );
 /**
  * FILE I/O FOR SAVING/LOADING
  */

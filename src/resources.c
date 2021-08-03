@@ -192,7 +192,7 @@ void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
     build_resource_file_path( fullResourcePath, fullLevelDir, wallsFileName );
     save_resource_to_file( tilemap->tm_walls, fullResourcePath, sizeof( char ), TOTAL_NUMBER_OF_TILES );
 
-    
+
 }
 
 void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer ) { 
@@ -302,6 +302,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     char *tilesetFileName = "tileset.png";
     char *pickupsFileName = "pickups";
     char *ghostVulnerableDurationFileName = "ghost_vulnerable_duration";
+    char *musicChangeFileName = "music_change";
 
     char fullResourcePath[ MAX_FILENAME_SIZE ];
 
@@ -334,6 +335,10 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
 
     build_resource_file_path( fullResourcePath, fullLevelDir, ghostVulnerableDurationFileName );
     tryLoadGhostVulnerableDurationFromFile( levelConfig, fullResourcePath ) ;
+
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, musicChangeFileName );
+    tryPlayNewLevelMusicFromFile( levelConfig, fullResourcePath );
 
     SDL_Surface *surface;
 
@@ -630,6 +635,34 @@ void tryLoadGhostVulnerableDurationFromFile( LevelConfig *levelConfig, const cha
 
 }
 
+void tryPlayNewLevelMusicFromFile( LevelConfig *levelConfig, const char *fullResourcePath ) {
+    // if no file, then set to min value
+    struct stat buffer;
+    if( stat( fullResourcePath, &buffer ) != 0 ) {
+        return;
+    }
+
+    FILE *f;
+    f = fopen(fullResourcePath, "r");
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file: %s\n", fullResourcePath );
+    }
+
+    char currentLine[ 256 ];
+    memset( currentLine, '\0', 256 );
+
+    fgets( currentLine, 64, f );
+
+    memset(gGameMusicFilename, '\0', 64 );
+    strncpy(gGameMusicFilename, currentLine, 64 );
+
+    Mix_HaltMusic( );
+    Mix_FreeMusic( g_Music );
+    g_Music = NULL;
+    g_Music = Mix_LoadMUS( gGameMusicFilename );
+    Mix_PlayMusic( g_Music, -1 );
+
+}
 // void load_render_xx_from_config_file( RenderData **renderDatas ) {
 
 //     int num_render_clips = 0;
