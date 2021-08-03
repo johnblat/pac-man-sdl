@@ -54,6 +54,21 @@ void initGamePlayingStuff( ) {
     //SDL_SetTextureColorMod(g_texture_atlases[3].texture, 0,0,0);
 }
 
+void allGhostsVulnerableStateEnter( Entities *entities, LevelConfig *levelConfig ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+        if( entities->ghostStates[ eid ] == NULL ) {
+            continue;
+        }
+        if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
+
+            *entities->ghostStates[ eid ] = STATE_VULNERABLE;
+            vulnerable_enter( entities, eid );
+        }
+        
+    }   
+    gGhostVulnerableTimer = levelConfig->ghostVulnerableDuration;  
+}
+
 void gamePlayingStateProcess( SDL_Event *event, Entities *entities, TileMap *tilemap, LevelConfig *levelConfig, float deltaTime ){
     switch(gGamePlayingState) {
         case GAME_PLAYING:
@@ -665,18 +680,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 g_NumDots--;
 
                 // make ghosts all vulnerable state
-                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-                    if( entities->ghostStates[ eid ] == NULL ) {
-                        continue;
-                    }
-                    if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
-
-                        *entities->ghostStates[ eid ] = STATE_VULNERABLE;
-                        vulnerable_enter( entities, eid );
-                    }
-                    
-                }   
-                gGhostVulnerableTimer = 8.0f;   
+                allGhostsVulnerableStateEnter( entities, levelConfig );   
             }
         }
         
@@ -706,18 +710,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 g_NumDots--;
 
                 // make ghosts all vulnerable state
-                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-                    if( entities->ghostStates[ eid ] == NULL ) {
-                        continue;
-                    }
-                    if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
-
-                        *entities->ghostStates[ eid ] = STATE_VULNERABLE;
-                        vulnerable_enter( entities, eid );
-                    }
-                    
-                }   
-                gGhostVulnerableTimer = 8.0f;   
+                allGhostsVulnerableStateEnter( entities, levelConfig );  
             }
 
         }
@@ -758,18 +751,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 //g_NumDots--;
 
                 // make ghosts all vulnerable state
-                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-                    if( entities->ghostStates[ eid ] == NULL ) {
-                        continue;
-                    }
-                    if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
-
-                        *entities->ghostStates[ eid ] = STATE_VULNERABLE;
-                        vulnerable_enter( entities, eid );
-                    }
-                    
-                }   
-                gGhostVulnerableTimer = 8.0f;   
+                allGhostsVulnerableStateEnter( entities, levelConfig );
             }
         }
         
@@ -799,18 +781,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 g_NumDots--;
 
                 // make ghosts all vulnerable state
-                for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-                    if( entities->ghostStates[ eid ] == NULL ) {
-                        continue;
-                    }
-                    if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
-
-                        *entities->ghostStates[ eid ] = STATE_VULNERABLE;
-                        vulnerable_enter( entities, eid );
-                    }
-                    
-                }   
-                gGhostVulnerableTimer = 8.0f;   
+                allGhostsVulnerableStateEnter( entities, levelConfig );  
             }
 
         }
@@ -867,8 +838,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         SDL_SetTextureColorMod( g_texture_atlases[3].texture, 255, val, val);
     }
     else {
-        int x = SDL_SetTextureColorMod(g_texture_atlases[3].texture, 255,255,255);
-        printf("x = %d\n", x );
+        SDL_SetTextureColorMod(g_texture_atlases[3].texture, 255,255,255);
     }
 
     ghostsProcess( entities, gPlayerIds, gNumPlayers, tilemap,  deltaTime,levelConfig);

@@ -9,6 +9,7 @@
 #include "resources.h"
 #include "tiles.h"
 #include "globalData.h"
+#include <sys/stat.h>
 
 
 const int MAX_FILENAME_SIZE = 64;
@@ -300,6 +301,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     char *wallsFileName = "walls";
     char *tilesetFileName = "tileset.png";
     char *pickupsFileName = "pickups";
+    char *ghostVulnerableDurationFileName = "ghost_vulnerable_duration";
 
     char fullResourcePath[ MAX_FILENAME_SIZE ];
 
@@ -329,6 +331,9 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
 
     build_resource_file_path( fullResourcePath, fullLevelDir, pickupsFileName );
     tryLoadPickupsFromConfigFile( levelConfig, fullResourcePath );
+
+    build_resource_file_path( fullResourcePath, fullLevelDir, ghostVulnerableDurationFileName );
+    tryLoadGhostVulnerableDurationFromFile( levelConfig, fullResourcePath ) ;
 
     SDL_Surface *surface;
 
@@ -599,6 +604,30 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
         pickupIdx++;
     }
     levelConfig->numPickupConfigs = pickupIdx;
+}
+
+
+void tryLoadGhostVulnerableDurationFromFile( LevelConfig *levelConfig, const char *fullResourcePath ) {
+    // if no file, then set to min value
+    struct stat buffer;
+    if( stat( fullResourcePath, &buffer ) != 0 ) {
+        levelConfig->ghostVulnerableDuration = 2;
+        return;
+    }
+
+    FILE *f;
+    f = fopen(fullResourcePath, "r");
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file: %s\n", fullResourcePath );
+    }
+
+
+    char currentLine[ 256 ];
+    memset( currentLine, '\0', 256 );
+
+    fgets( currentLine, 3, f );
+    levelConfig->ghostVulnerableDuration = strtol( currentLine, NULL, 10 );
+
 }
 
 // void load_render_xx_from_config_file( RenderData **renderDatas ) {

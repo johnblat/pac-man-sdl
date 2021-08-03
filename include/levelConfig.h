@@ -24,6 +24,7 @@ typedef struct LevelConfig {
     SDL_Point powerPelletTiles[ 4 ];
     PickupConfig pickupConfigs[ MAX_PICKUPS_PER_LEVEL ];
     unsigned int numPickupConfigs;
+    int ghostVulnerableDuration;
 } LevelConfig;
 
 #endif

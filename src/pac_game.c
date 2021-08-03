@@ -143,7 +143,7 @@ int main( int argc, char *argv[] ) {
         fprintf( stderr, "Error %s\n ", IMG_GetError() );
         exit( EXIT_FAILURE );
     }
-
+    
     if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 ) {
         fprintf( stderr, "SDL_mixer could not initialize: %s\n", Mix_GetError());
     }
@@ -187,20 +187,29 @@ int main( int argc, char *argv[] ) {
         printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() );
     }
 
-    g_GhostSound = Mix_LoadWAV("res/sounds/ghost.wav");
+    g_GhostSound = Mix_LoadWAV("res/sounds/ghosts_ambient.wav");
     if( g_GhostSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
+    Mix_VolumeChunk( g_GhostSound, 5 );
 
-    g_GhostVulnerableSound = Mix_LoadWAV("res/sounds/vulnerable.wav");
+    g_GhostVulnerableSound = Mix_LoadWAV("res/sounds/ghosts_ambient_scared1.wav");
     if( g_GhostVulnerableSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
+    Mix_VolumeChunk( g_GhostVulnerableSound, 10 );
 
-    g_PacChompSound = Mix_LoadWAV("res/sounds/chomp.wav");
+    g_PacChompSound = Mix_LoadWAV("res/sounds/wakka_wakka1.wav");
     if( g_PacChompSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
+    Mix_VolumeChunk( g_PacChompSound, 30 );
+
+    g_PacChompSound2 = Mix_LoadWAV("res/sounds/wakka_wakka2.wav");
+    if( g_PacChompSound2 == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+    Mix_VolumeChunk( g_PacChompSound2, 30 );
 
     g_GhostEatenYeahSound = Mix_LoadWAV("res/sounds/yeah.wav");
     if( g_GhostEatenYeahSound == NULL ) {
