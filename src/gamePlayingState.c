@@ -43,12 +43,15 @@ const float gLevelEndDuration = 1.5f;
 float gLevelEndTimer = 0.0f;
 
 
-
+Blink ghostVulnerableBlink;
 
 void initGamePlayingStuff( ) {
     gPauseTextTexture = createTextTexture(&gPauseTextDestRect, gPauseText, pac_color, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
     gLevelStartTextTexture = createTextTexture(&gLevelStartTextRect, gLevelStartText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
     gLevelEndTextTexture = createTextTexture(&gLevelEndTextRect, gLevelEndText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 );
+
+    ghostVulnerableBlink = blinkInit( 0.2, 1, 255 );
+    //SDL_SetTextureColorMod(g_texture_atlases[3].texture, 0,0,0);
 }
 
 void gamePlayingStateProcess( SDL_Event *event, Entities *entities, TileMap *tilemap, LevelConfig *levelConfig, float deltaTime ){
@@ -504,6 +507,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 EntityId playerId;
                 for( int i = 0; i < gNumPlayers; ++i ) {
                     playerId = gPlayerIds[ i ];
+                    
+                    if( entities->isActive[ playerId ] != NULL && *entities->isActive[ playerId ] == SDL_FALSE ) {
+                        continue;
+                    }
 
                     // eat ghost if pacman touches
                     if ( entities->actors[ playerId ]->current_tile.x == entities->actors[ eid ]->current_tile.x 
@@ -640,6 +647,9 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         // collide with players
         for( int i = 0; i < gNumPlayers; i++ ) {
             EntityId playerId = gPlayerIds[ i ];
+            if( entities->isActive[ playerId ] != NULL && *entities->isActive[ playerId ] == SDL_FALSE ) {
+                continue;
+            }
             // player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
                 gScore.score_number += *entities->scores[eid];
@@ -666,7 +676,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 10.0f;   
+                gGhostVulnerableTimer = 8.0f;   
             }
         }
         
@@ -707,7 +717,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 10.0f;   
+                gGhostVulnerableTimer = 8.0f;   
             }
 
         }
@@ -759,7 +769,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 10.0f;   
+                gGhostVulnerableTimer = 8.0f;   
             }
         }
         
@@ -800,7 +810,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
                     
                 }   
-                gGhostVulnerableTimer = 10.0f;   
+                gGhostVulnerableTimer = 8.0f;   
             }
 
         }
@@ -848,6 +858,17 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     }
     else {
         gGhostVulnerableTimer -= deltaTime;
+    }
+
+    // if ghost vulnerability timer almost up, blink them
+    if( gGhostVulnerableTimer <= 2.0f ) {
+        blinkProcess( &ghostVulnerableBlink, deltaTime );
+        float val = ghostVulnerableBlink.values[ghostVulnerableBlink.current_value_idx];
+        SDL_SetTextureColorMod( g_texture_atlases[3].texture, 255, val, val);
+    }
+    else {
+        int x = SDL_SetTextureColorMod(g_texture_atlases[3].texture, 255,255,255);
+        printf("x = %d\n", x );
     }
 
     ghostsProcess( entities, gPlayerIds, gNumPlayers, tilemap,  deltaTime,levelConfig);

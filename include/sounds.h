@@ -19,13 +19,17 @@ Mix_Chunk *g_GhostEatenSweetSound = NULL;
 Mix_Chunk *g_GhostEatenCoolSound = NULL;
 Mix_Chunk *g_GhostEatenGroovySound = NULL;
 Mix_Chunk *g_PacDieOhNoSound = NULL;
+Mix_Chunk *g_PacChompSound2 = NULL;
+
+SDL_bool gPacChomp2 = SDL_FALSE;
 
 Mix_Chunk *g_GhostEatenSounds[4];
 
 typedef enum {
     GHOST_SOUND_CHANNEL = 7,// = 20,
     GHOST_VULN_CHANNEL = 6,// = 21,
-    PAC_CHOMP_CHANNEL = 22
+    PAC_CHOMP_CHANNEL = 15,
+    PAC_CHOMP_CHANNEL2 = 14
 } SoundChannel;
 
 #endif

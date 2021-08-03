@@ -5,6 +5,7 @@
 #include "programState.h"
 #include "sounds.h"
 #include "globalData.h"
+#include "interpolation.h"
 
 
 typedef enum MenuState {

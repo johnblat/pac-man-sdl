@@ -301,8 +301,16 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
             continue;
         }
         if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
-     
-            Mix_PlayChannel( -1, g_PacChompSound, 0 );
+            
+            //if( !Mix_Playing( PAC_CHOMP_CHANNEL ))
+            gPacChomp2 = !gPacChomp2;
+            if( gPacChomp2 ) {
+                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound2, 0 );
+            }
+            else {
+                Mix_PlayChannel( PAC_CHOMP_CHANNEL2, g_PacChompSound, 0 );
+
+            }
 
             // get rid of dot marker
             dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] = ' ';
@@ -329,7 +337,7 @@ void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS
         }
         if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
      
-            Mix_PlayChannel( -1, g_PacChompSound, 0 );
+            //Mix_PlayChannel( -1, g_PacChompSound, 0 );
 
             // get rid of dot marker
             dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] = ' ';

@@ -248,7 +248,7 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
             continue;
         }
         if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
-            Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
+            //Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
 
             entities->actors[playerId]->current_tile = levelConfig->pacStartingTile;
             //entities->actors[playerId]->current_tile.y -= 1;
