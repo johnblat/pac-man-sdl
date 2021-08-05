@@ -28,24 +28,8 @@
 //unsigned int gNumLevels = 0;
 
 
-void updateDashStockRects( Entities *entities, EntityId *playerIds, unsigned int numPlayers ) {
-    for(int i = 0; i < numPlayers; i++) {
-        EntityId playerId = playerIds[ i ];
-        if( entities->dashCooldownStocks[ playerId ] == NULL ) {
-            continue;
-        }
-        gDashStockRects[ i ].numRectsToShow = entities->dashCooldownStocks[ playerId ]->currentNumStock;
-    }
-}
 
-void renderDashStockRects( ) {
-    for( int i = 0; i < gNumDashStockRects; i++ ) {
-        SDL_SetRenderDrawColor( gRenderer, gDashStockRects[ i ].color.r, gDashStockRects[ i ].color.g, gDashStockRects[ i ].color.b, 255 );
-        for( int numRect = 0; numRect < gDashStockRects[ i ].numRectsToShow; numRect++ ) {
-            SDL_RenderFillRect( gRenderer, &gDashStockRects[i].rects[numRect]);
-        }
-    }
-}
+
 
 
 void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_screen_position, SDL_Point *points ) {
@@ -499,6 +483,10 @@ int main( int argc, char *argv[] ) {
     SDL_DestroyRenderer( gRenderer );
     SDL_DestroyWindow( gWindow );
     TTF_CloseFont( gFont );
+
+    SDL_DestroyTexture( gScore.score_texture );
+    SDL_DestroyTexture( gLivesRemainingUI.texture );
+
 
     Mix_FreeChunk(g_GhostSound);
     Mix_FreeChunk(g_GhostVulnerableSound);
