@@ -97,7 +97,8 @@ Create the corresponsding `res/levels/level#` directory of the level to edit if 
 Credits
 =======
 
-- Programming: John Blat 
+- Programming: 
+    - John Blat 
 - Music:
     - **Rock Paper Funk Take Off** by Broken Groove
     - **Don't Worry We've Got Warp Speed** by Broken Groove
