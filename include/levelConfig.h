@@ -25,6 +25,7 @@ typedef struct LevelConfig {
     PickupConfig pickupConfigs[ MAX_PICKUPS_PER_LEVEL ];
     unsigned int numPickupConfigs;
     int ghostVulnerableDuration;
+    int numDotsUntilLeavePen[ 3 ]; // will be used for ambush, moody, and pokey respectively
 } LevelConfig;
 
 #endif

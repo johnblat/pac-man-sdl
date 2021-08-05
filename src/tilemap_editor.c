@@ -7,6 +7,7 @@
 #include "comparisons.h"
 #include "string.h"
 #include "jb_types.h"
+#include "globalData.h"
 
 typedef struct TileSelectionPanel {
     int num_rows;

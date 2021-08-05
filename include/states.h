@@ -57,7 +57,7 @@ void go_to_pen_enter( Entities *entities, EntityId ghostId );
 /**
  * Will target the ghost pen tile
  */
-void go_to_pen_process( Entities *entities, EntityId ghostId, TileMap *tm );
+void go_to_pen_process( Entities *entities, LevelConfig *levelConfig, EntityId ghostId, TileMap *tm );
 
 
 void leave_pen_enter( Entities *entities, EntityId ghostId );
@@ -69,5 +69,8 @@ void leave_pen_process( Entities *entities, EntityId ghostId, TileMap *tm );
 
 //void states_machine_process( Actor **actors, GhostState *ghost_states, TileMap *tm );
 
+void stayPenEnter( Entities *entities, LevelConfig *levelConfig, EntityId ghostId );
+
+void stayPenProcess( Entities *entities, LevelConfig *levelConfig, TileMap *tilemap, EntityId ghostId );
 
 #endif

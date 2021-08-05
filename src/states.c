@@ -16,8 +16,6 @@
 #include "globalData.h"
 
 
-SDL_Point ghost_pen_tile = {23, 11};
-
 uint8_t g_current_scatter_chase_period = 0;
 uint32_t g_scatter_chase_period_seconds[ NUM_SCATTER_CHASE_PERIODS ] = { 0 };
 
@@ -64,15 +62,15 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
     // wrap around tilemaps Issue 150
     for( int i = 0; i < 4; i++ ) {
         if( surrounding_tiles[ i ].x < 0 ) {
-            surrounding_tiles[ i ].x = 47;
+            surrounding_tiles[ i ].x = TILE_COLS-1;
         }
-        else if( surrounding_tiles[ i ].x > 47 ) {
+        else if( surrounding_tiles[ i ].x > TILE_COLS-1 ) {
             surrounding_tiles[ i ].x = 0;
         }
         else if( surrounding_tiles[ i ].y < 0 ) {
-            surrounding_tiles[ i ].y = 22;
+            surrounding_tiles[ i ].y = TILE_ROWS-1;
         }
-        else if( surrounding_tiles[ i ].y > 22) {
+        else if( surrounding_tiles[ i ].y > TILE_ROWS-1) {
             surrounding_tiles[ i ].y = 0;
         }
     }
@@ -123,17 +121,17 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
 
     // 23 is the actual tilemap on the screen height - because of offset
 
-    if( entities->actors[ ghostId ]->next_tile.y > 22 ) {
+    if( entities->actors[ ghostId ]->next_tile.y > TILE_ROWS-1 ) {
         entities->actors[ ghostId ]->next_tile.y = 1;
     } 
     if( entities->actors[ ghostId ]->next_tile.y < 0 ){
-        entities->actors[ ghostId ]->next_tile.y = 22;
+        entities->actors[ ghostId ]->next_tile.y = TILE_ROWS-1;
     }
-    if( entities->actors[ ghostId ]->next_tile.x > 47 ) {
+    if( entities->actors[ ghostId ]->next_tile.x > TILE_COLS-1 ) {
         entities->actors[ ghostId ]->next_tile.x = 1;
     }
     if( entities->actors[ ghostId ]->next_tile.x < 0 ) {
-        entities->actors[ ghostId ]->next_tile.x = 47;
+        entities->actors[ ghostId ]->next_tile.x = TILE_COLS-1;
     }
 
 }
@@ -304,8 +302,8 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
  * In the other states, its fine if they get caught and can't go to their target tile. 
  * In this state its a necessity
  */
-void go_to_pen_process( Entities *entities, EntityId ghostId, TileMap *tm ) {
-    if( points_equal(entities->actors[ ghostId]->next_tile, entities->actors[ ghostId]->current_tile ) && !points_equal(entities->actors[ ghostId]->current_tile, ghost_pen_tile ) ) {
+void go_to_pen_process( Entities *entities, LevelConfig *levelConfig, EntityId ghostId, TileMap *tm ) {
+    if( points_equal(entities->actors[ ghostId]->next_tile, entities->actors[ ghostId]->current_tile ) && !points_equal(entities->actors[ ghostId]->current_tile, levelConfig->ghostPenTile ) ) {
         set_direction_and_next_tile_shortest_to_target( entities->actors[ ghostId ], tm, STATE_GO_TO_PEN );
     }
 }
@@ -333,6 +331,34 @@ void leave_pen_process( Entities *entities, EntityId ghostId, TileMap *tm ){
             entities->actors[ ghostId ]->speed_multp = 0.5f;
             break;
         }
+    }
+}
+
+void stayPenEnter( Entities *entities, LevelConfig *levelConfig, EntityId ghostId ) {
+    entities->animatedSprites[ ghostId ] ->num_frames_col = 8;
+    entities->animatedSprites[ ghostId ]->current_anim_row = 4;
+    entities->animatedSprites[ ghostId ]->accumulator = 0.0f;
+    entities->animatedSprites[ ghostId ]->texture_atlas_id = entities->animatedSprites[ ghostId ]->default_texture_atlas_id;
+    
+
+    entities->actors[ ghostId ]->speed_multp = 0.8f;
+
+    entities->actors[ ghostId ]->target_tile.x = entities->actors[ ghostId ]->current_tile.x - 1;
+    entities->actors[ ghostId ]->target_tile.y = entities->actors[ ghostId ]->current_tile.y;
+    
+    entities->actors[ ghostId ]->direction = DIR_LEFT;
+}
+
+void stayPenProcess( Entities *entities, LevelConfig *levelConfig, TileMap *tilemap, EntityId ghostId ) {
+    
+    if(points_equal(  entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile )) {
+        if( entities->actors[ghostId]->current_tile.x == levelConfig->ghostPenTile.x - 1 ) {
+            entities->actors[ghostId]->target_tile.x = levelConfig->ghostPenTile.x + 1;
+        }
+        else if( entities->actors[ghostId]->current_tile.x == levelConfig->ghostPenTile.x + 1 ) {
+            entities->actors[ghostId]->target_tile.x = levelConfig->ghostPenTile.x - 1;
+        }
+        set_direction_and_next_tile_shortest_to_target( entities->actors[ ghostId ], tilemap, STATE_NORMAL );
     }
 }
 

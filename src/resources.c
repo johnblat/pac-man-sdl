@@ -10,6 +10,7 @@
 #include "tiles.h"
 #include "globalData.h"
 #include <sys/stat.h>
+#include "string.h"
 
 
 const int MAX_FILENAME_SIZE = 64;
@@ -91,6 +92,7 @@ void initializePlayersFromFiles( Entities *entities, LevelConfig *levelConfig, u
 
         createPlayer( entities, levelConfig, animatedSprite );
     }
+    fclose(f);
 }
 
 /**
@@ -108,7 +110,7 @@ void initializeGhostsFromFile( Entities *entities, LevelConfig *levelConfig, con
         fprintf(stderr, "Error opening file %s\n", ghostSpritesFilename );
     }
 
-    char line[ 64 ] = {'\0'};
+    char line[ 64 ];
     memset(line, '\0', 64);
 
     for( int i = 0; i < 4; i++ ) { // 0 thru 4 will also be used for setting the targeting behavior. This will need to change if more ghosts are added with varying targeting behaviors
@@ -303,6 +305,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     char *pickupsFileName = "pickups";
     char *ghostVulnerableDurationFileName = "ghost_vulnerable_duration";
     char *musicChangeFileName = "music_change";
+    char *numDotsUntilLeavePenFileName = "ghostBegin";
 
     char fullResourcePath[ MAX_FILENAME_SIZE ];
 
@@ -340,6 +343,10 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     build_resource_file_path( fullResourcePath, fullLevelDir, musicChangeFileName );
     tryPlayNewLevelMusicFromFile( levelConfig, fullResourcePath );
 
+    build_resource_file_path( fullResourcePath, fullLevelDir, numDotsUntilLeavePenFileName );
+    tryLoadNumDotsUntilLeavePenFromFile( levelConfig, fullResourcePath ); 
+
+    // set tilemap texture
     SDL_Surface *surface;
 
     build_resource_file_path( fullResourcePath, fullLevelDir, tilesetFileName );
@@ -429,6 +436,7 @@ void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer ) {
         addTextureAtlas( renderer, textureName, filename_texture_atlas, num_rows, num_cols );
 
     }
+    fclose(f);
 }
 
 void load_animations_from_config_file( AnimatedSprite **animated_sprites ) { 
@@ -481,6 +489,7 @@ void load_animations_from_config_file( AnimatedSprite **animated_sprites ) {
         //assert( *end_ptr == '\n' || *end_ptr == ' ' || *end_ptr == '\0');
 
     }
+    fclose(f);
 }
 
 void load_ghost_mode_times_from_config_file( uint32_t *ghost_mode_times, int num_periods, char *filename_config ) {
@@ -517,6 +526,8 @@ void load_ghost_mode_times_from_config_file( uint32_t *ghost_mode_times, int num
         }
         
     }
+    fclose(f);
+
     
 
 }
@@ -609,6 +620,8 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
         pickupIdx++;
     }
     levelConfig->numPickupConfigs = pickupIdx;
+    fclose(f);
+
 }
 
 
@@ -632,6 +645,39 @@ void tryLoadGhostVulnerableDurationFromFile( LevelConfig *levelConfig, const cha
 
     fgets( currentLine, 3, f );
     levelConfig->ghostVulnerableDuration = strtol( currentLine, NULL, 10 );
+    fclose(f);
+
+}
+
+void tryLoadNumDotsUntilLeavePenFromFile( LevelConfig *levelConfig, const char *fullResourcePath ) {
+    struct stat buffer;
+    if( stat( fullResourcePath, &buffer ) != 0 ) {
+        levelConfig->numDotsUntilLeavePen[ 0 ] = 0;
+        levelConfig->numDotsUntilLeavePen[ 1 ] = 1;
+        levelConfig->numDotsUntilLeavePen[ 2 ] = 2;
+        return;
+    }
+
+    FILE *f;
+    f = fopen(fullResourcePath, "r");
+    if( f == NULL ) {
+        fprintf(stderr, "Error opening file: %s\n", fullResourcePath );
+    }
+
+    char currentLine[ 256 ];
+    memset( currentLine, '\0', 256 );
+    fgets(currentLine, 4, f);
+    levelConfig->numDotsUntilLeavePen[ 0 ] = strtol(currentLine, NULL, 10 );
+
+    memset( currentLine, '\0', 256 );
+    fgets(currentLine, 4, f);
+    levelConfig->numDotsUntilLeavePen[ 1 ] = strtol(currentLine, NULL, 10 );
+
+    memset( currentLine, '\0', 256 );
+    fgets(currentLine, 4, f);
+    levelConfig->numDotsUntilLeavePen[ 2 ] = strtol(currentLine, NULL, 10 );
+
+    fclose(f);
 
 }
 
@@ -661,6 +707,9 @@ void tryPlayNewLevelMusicFromFile( LevelConfig *levelConfig, const char *fullRes
     g_Music = NULL;
     g_Music = Mix_LoadMUS( gGameMusicFilename );
     Mix_PlayMusic( g_Music, -1 );
+
+    fclose(f);
+
 
 }
 // void load_render_xx_from_config_file( RenderData **renderDatas ) {

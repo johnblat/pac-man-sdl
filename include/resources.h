@@ -39,6 +39,9 @@ void tryLoadPickupsFromConfigFile( LevelConfig *levelConfig, const char *fullRes
 void tryLoadGhostVulnerableDurationFromFile( LevelConfig *levelConfig, const char *fullResourcePath );
 
 void tryPlayNewLevelMusicFromFile( LevelConfig *levelConfig, const char *fullResourcePath );
+
+void tryLoadNumDotsUntilLeavePenFromFile( LevelConfig *levelConfig, const char *fullResourcePath );
+
 /**
  * FILE I/O FOR SAVING/LOADING
  */

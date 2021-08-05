@@ -31,15 +31,15 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, 
     // wrap around tilemaps Issue 150
     for( int i = 0; i < 4; i++ ) {
         if( surrounding_tiles[ i ].x < 0 ) {
-            surrounding_tiles[ i ].x = 47;
+            surrounding_tiles[ i ].x = TILE_COLS-1;
         }
-        else if( surrounding_tiles[ i ].x > 47 ) {
+        else if( surrounding_tiles[ i ].x >  TILE_COLS-1 ) {
             surrounding_tiles[ i ].x = 0;
         }
         else if( surrounding_tiles[ i ].y < 0 ) {
-            surrounding_tiles[ i ].y = 22;
+            surrounding_tiles[ i ].y = TILE_ROWS-1;
         }
-        else if( surrounding_tiles[ i ].y > 22) {
+        else if( surrounding_tiles[ i ].y > TILE_ROWS-1) {
             surrounding_tiles[ i ].y = 0;
         }
     }
@@ -90,17 +90,17 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, 
     // 23 is the actual tilemap on the screen height - because of offset
     actor->direction = (Direction) shortest_direction;
     actor->next_tile = surrounding_tiles[ shortest_direction ];
-    if( actor->next_tile.y > 22 ) {
+    if( actor->next_tile.y > TILE_ROWS-1 ) {
         actor->next_tile.y = 1;
     } 
     if( actor->next_tile.y < 0 ){
-        actor->next_tile.y = 22;
+        actor->next_tile.y =  TILE_ROWS-1;
     }
-    if( actor->next_tile.x > 47 ) {
+    if( actor->next_tile.x >  TILE_COLS-1 ) {
         actor->next_tile.x = 1;
     }
     if( actor->next_tile.x < 0 ) {
-        actor->next_tile.x = 47;
+        actor->next_tile.x =  TILE_COLS-1;
     }
 }
 

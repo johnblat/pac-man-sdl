@@ -12,8 +12,8 @@
  * TILE VALUES, DIMENSIONS, ETC
  */
 #define TILE_SIZE 40 // change to different size if necessary
-#define TILE_COLS ( SCREEN_WIDTH / (TILE_SIZE ) )
-#define TILE_ROWS ( SCREEN_HEIGHT / ( TILE_SIZE ) - 2 )
+#define TILE_COLS 48
+#define TILE_ROWS 26
 #define TOTAL_NUMBER_OF_TILES ( TILE_ROWS * TILE_COLS )
 
 #define DOT_SIZE  8 

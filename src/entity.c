@@ -105,6 +105,7 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->targetingBehaviors     [ entityId ] = (TargetingBehavior *)              malloc(sizeof(TargetingBehavior));
     entities->ghostStates[ entityId] = (GhostState *)malloc(sizeof(GhostState));
     entities->stopTimers[entityId] = (float *) malloc(sizeof(float));
+    entities->numDots[entityId] = (unsigned int *)malloc(sizeof(unsigned int));
 
     //initialize
     // position
@@ -141,6 +142,8 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     *entities->targetingBehaviors[ entityId ] = targetingBehavior;
 
     *entities->stopTimers[entityId] = 0.0f;
+
+    *entities->numDots[entityId] = 0;
 
     return entityId;
 }
@@ -241,10 +244,13 @@ void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPla
                 vulnerable_process(entities, eid , tilemap );
                 break;
             case STATE_GO_TO_PEN:
-                go_to_pen_process(entities, eid, tilemap );
+                go_to_pen_process(entities, levelConfig, eid, tilemap );
                 break;
             case STATE_LEAVE_PEN:
                 leave_pen_process( entities, eid, tilemap );
+                break;
+            case STATE_STAY_PEN:
+                stayPenProcess( entities, levelConfig, tilemap, eid );
                 break;
             default:
                 // something went wrong
@@ -389,6 +395,9 @@ EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float ac
     entities->actors[entityId]->direction = playerActor->direction;
     entities->actors[entityId]->world_position = playerActor->world_position;
     entities->actors[entityId]->world_center_point = playerActor->world_center_point;
+    entities->actors[entityId]->velocity.x = 0;
+    entities->actors[entityId]->velocity.y = 0;
+
 
     entities->animatedSprites[entityId]->accumulator = playerAnimatedSprite->accumulator;
     entities->animatedSprites[entityId]->current_anim_row = playerAnimatedSprite->current_anim_row;
@@ -657,7 +666,9 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                     *entities->activeTimers[ eid ] = 0.0f;
                     score->score_number += *entities->scores[ eid ];
 
-                     for( int i = 0; i < g_NumTimedMessages; i++ ) {
+                    Mix_PlayChannel( PICKUP_EAT_CHANNEL, g_PickupEaten, 0 );
+
+                    for( int i = 0; i < g_NumTimedMessages; i++ ) {
                         if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
                             g_TimedMessages[ i ].remainingTime = 0.85f;
                             g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities->actors[ playerId ]->current_tile );

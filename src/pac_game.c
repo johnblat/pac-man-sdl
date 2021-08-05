@@ -79,6 +79,12 @@ int main( int argc, char *argv[] ) {
         entities.mirrorEntityRefs[ i ] = NULL;
         entities.invincibilityTimers[i] = NULL;
         entities.isActive[i] = NULL;
+        entities.gameControllerIds[i] = NULL;
+        entities.speedBoostTimers[i] = NULL;
+        entities.stopTimers[i] = NULL;
+        entities.mirrorEntityRefs[i] = NULL;
+        
+
 
     }
     
@@ -236,6 +242,17 @@ int main( int argc, char *argv[] ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
 
+    g_GhostEatSound = Mix_LoadWAV("res/sounds/ghost_eaten.wav");
+    if( g_GhostEatSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+    Mix_VolumeChunk( g_GhostEatSound, 20 );
+
+    g_PickupEaten = Mix_LoadWAV("res/sounds/powerup.wav");
+    if( g_PickupEaten == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+    Mix_VolumeChunk( g_PickupEaten, 20 );
    // Mix_VolumeChunk( g_GhostEatenGroovySound, 100 );
 
     g_GhostEatenSounds[ 0 ] = g_GhostEatenYeahSound;
@@ -335,7 +352,7 @@ int main( int argc, char *argv[] ) {
     // createFruit( &entities, &levelConfig, fruitAnimatedSprite, 60 );
     
 
-    SDL_Point ghost_pen_position = tile_grid_point_to_world_point( ghost_pen_tile ); 
+    SDL_Point ghost_pen_position = tile_grid_point_to_world_point( levelConfig.ghostPenTile  ); 
     SDL_Point ghost_pen_center_point;
     ghost_pen_center_point.x = ghost_pen_position.x + (TILE_SIZE / 2);
     ghost_pen_center_point.y = ghost_pen_position.y + (TILE_SIZE / 2);
@@ -455,7 +472,15 @@ int main( int argc, char *argv[] ) {
     Mix_FreeChunk(g_GhostEatenCoolSound);
     Mix_FreeChunk(g_GhostEatenGroovySound);
     Mix_FreeChunk(g_PacDieOhNoSound);
+    Mix_FreeChunk(g_PacChompSound2);
+    Mix_FreeChunk(g_GhostEatSound);
+    Mix_FreeChunk(g_PickupEaten);
 
+    for( int i = 0; i < 4; i++ ) {
+        if(g_GameControllers[i] != NULL ){
+            SDL_GameControllerClose(g_GameControllers[i]);
+        }
+    }
 
     Mix_FreeMusic(g_Music);
 
@@ -523,6 +548,30 @@ int main( int argc, char *argv[] ) {
         if( entities.numDots[i] != NULL ) {
             free(entities.numDots[i]);
             entities.numDots[i] = NULL;
+        }
+        if( entities.scores[i] != NULL ) {
+            free(entities.scores[i]);
+            entities.scores[i] = NULL;
+        }
+        if( entities.mirrorEntityRefs[i] != NULL ) {
+            free(entities.mirrorEntityRefs[i]);
+            entities.mirrorEntityRefs[i] = NULL;
+        }
+        if( entities.speedBoostTimers[i] != NULL ) {
+            free(entities.speedBoostTimers[i]);
+            entities.speedBoostTimers[i] = NULL;
+        }
+        if( entities.invincibilityTimers[i] != NULL ) {
+            free(entities.invincibilityTimers[i]);
+            entities.invincibilityTimers[i] = NULL;
+        }
+        if( entities.stopTimers[i] != NULL ) {
+            free(entities.stopTimers[i]);
+            entities.stopTimers[i] = NULL;
+        }
+        if( entities.isActive[i] != NULL ) {
+            free(entities.isActive[i]);
+            entities.isActive[i] = NULL;
         }
         
     }

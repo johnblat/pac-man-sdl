@@ -27,15 +27,15 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
 
         tile_wrap( &tile_above );
         
-        SDL_Rect tile_above_rect = {tile_grid_point_to_world_point( tile_above ).x, tile_grid_point_to_world_point( tile_above ).y, TILE_SIZE, TILE_SIZE };
+        //SDL_Rect tile_above_rect = {tile_grid_point_to_world_point( tile_above ).x, tile_grid_point_to_world_point( tile_above ).y, TILE_SIZE, TILE_SIZE };
 
-        if( actors[ entityId ]->world_center_point.x > tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_RIGHT ) {
-            return;
-        }
+        // if( actors[ entityId ]->world_center_point.x > tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_RIGHT ) {
+        //     return;
+        // }
 
-        if( actors[ entityId ]->world_center_point.x < tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_LEFT ) {
-            return;
-        }
+        // if( actors[ entityId ]->world_center_point.x < tile_above_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_LEFT ) {
+        //     return;
+        // }
 
         // are other players there?
         // for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
@@ -62,14 +62,14 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
 
         tile_wrap( &tile_below );
 
-        SDL_Rect tile_below_rect = {tile_grid_point_to_world_point( tile_below ).x, tile_grid_point_to_world_point( tile_below ).y, TILE_SIZE, TILE_SIZE };
+        //SDL_Rect tile_below_rect = {tile_grid_point_to_world_point( tile_below ).x, tile_grid_point_to_world_point( tile_below ).y, TILE_SIZE, TILE_SIZE };
 
-        if( actors[ entityId ]->world_center_point.x > tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_RIGHT ) {
-            return;
-        }
-        if( actors[ entityId ]->world_center_point.x < tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_LEFT ) {
-            return;
-        }
+        // if( actors[ entityId ]->world_center_point.x > tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_RIGHT ) {
+        //     return;
+        // }
+        // if( actors[ entityId ]->world_center_point.x < tile_below_rect.x + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_LEFT ) {
+        //     return;
+        // }
 
         if( points_equal( tile_below, tilemap->one_way_tile) ) {
             return;
@@ -89,14 +89,14 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
 
         tile_wrap( &tile_to_left );
 
-        SDL_Rect tile_to_left_rect = {tile_grid_point_to_world_point( tile_to_left ).x, tile_grid_point_to_world_point( tile_to_left ).y, TILE_SIZE, TILE_SIZE };
+        // SDL_Rect tile_to_left_rect = {tile_grid_point_to_world_point( tile_to_left ).x, tile_grid_point_to_world_point( tile_to_left ).y, TILE_SIZE, TILE_SIZE };
 
-        if( actors[ entityId ]->world_center_point.y > tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_DOWN ) {
-            return;
-        }
-        if( actors[ entityId ]->world_center_point.y < tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_UP ) {
-            return;
-        }
+        // if( actors[ entityId ]->world_center_point.y > tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_DOWN ) {
+        //     return;
+        // }
+        // if( actors[ entityId ]->world_center_point.y < tile_to_left_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_UP ) {
+        //     return;
+        // }
 
         if( points_equal( tile_to_left, tilemap->one_way_tile) ) {
             return;
@@ -116,14 +116,14 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
 
         tile_wrap( &tile_to_right );
 
-        SDL_Rect tile_to_right_rect = {tile_grid_point_to_world_point( tile_to_right ).x, tile_grid_point_to_world_point( tile_to_right ).y, TILE_SIZE, TILE_SIZE };
+        // SDL_Rect tile_to_right_rect = {tile_grid_point_to_world_point( tile_to_right ).x, tile_grid_point_to_world_point( tile_to_right ).y, TILE_SIZE, TILE_SIZE };
 
-        if( actors[ entityId ]->world_center_point.y > tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_DOWN ) {
-            return;
-        }
-        if( actors[ entityId ]->world_center_point.y < tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_UP ) {
-            return;
-        }
+        // if( actors[ entityId ]->world_center_point.y > tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_DOWN ) {
+        //     return;
+        // }
+        // if( actors[ entityId ]->world_center_point.y < tile_to_right_rect.y + ( TILE_SIZE / 2 ) && actors[ entityId ]->direction == DIR_UP ) {
+        //     return;
+        // }
 
         if( points_equal( tile_to_right, tilemap->one_way_tile) ) {
             return;
@@ -161,7 +161,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             actors[ i ]->next_tile.x = actors[ i ]->current_tile.x;
             actors[ i ]->next_tile.y = actors[ i ]->current_tile.y - 1;
             if( actors[ i ]->next_tile.y < 0 ){
-                actors[ i ]->next_tile.y = 22;
+                actors[ i ]->next_tile.y = TILE_ROWS-1;
             } 
 
             // set velocity
@@ -229,7 +229,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
         if( actors[ i ]->direction == DIR_DOWN ) {
             actors[ i ]->next_tile.x = actors[ i ]->current_tile.x;
             actors[ i ]->next_tile.y = actors[ i ]->current_tile.y + 1;
-            if( actors[ i ]->next_tile.y >= 23 ){
+            if( actors[ i ]->next_tile.y >= TILE_ROWS-1 ){
                 actors[ i ]->next_tile.y = 0;
             } 
 
@@ -658,7 +658,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
         pacmonster->next_tile.x = pacmonster->current_tile.x;
         pacmonster->next_tile.y = pacmonster->current_tile.y - 1;
         if( pacmonster->next_tile.y < 0 ){
-            pacmonster->next_tile.y = 22;
+            pacmonster->next_tile.y = TILE_ROWS-1;
         } 
 
         // set velocity
@@ -715,7 +715,7 @@ void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time ) {
     if( pacmonster->direction == DIR_DOWN ) {
         pacmonster->next_tile.x = pacmonster->current_tile.x;
         pacmonster->next_tile.y = pacmonster->current_tile.y + 1;
-        if( pacmonster->next_tile.y >= 23 ){
+        if( pacmonster->next_tile.y >= TILE_ROWS-1 ){
             pacmonster->next_tile.y = 0;
         } 
 

@@ -34,6 +34,7 @@ void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfi
 }
 
 void mainMenuProgramStateEnter(Entities *entities) {
+    gScore.score_number = 0;
     Mix_HaltChannel( GHOST_SOUND_CHANNEL );
     Mix_HaltChannel( GHOST_VULN_CHANNEL );
     Mix_HaltMusic();

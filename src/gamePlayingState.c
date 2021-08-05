@@ -59,7 +59,7 @@ void allGhostsVulnerableStateEnter( Entities *entities, LevelConfig *levelConfig
         if( entities->ghostStates[ eid ] == NULL ) {
             continue;
         }
-        if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN ) {
+        if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN && *entities->ghostStates[eid] != STATE_STAY_PEN ) {
 
             *entities->ghostStates[ eid ] = STATE_VULNERABLE;
             vulnerable_enter( entities, eid );
@@ -140,17 +140,65 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
     // INIT GHOST
     SDL_Point ghost_pen_tile;
     ghost_pen_tile = levelConfig->ghostPenTile;
-
+    
     
     // reset ghosts
     for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
         if( entities->ghostStates[ i ] == NULL ) {
             continue;
         }
-        actor_reset_data( entities->actors[ i ], ghost_pen_tile );
+        SDL_Point startingTile = ghost_pen_tile;
+
+        if( *entities->targetingBehaviors[i] == AMBUSH_BEHAVIOR ) {
+            startingTile.x = ghost_pen_tile.x;
+            startingTile.y = ghost_pen_tile.y;
+        }
+        else if( *entities->targetingBehaviors[i] == MOODY_BEHAVIOR ) {
+            startingTile.x = ghost_pen_tile.x - 1;
+            startingTile.y = ghost_pen_tile.y;
+        }
+        else if( *entities->targetingBehaviors[i] == POKEY_BEHAVIOR ) {
+            startingTile.x = ghost_pen_tile.x + 1;
+            startingTile.y = ghost_pen_tile.y;
+        }
+
+        actor_reset_data( entities->actors[ i ], startingTile );
         entities->animatedSprites[i ]->texture_atlas_id = entities->animatedSprites[i]->default_texture_atlas_id;
-        *entities->ghostStates[ i ] = STATE_LEAVE_PEN;
-        leave_pen_enter( entities, i );
+        *entities->ghostStates[ i ] = STATE_STAY_PEN;
+        stayPenEnter( entities, levelConfig, i );
+    }
+    // adjust blinky position
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        if( entities->targetingBehaviors[i] == NULL ) {
+            continue;
+        }
+        if( *entities->targetingBehaviors[i] == SHADOW_BEHAVIOR ) {
+            SDL_Point blinkyTile;
+            blinkyTile.x = ghost_pen_tile.x;
+            blinkyTile.y = ghost_pen_tile.y - 3; // above pen. outside of gate
+            actor_reset_data( entities->actors[i], blinkyTile );
+            *entities->ghostStates[i] = STATE_NORMAL;
+        }
+    }
+
+    // set ghost num dots accordingly to determine when leave pen
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        if( entities->targetingBehaviors[i] == NULL ) {
+            continue;
+        }
+        if( entities->numDots[i] == NULL ) {
+            continue;
+        }
+
+        if( *entities->targetingBehaviors[i] == AMBUSH_BEHAVIOR ) {
+            *entities->numDots[i] = levelConfig->numDotsUntilLeavePen[ 0 ];
+        }
+        else if( *entities->targetingBehaviors[i] == MOODY_BEHAVIOR ) {
+            *entities->numDots[i] = levelConfig->numDotsUntilLeavePen[ 1 ];
+        }
+        else if( *entities->targetingBehaviors[i] == POKEY_BEHAVIOR ) {
+            *entities->numDots[i] = levelConfig->numDotsUntilLeavePen[ 2 ];
+        }
     }
 
 
@@ -519,7 +567,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 }
                 SDL_bool stateChanged = SDL_FALSE;
                 // collide with players
-                EntityId playerId;
+                EntityId playerId = 0;
                 for( int i = 0; i < gNumPlayers; ++i ) {
                     playerId = gPlayerIds[ i ];
                     
@@ -530,7 +578,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     // eat ghost if pacman touches
                     if ( entities->actors[ playerId ]->current_tile.x == entities->actors[ eid ]->current_tile.x 
                     && entities->actors[ playerId ]->current_tile.y == entities->actors[ eid ]->current_tile.y ) {
-                        Mix_PlayChannel( -1, g_PacChompSound, 0 );
+                        Mix_PlayChannel( GHOST_EAT_CHANNEL , g_GhostEatSound, 0 );
                         Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
                         gScore.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
                         g_NumGhostsEaten++;
@@ -538,7 +586,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                         uint8_t texture_atlas_id = 4;
                         entities->animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
                         entities->actors[ eid ]->next_tile = entities->actors[ eid ]->current_tile;
-                        entities->actors[ eid ]->target_tile = ghost_pen_tile;
+                        entities->actors[ eid ]->target_tile = levelConfig->ghostPenTile;
                         entities->actors[ eid ]->speed_multp = 1.6f;
 
                         // show message
@@ -596,7 +644,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                         uint8_t texture_atlas_id = 4;
                         entities->animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
                         entities->actors[ eid ]->next_tile = entities->actors[ eid ]->current_tile;
-                        entities->actors[ eid ]->target_tile = ghost_pen_tile;
+                        entities->actors[ eid ]->target_tile = levelConfig->ghostPenTile;
                         entities->actors[ eid ]->speed_multp = 1.6f;
 
                         // show message
@@ -630,7 +678,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             case STATE_GO_TO_PEN :
                 // ghost is in pen
                 
-                if( points_equal(entities->actors[ eid ]->current_tile, ghost_pen_tile ) && entities->actors[ eid ]->world_center_point.y >= tile_grid_point_to_world_point(levelConfig->ghostPenTile).y/2) {
+                if( points_equal(entities->actors[ eid ]->current_tile, levelConfig->ghostPenTile ) && entities->actors[ eid ]->world_center_point.y >= tile_grid_point_to_world_point(levelConfig->ghostPenTile).y/2) {
 
                     *entities->ghostStates[ eid ] = STATE_LEAVE_PEN;
                     leave_pen_enter( entities, eid );
@@ -646,6 +694,13 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     normal_enter( entities, eid );
                 }
                 
+                break;
+            case STATE_STAY_PEN:
+                // check if num dots remaining <= entities->numDots[eid]
+                if( g_StartingNumDots - g_NumDots >= *entities->numDots[ eid ] ) {
+                    *entities->ghostStates[ eid ] = STATE_LEAVE_PEN;
+                    leave_pen_enter( entities, eid );
+                }
                 break;
         }
     }

@@ -5,7 +5,8 @@ typedef enum {
     STATE_NORMAL,
     STATE_VULNERABLE,
     STATE_GO_TO_PEN,
-    STATE_LEAVE_PEN
+    STATE_LEAVE_PEN,
+    STATE_STAY_PEN // will wander around pen
 } GhostState;
 
 typedef enum {
