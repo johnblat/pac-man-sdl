@@ -99,11 +99,12 @@ Credits
 
 - Programming: 
     - John Blat 
+- Art:
+    - Stephen Bath
+    - Colton Powell
 - Music:
     - **Rock Paper Funk Take Off** by Broken Groove
     - **Don't Worry We've Got Warp Speed** by Broken Groove
     - **Trust Relax Autopilot** by Broken Groove
     - **DisFunkTional** bt ThatAndyGuy
-- Art:
-    - Stephen Bath
-    - Colton Powell
+
