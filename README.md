@@ -1,21 +1,26 @@
-Pac-Man Estrangement
+Pac-Man SDL
 ====================
-
-Alternatively: Pac-Man Alignment or some other title
 
 Concept
 -------
 
 Inspired by Pac-Man Arrangment.
+Local Multiplayer with friends.
 
 Controls
 --------
 
+**Keyboard**
 - Arrow Keys to move
 - Hold Z to charge dash
     - Release to dash
 - Press B to disable Debug Visuals
+- Enter/Return = OK
 
+**Controller**
+- D-Pad to move
+- Hold X (XBox) to charge dash
+- A = OK
 
 Editing and Modifying
 =======
