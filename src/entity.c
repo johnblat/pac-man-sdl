@@ -567,7 +567,7 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
         if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y > 0 ) { // down-right
             entities->animatedSprites[ eid ]->current_anim_row = 6;
         }
-        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ 0 ]->velocity.y > 0 ) { // down-left
+        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ eid ]->velocity.y > 0 ) { // down-left
             entities->animatedSprites[ eid ]->current_anim_row = 7;
         }
 
