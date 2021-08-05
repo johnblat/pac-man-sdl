@@ -10,6 +10,7 @@
 #include "animation.h"
 #include <string.h>
 #include "globalData.h"
+#include "UI.h"
 
 
 // const uint8_t MAX_TEXTURE_ATLASES = 10; 
@@ -206,6 +207,20 @@ void updateScoreTexture( Score *score, SDL_Renderer *renderer ) {
     score->score_render_dst_rect.h = score_surface->h;
 
     SDL_FreeSurface( score_surface );
+}
+
+void updateLivesRemainingTexture(LivesRemainingUI *lr ) {
+    snprintf( lr->text, 16, "Lives: %d", lr->livesRemaining );
+    SDL_Surface *lr_surface = TTF_RenderText_Solid(lr->font, lr->text, lr->color );
+
+    SDL_DestroyTexture( lr->texture );
+    lr->texture = SDL_CreateTextureFromSurface( gRenderer, lr_surface );
+    lr->destRect.x = 1800;
+    lr->destRect.y = 10;
+    lr->destRect.w = lr_surface->w;
+    lr->destRect.h = lr_surface->h;
+
+    SDL_FreeSurface(lr_surface);
 }
 
 SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color color, int screenPosCenterX, int screenPosCenterY ) {

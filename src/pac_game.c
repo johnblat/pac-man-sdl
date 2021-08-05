@@ -28,6 +28,25 @@
 //unsigned int gNumLevels = 0;
 
 
+void updateDashStockRects( Entities *entities, EntityId *playerIds, unsigned int numPlayers ) {
+    for(int i = 0; i < numPlayers; i++) {
+        EntityId playerId = playerIds[ i ];
+        if( entities->dashCooldownStocks[ playerId ] == NULL ) {
+            continue;
+        }
+        gDashStockRects[ i ].numRectsToShow = entities->dashCooldownStocks[ playerId ]->currentNumStock;
+    }
+}
+
+void renderDashStockRects( ) {
+    for( int i = 0; i < gNumDashStockRects; i++ ) {
+        SDL_SetRenderDrawColor( gRenderer, gDashStockRects[ i ].color.r, gDashStockRects[ i ].color.g, gDashStockRects[ i ].color.b, 255 );
+        for( int numRect = 0; numRect < gDashStockRects[ i ].numRectsToShow; numRect++ ) {
+            SDL_RenderFillRect( gRenderer, &gDashStockRects[i].rects[numRect]);
+        }
+    }
+}
+
 
 void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_screen_position, SDL_Point *points ) {
     points[ starting_index ].x = center_point.x + tilemap_screen_position.x;
@@ -87,6 +106,7 @@ int main( int argc, char *argv[] ) {
 
 
     }
+
     
     // initialize default keybindings
 
@@ -335,7 +355,7 @@ int main( int argc, char *argv[] ) {
     initializeGhostsFromFile( &entities, &levelConfig, "res/ghost_animated_sprites");
 
 
-    initializeDashStockRects( numPlayers );
+    
 
     // load everything for entity data from config
     //level_advance( &levelConfig, &tilemap, gRenderer, &entities );
@@ -368,6 +388,22 @@ int main( int argc, char *argv[] ) {
     gScore.score_render_dst_rect.y = 10;
     gScore.score_render_dst_rect.w = score_surface->w;
     gScore.score_render_dst_rect.h = score_surface->h;
+
+    // INIT LIVES UI
+    gLivesRemainingUI.font = gFont;
+    gLivesRemainingUI.color = pac_color;
+    gLivesRemainingUI.livesRemaining = 0;
+    SDL_Surface *lr_surface = TTF_RenderText_Solid(gLivesRemainingUI.font, "Lives: 0", gLivesRemainingUI.color );
+
+    SDL_DestroyTexture( gLivesRemainingUI.texture );
+    gLivesRemainingUI.texture = SDL_CreateTextureFromSurface( gRenderer, lr_surface );
+    gLivesRemainingUI.destRect.x = 1800;
+    gLivesRemainingUI.destRect.y = 10;
+    gLivesRemainingUI.destRect.w = lr_surface->w;
+    gLivesRemainingUI.destRect.h = lr_surface->h;
+
+    SDL_FreeSurface(lr_surface);
+
 
     SDL_FreeSurface( score_surface );
 

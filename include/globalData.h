@@ -7,6 +7,7 @@
 #include "jb_types.h"
 #include "programState.h"
 #include "gamePlayingState.h"
+#include "UI.h"
 
 SDL_bool g_show_debug_info = SDL_FALSE;
 
@@ -44,6 +45,8 @@ unsigned int g_GhostPointValues[] = { 200, 400, 800, 1600 };
 unsigned int gBaseSpeed = 0;
 
 unsigned int gLivesRemaining = 0;
+
+LivesRemainingUI gLivesRemainingUI;
 
 SDL_Window *gWindow = NULL;
 TTF_Font *gFont = NULL; 

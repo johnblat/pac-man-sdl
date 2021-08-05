@@ -986,6 +986,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     SDL_RenderFillRect( gRenderer, &black_bar);
 
     SDL_RenderCopy( gRenderer, gScore.score_texture, NULL, &gScore.score_render_dst_rect);
+    SDL_RenderCopy( gRenderer, gLivesRemainingUI.texture, NULL, &gLivesRemainingUI.destRect);
     //SDL_RenderCopy(gRenderer, gCooldownTexture, NULL, &gCooldownRect);
 
     renderDashStockRects( ) ;

@@ -31,6 +31,18 @@ DashStockRects gDashStockRects[ 4 ];
 unsigned int gNumDashStockRects = 0; 
 const unsigned int MAX_NUM_DASH_STOCK_RECTS = 3;
 
+// Lives
+typedef struct LivesRemainingUI {
+    unsigned int livesRemaining;
+    char text[ 16 ];
+    SDL_Rect destRect;
+    SDL_Texture *texture;
+    TTF_Font *font;
+    SDL_Color color;
+} LivesRemainingUI;
+
+
+
 void initializeDashStockRects( unsigned int numPlayers ) {
     gNumDashStockRects = numPlayers;
     
@@ -67,23 +79,5 @@ void initializeDashStockRects( unsigned int numPlayers ) {
     }
 }
 
-void updateDashStockRects( Entities *entities, EntityId *playerIds, unsigned int numPlayers ) {
-    for(int i = 0; i < numPlayers; i++) {
-        EntityId playerId = playerIds[ i ];
-        if( entities->dashCooldownStocks[ playerId ] == NULL ) {
-            continue;
-        }
-        gDashStockRects[ i ].numRectsToShow = entities->dashCooldownStocks[ playerId ]->currentNumStock;
-    }
-}
-
-void renderDashStockRects( ) {
-    for( int i = 0; i < gNumDashStockRects; i++ ) {
-        SDL_SetRenderDrawColor( gRenderer, gDashStockRects[ i ].color.r, gDashStockRects[ i ].color.g, gDashStockRects[ i ].color.b, 255 );
-        for( int numRect = 0; numRect < gDashStockRects[ i ].numRectsToShow; numRect++ ) {
-            SDL_RenderFillRect( gRenderer, &gDashStockRects[i].rects[numRect]);
-        }
-    }
-}
 
 #endif

@@ -23,7 +23,10 @@ void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfi
     gProgramState = GAME_PLAYING_PROGRAM_STATE;
     gGamePlayingState = LEVEL_START;
     gLivesRemaining = 2 + gNumPlayers;
+    gLivesRemainingUI.livesRemaining = gLivesRemaining;
+    updateLivesRemainingTexture(&gLivesRemainingUI);
     level_advance( levelConfig, tilemap, gRenderer, entities );
+    initializeDashStockRects( gNumPlayers );
 
     // activate all players
     EntityId pid = 0;

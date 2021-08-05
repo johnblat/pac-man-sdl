@@ -276,6 +276,8 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
             if(gLivesRemaining > 0 ){
                 gLivesRemaining--;
                 printf("Lives Remaining = %d\n", gLivesRemaining );
+                gLivesRemainingUI.livesRemaining = gLivesRemaining;
+                updateLivesRemainingTexture( &gLivesRemainingUI );
             }
             if( gLivesRemaining == 0 ) {
                 *entities->isActive[playerId] = SDL_FALSE;

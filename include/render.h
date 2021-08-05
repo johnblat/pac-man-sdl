@@ -6,6 +6,7 @@
 #include <SDL2/SDL_image.h>
 #include "actor.h"
 #include "animation.h"
+#include "UI.h"
 
 /**
  * Responsible for holding render details of textures to be rendered in each cycle through the game loop
@@ -41,6 +42,8 @@ int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char
 RenderData *renderDataInit(  ) ;
 
 void updateScoreTexture( Score *score, SDL_Renderer *renderer );
+void updateLivesRemainingTexture(LivesRemainingUI *lr );
+
 
 /**
  * Sorts the renderDatas based on their Y position in the destRects

@@ -45,7 +45,7 @@ char *gP1Text = "P1";
 char *gP2Text = "P2";
 char *gP3Text = "P3";
 char *gP4Text = "P4";
-char *gPressAToJoinText = "Press ( A ) to Join!";
+char *gPressAToJoinText = "Press Any Button to Join!";
 char *gReadyText = "Ready!";
 char *gPressStartWhenReadyText = "Press Start When All Players Ready!";
 SDL_Texture *gJoinGameTextTexture = NULL;
@@ -300,7 +300,7 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
             if ( event->key.keysym.sym == SDLK_RETURN ) {
                 start_release = SDL_TRUE;
             }
-            if( event->key.keysym.sym == SDLK_z ) {
+            if( event->key.keysym.sym != SDLK_RETURN && event->key.keysym.sym != SDLK_x ) {
                 // full players?
                 if( gNumPlayers >= 4 ) {
                     break;
@@ -343,7 +343,7 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
             if( event->cbutton.button == SDL_CONTROLLER_BUTTON_B ) {
                 back_release = SDL_TRUE;
             }
-            else if( event->cbutton.button == SDL_CONTROLLER_BUTTON_A ) { // a player wants to join
+            else if( event->cbutton.button != SDL_CONTROLLER_BUTTON_B && event->cbutton.button != SDL_CONTROLLER_BUTTON_START ) { // a player wants to join
                 // full players?
                 if( gNumPlayers >= 4 ) {
                     continue;
