@@ -5,6 +5,8 @@
 #include "targeting.c"
 #include "actor.c"
 #include "movement.c"
+#include "programStateProcessing.c"
+#include "gamePlayingState.c"
 //end dont need
 #include "tiles.c"
 #include "resources.c"
