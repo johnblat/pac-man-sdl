@@ -33,6 +33,8 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->invincibilityTimers[entityId] = (float *)malloc(sizeof(float));
     entities->stopTimers[entityId] = (float *)malloc(sizeof(float));
     entities->isActive[entityId] = (SDL_bool *)malloc(sizeof(SDL_bool));
+    entities->deathTimers[entityId] = (float *)malloc(sizeof(float));
+    entities->respawnTimers[entityId] = (float *)malloc(sizeof(float));
 
     //initialize
     // position
@@ -91,6 +93,9 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     *entities->stopTimers[entityId] = 0.0f;
     
     *entities->isActive[ entityId ] = SDL_FALSE;
+
+    *entities->deathTimers[entityId] = 0.0f;
+    *entities->respawnTimers[entityId] = 0.0f;
 
     return entityId;
 }
@@ -484,6 +489,75 @@ void processSpeedBoostTimer( Entities *entities, float deltaTime ) {
     }
 }
 
+
+void processDeathTimers( Entities *entities, LevelConfig *levelConfig, float deltaTime ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if(entities->deathTimers[eid] == NULL ) {
+            continue;
+        }
+        if( *entities->deathTimers[eid] <= 0.0f ){
+            continue;
+        }
+
+        entities->animatedSprites[eid]->current_anim_row = 2;
+        *entities->deathTimers[eid] -= deltaTime;
+        if( entities->renderDatas[eid]->scale > 0.0f ) {
+            if( *entities->deathTimers[eid] < 1.5f ) {
+                entities->renderDatas[eid]->scale -= deltaTime * 1.5;
+            }
+        }
+        if( *entities->deathTimers[eid] <= 0.0f ) {
+            entities->actors[eid]->current_tile = levelConfig->pacStartingTile;
+            //entities->actors[eid]->current_tile.y -= 1;
+            entities->actors[eid]->next_tile = levelConfig->pacStartingTile;
+            entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
+            entities->actors[ eid ]->world_position.y =  tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y - 1;
+            entities->actors[ eid ]->world_center_point.x = ( int ) entities->actors[ eid ]->world_position.x + ( ACTOR_SIZE / 2 );
+            entities->actors[ eid ]->world_center_point.y = ( int ) entities->actors[ eid ]->world_position.y + ( ACTOR_SIZE / 2 );
+
+            entities->actors[ eid ]->world_top_sensor.x = entities->actors[ eid ]->world_position.x + ( ACTOR_SIZE / 2 );
+            entities->actors[ eid ]->world_top_sensor.y = entities->actors[ eid ]->world_position.y;
+
+            entities->actors[ eid ]->world_bottom_sensor.x = entities->actors[ eid ]->world_position.x + ( ACTOR_SIZE / 2 );
+            entities->actors[ eid ]->world_bottom_sensor.y = entities->actors[ eid ]->world_position.y + ACTOR_SIZE;
+
+            entities->actors[ eid ]->world_left_sensor.x = entities->actors[ eid ]->world_position.x;
+            entities->actors[ eid ]->world_left_sensor.y = entities->actors[ eid ]->world_position.y + ( ACTOR_SIZE / 2 );
+
+            entities->actors[ eid ]->world_right_sensor.x = entities->actors[ eid ]->world_position.x + ACTOR_SIZE;
+            entities->actors[ eid ]->world_right_sensor.y = entities->actors[ eid ]->world_position.y + ( ACTOR_SIZE / 2 );    
+
+            entities->actors[ eid ]->direction = DIR_NONE;
+
+            //actor_set_current_tile( entities->actors[ eid ] );
+            entities->actors[ eid ]->next_tile = entities->actors[ eid ]->current_tile;
+            *entities->invincibilityTimers[ eid ] = 5.0f;
+
+            *entities->respawnTimers[eid] = 0.5f;
+
+            Mix_PlayChannel(PAC_RESPAWN_CHANNEL, g_PacRespawnSound, 0 );
+        }
+    }
+}
+
+
+void processRespawnTimers( Entities *entities, float deltaTime ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if(entities->respawnTimers[eid] == NULL ) {
+            continue;
+        }
+        if( *entities->respawnTimers[eid] <= 0.0f ){
+            continue;
+        }
+
+        *entities->respawnTimers[eid] -= deltaTime;
+        if(entities->renderDatas[eid]->scale < 1.0f ) {
+            entities->renderDatas[eid]->scale += deltaTime * 3;
+        }
+    }
+}
+
+
 void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
     for( int eid = 0; eid < g_NumEntities; eid++ ) {
         if( entities->mirrorEntityRefs[ eid ] == NULL ) {
@@ -538,7 +612,8 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
         entities->actors[eid]->world_position.x -= ACTOR_SIZE;
 
 
-        entities->actors[eid]->world_center_point = playerActor->world_center_point;
+        entities->actors[eid]->world_center_point.x = entities->actors[eid]->world_position.x + ACTOR_SIZE/2;
+        entities->actors[eid]->world_center_point.y = entities->actors[eid]->world_position.y + ACTOR_SIZE/2;
 
         entities->actors[eid]->velocity.x = -playerActor->velocity.x;
         entities->actors[eid]->velocity.y = playerActor->velocity.y;

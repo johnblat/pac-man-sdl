@@ -86,6 +86,8 @@ int main( int argc, char *argv[] ) {
         entities.speedBoostTimers[i] = NULL;
         entities.stopTimers[i] = NULL;
         entities.mirrorEntityRefs[i] = NULL;
+        entities.deathTimers[i] = NULL;
+        entities.respawnTimers[i] = NULL;
         
 
 
@@ -241,10 +243,17 @@ int main( int argc, char *argv[] ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
 
-    g_PacDieOhNoSound = Mix_LoadWAV("res/sounds/oh-no.wav");
-    if( g_PacDieOhNoSound == NULL ) {
+    g_PacDieSound = Mix_LoadWAV("res/sounds/life_lost.wav");
+    if( g_PacDieSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
+    Mix_VolumeChunk( g_PacDieSound, 30 );
+
+    g_PacRespawnSound = Mix_LoadWAV("res/sounds/respawn.wav");
+    if( g_PacRespawnSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+    Mix_VolumeChunk( g_PacRespawnSound, 30 );
 
     g_GhostEatSound = Mix_LoadWAV("res/sounds/ghost_eaten.wav");
     if( g_GhostEatSound == NULL ) {
@@ -495,7 +504,7 @@ int main( int argc, char *argv[] ) {
     Mix_FreeChunk(g_GhostEatenSweetSound);
     Mix_FreeChunk(g_GhostEatenCoolSound);
     Mix_FreeChunk(g_GhostEatenGroovySound);
-    Mix_FreeChunk(g_PacDieOhNoSound);
+    Mix_FreeChunk(g_PacDieSound);
     Mix_FreeChunk(g_PacChompSound2);
     Mix_FreeChunk(g_GhostEatSound);
     Mix_FreeChunk(g_PickupEaten);
@@ -596,6 +605,14 @@ int main( int argc, char *argv[] ) {
         if( entities.isActive[i] != NULL ) {
             free(entities.isActive[i]);
             entities.isActive[i] = NULL;
+        }
+        if( entities.deathTimers[i] != NULL ) {
+            free(entities.deathTimers[i]);
+            entities.deathTimers[i] = NULL;
+        }
+        if( entities.respawnTimers[i] != NULL ) {
+            free(entities.respawnTimers[i]);
+            entities.respawnTimers[i] = NULL;
         }
         
     }

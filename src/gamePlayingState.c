@@ -237,6 +237,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
     //     }
     // }
 
+    // power pellets
     int ppIdx = 0; 
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
         if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid ] != POWER_PELLET_PICKUP ) {
@@ -249,6 +250,8 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         entities->actors[ eid ]->current_tile = levelConfig->powerPelletTiles[ ppIdx ];
         entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
         entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
+        entities->actors[eid]->world_center_point.x = entities->actors[eid]->world_position.x + ACTOR_SIZE/2;
+        entities->actors[eid]->world_center_point.y = entities->actors[eid]->world_position.y + ACTOR_SIZE/2;
 
         g_NumDots++;
         ppIdx++;
@@ -280,7 +283,10 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             break; // loaded in all the pickup configs for the level
         }
 
-        entities->actors[ eid ]->current_tile = levelConfig->pacStartingTile;
+        entities->actors[ eid ]->current_tile.x = levelConfig->pacStartingTile.x;
+        entities->actors[ eid ]->current_tile.y = levelConfig->pacStartingTile.y;
+
+        
 
         entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
         entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
@@ -291,6 +297,8 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         *entities->scores[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].scoreReward;
         entities->animatedSprites[ eid ]->texture_atlas_id = levelConfig->pickupConfigs[ pickupIdx ].textureAtlasId;
         entities->animatedSprites[ eid ]->default_texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
+        entities->actors[eid]->world_center_point.x = entities->actors[eid]->world_position.x + ACTOR_SIZE/2;
+        entities->actors[eid]->world_center_point.y = entities->actors[eid]->world_position.y + ACTOR_SIZE/2;
 
         pickupIdx++; // will go to the next one if any
 
@@ -529,6 +537,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     processSpeedBoostTimer( entities, deltaTime );
     processStopTimers( entities, deltaTime);
     processInvincibilityTimers(entities, deltaTime);
+    processDeathTimers( entities, levelConfig, deltaTime );
+    processRespawnTimers( entities, deltaTime );
 
 
     SDL_DestroyTexture( gCooldownTexture );

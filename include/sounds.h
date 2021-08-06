@@ -18,7 +18,8 @@ Mix_Chunk *g_GhostEatenYeahSound = NULL;
 Mix_Chunk *g_GhostEatenSweetSound = NULL;
 Mix_Chunk *g_GhostEatenCoolSound = NULL;
 Mix_Chunk *g_GhostEatenGroovySound = NULL;
-Mix_Chunk *g_PacDieOhNoSound = NULL;
+Mix_Chunk *g_PacDieSound = NULL;
+Mix_Chunk *g_PacRespawnSound = NULL;
 Mix_Chunk *g_PacChompSound2 = NULL;
 Mix_Chunk *g_GhostEatSound = NULL;
 Mix_Chunk *g_PickupEaten = NULL;
@@ -33,7 +34,9 @@ typedef enum {
     PAC_CHOMP_CHANNEL = 15,
     PAC_CHOMP_CHANNEL2 = 14,
     GHOST_EAT_CHANNEL = 13,
-    PICKUP_EAT_CHANNEL = 12
+    PICKUP_EAT_CHANNEL = 12,
+    PAC_DIE_CHANNEL = 11,
+    PAC_RESPAWN_CHANNEL = 10
 } SoundChannel;
 
 #endif

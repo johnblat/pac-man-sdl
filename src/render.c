@@ -124,6 +124,8 @@ RenderData *renderDataInit( ) {
 
     render_clip->alphaMod = 255;
 
+    render_clip->scale = 1.0f;
+
 
     return render_clip;
 }
@@ -179,16 +181,28 @@ void set_render_clip_values_based_on_positions_and_animation( Entities *entities
         uint8_t current_row = entities->animatedSprites[ eid ]->current_anim_row;
         uint8_t num_cols = entities->animatedSprites[ eid ]->num_frames_col; 
         uint8_t clip_idx = ( current_row * num_cols ) + current_col;
-        entities->renderDatas[ eid ]->dest_rect.x =
-            offset.x
-            + entities->actors[ eid ]->world_position.x
-            - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].w - ACTOR_SIZE ) / 2;
-        entities->renderDatas[ eid ]->dest_rect.y = 
-            offset.y
-            + entities->actors[ eid ]->world_position.y 
-            - ( g_texture_atlases[ texture_atlas_id ].sprite_clips[clip_idx ].h - ACTOR_SIZE ) / 2;
+        
         entities->renderDatas[ eid ]->dest_rect.w = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].w;
         entities->renderDatas[ eid ]->dest_rect.h = g_texture_atlases[ texture_atlas_id ].sprite_clips[ clip_idx].h;
+
+        // adjust for scale
+        entities->renderDatas[eid]->dest_rect.w *= entities->renderDatas[eid]->scale;
+        entities->renderDatas[eid]->dest_rect.h *= entities->renderDatas[eid]->scale;
+
+        int centerx = entities->actors[eid]->world_center_point.x;
+        int centery = entities->actors[eid]->world_center_point.y;
+
+
+        int w = entities->renderDatas[eid]->dest_rect.w;
+        int h = entities->renderDatas[eid]->dest_rect.h;
+        entities->renderDatas[ eid ]->dest_rect.x =
+            offset.x
+            + centerx
+            - ( w ) / 2;
+        entities->renderDatas[ eid ]->dest_rect.y = 
+            offset.y
+            + centery 
+            - ( h ) / 2;
 
         entities->renderDatas[ eid ]->flip = SDL_FLIP_NONE;
 

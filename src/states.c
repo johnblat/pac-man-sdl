@@ -245,33 +245,24 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
         if( *entities->isActive[playerId] == SDL_FALSE ) {
             continue;
         }
+        if( *entities->deathTimers[playerId] > 0.0f ) {
+            continue;
+        }
         if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
             //Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
+            *entities->deathTimers[playerId] = 2.0f;
+            Mix_PlayChannel(PAC_DIE_CHANNEL, g_PacDieSound, 0 );
+            // close down any mirror players
+            for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+                if( entities->mirrorEntityRefs[eid] == NULL ) {
+                    continue;
+                }
+                if( *entities->mirrorEntityRefs[eid] == playerId ) {
+                    *entities->activeTimers[eid] = 0;
+                }
+            }
 
-            entities->actors[playerId]->current_tile = levelConfig->pacStartingTile;
-            //entities->actors[playerId]->current_tile.y -= 1;
-            entities->actors[playerId]->next_tile = levelConfig->pacStartingTile;
-            entities->actors[ playerId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
-            entities->actors[ playerId ]->world_position.y =  tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y - 1;
-            entities->actors[ playerId ]->world_center_point.y = ( int ) entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );
 
-            entities->actors[ playerId ]->world_top_sensor.x = entities->actors[ playerId ]->world_position.x + ( ACTOR_SIZE / 2 );
-            entities->actors[ playerId ]->world_top_sensor.y = entities->actors[ playerId ]->world_position.y;
-
-            entities->actors[ playerId ]->world_bottom_sensor.x = entities->actors[ playerId ]->world_position.x + ( ACTOR_SIZE / 2 );
-            entities->actors[ playerId ]->world_bottom_sensor.y = entities->actors[ playerId ]->world_position.y + ACTOR_SIZE;
-
-            entities->actors[ playerId ]->world_left_sensor.x = entities->actors[ playerId ]->world_position.x;
-            entities->actors[ playerId ]->world_left_sensor.y = entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );
-
-            entities->actors[ playerId ]->world_right_sensor.x = entities->actors[ playerId ]->world_position.x + ACTOR_SIZE;
-            entities->actors[ playerId ]->world_right_sensor.y = entities->actors[ playerId ]->world_position.y + ( ACTOR_SIZE / 2 );    
-
-            entities->actors[ playerId ]->direction = DIR_NONE;
-
-            //actor_set_current_tile( entities->actors[ playerId ] );
-            entities->actors[ playerId ]->next_tile = entities->actors[ playerId ]->current_tile;
-            *entities->invincibilityTimers[ playerId ] = 5.0f;
 
             if(gLivesRemaining > 0 ){
                 gLivesRemaining--;

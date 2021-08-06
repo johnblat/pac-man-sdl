@@ -33,8 +33,6 @@ typedef struct CoolDownStock {
 } CooldownStock;
 
 
-
-
 typedef struct Entities {
     SDL_bool           *isActive          [ MAX_NUM_ENTITIES ]; // process. If deactivated, can be overwritten
     Position           *positions         [ MAX_NUM_ENTITIES ];
@@ -58,6 +56,9 @@ typedef struct Entities {
     float              *speedBoostTimers   [ MAX_NUM_ENTITIES ];
     float              *invincibilityTimers[MAX_NUM_ENTITIES]; // won't be able to get hurt
     float              *stopTimers         [MAX_NUM_ENTITIES]; // won't move
+    float               *deathTimers [ MAX_NUM_ENTITIES];
+    float               *respawnTimers[MAX_NUM_ENTITIES];
+    
 } Entities;
 
 EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite );
@@ -94,6 +95,8 @@ void processStopTimers(Entities *entities, float deltaTime );
 void makePlayerInvincibleForDuration( Entities *entities, EntityId playerId, float duration);
 void processInvincibilityTimers( Entities *entities, float deltaTime) ;
 
+void processDeathTimers( Entities *entities, LevelConfig *levelConfig, float deltaTime );
+void processRespawnTimers( Entities *entities, float deltaTime );
 
 
 #endif

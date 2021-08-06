@@ -34,6 +34,7 @@ typedef struct RenderData {
     SDL_Rect dest_rect;
     SDL_RendererFlip flip;
     uint8_t alphaMod;
+    float scale; // adjusts the dest_rect
 } RenderData;
 
 

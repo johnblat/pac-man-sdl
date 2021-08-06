@@ -151,6 +151,9 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
         if( entities->stopTimers[ i ] != NULL && *entities->stopTimers[i] > 0.0f ) {
             continue;
         }
+        if( entities->deathTimers[ i ] != NULL && *entities->deathTimers[i] > 0.0f ) {
+            continue;
+        }
         // should process
         // don't allow changing direciton if pacman is more than half of the tile
         trySetDirection( entities, i, tilemap );

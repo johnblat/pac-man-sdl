@@ -25,6 +25,45 @@ void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfi
     gLivesRemaining = 2 + gNumPlayers;
     gLivesRemainingUI.livesRemaining = gLivesRemaining;
     updateLivesRemainingTexture(&gLivesRemainingUI);
+
+
+    // zero out certian stuff
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if( entities->deathTimers[eid] != NULL ) {
+            *entities->deathTimers[eid] = 0.0f;
+        }
+        if( entities->respawnTimers[eid] != NULL ) {
+            *entities->respawnTimers[eid] = 0.0f;
+        }
+        if( entities->slowTimers[eid] != NULL ) {
+            *entities->slowTimers[eid] = 0.0f;
+        }
+        if( entities->dashTimers[eid] != NULL ) {
+            *entities->dashTimers[eid] = 0.0f;
+        }
+        if( entities->stopTimers[eid] != NULL ) {
+            *entities->stopTimers[eid] = 0.0f;
+        }
+        if( entities->activeTimers[eid] != NULL ) {
+            *entities->activeTimers[eid] = 0.0f;
+        }
+        if( entities->chargeTimers[eid] != NULL ) {
+            *entities->chargeTimers[eid] = 0.0f;
+        }
+        if( entities->invincibilityTimers[eid] != NULL ) {
+            *entities->invincibilityTimers[eid] = 0.0f;
+        }
+        if( entities->speedBoostTimers[eid] != NULL ) {
+            *entities->speedBoostTimers[eid] = 0.0f;
+        }
+
+        if( entities->dashCooldownStocks[eid] != NULL ) {
+            entities->dashCooldownStocks[eid]->cooldownTimer = 0.0f;
+            entities->dashCooldownStocks[eid]->currentNumStock = 3;
+
+        }
+    }
+
     level_advance( levelConfig, tilemap, gRenderer, entities );
     initializeDashStockRects( gNumPlayers );
 
@@ -34,6 +73,8 @@ void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfi
         pid = gPlayerIds[ i ];
         *entities->isActive[pid] = SDL_TRUE;
     }
+
+    
 }
 
 void mainMenuProgramStateEnter(Entities *entities) {
@@ -71,6 +112,8 @@ void mainMenuProgramStateEnter(Entities *entities) {
             entities->keybinds[eid] = NULL;
         }
     }
+
+    
     //load_current_level_off_disk( levelConfig, tilemap, gRenderer);
     return;
 }
