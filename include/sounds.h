@@ -23,6 +23,7 @@ Mix_Chunk *g_PacRespawnSound = NULL;
 Mix_Chunk *g_PacChompSound2 = NULL;
 Mix_Chunk *g_GhostEatSound = NULL;
 Mix_Chunk *g_PickupEaten = NULL;
+Mix_Chunk *g_ExtraLifeSound = NULL;
 
 SDL_bool gPacChomp2 = SDL_FALSE;
 
@@ -36,7 +37,8 @@ typedef enum {
     GHOST_EAT_CHANNEL = 13,
     PICKUP_EAT_CHANNEL = 12,
     PAC_DIE_CHANNEL = 11,
-    PAC_RESPAWN_CHANNEL = 10
+    PAC_RESPAWN_CHANNEL = 10,
+    EXTRA_LIFE_CHANNEL = 9
 } SoundChannel;
 
 #endif

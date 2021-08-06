@@ -48,10 +48,18 @@ void dimensions_of_atlas_surface( int tile_size, int *num_rows, int *num_cols, S
 /**
  * ADDING OR REMOVING TILES TO MAP
  */
-void add_selected_tile_to_position( SDL_Point mouse_position, TwoDimensionalArrayIndex atlas_indexes[ TILE_ROWS ][ TILE_COLS ], SDL_Point tile_map_screen_position, TwoDimensionalArrayIndex selection_panel_atlas_index ) {
-    if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
-        return;
+void add_selected_tile_to_position( SDL_Point mouse_position, TileSelectionPanel *panel, TwoDimensionalArrayIndex atlas_indexes[ TILE_ROWS ][ TILE_COLS ], SDL_Point tile_map_screen_position, TwoDimensionalArrayIndex selection_panel_atlas_index ) {
+
+    if ( mouse_position.x < panel->num_cols * panel->tile_size ) {
+  
+        if ( mouse_position.y < panel->num_rows * panel->tile_size ) {
+            return;
+        }
     }
+
+    // if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
+    //     return;
+    // }
 
     SDL_Point grid_point = screen_point_to_tile_grid_point( mouse_position,  tile_map_screen_position );
 
@@ -302,6 +310,7 @@ int main( int argc, char *argv[] ) {
         delta_time = delta_time < max_delta_time ?  delta_time : max_delta_time;
 
         while (SDL_PollEvent( &event ) != 0 ) {
+            
             if( event.type == SDL_QUIT ) {
                 quit = 1;
             }
@@ -453,7 +462,7 @@ int main( int argc, char *argv[] ) {
             //TODO: add selected tile to position
             update_selected_texture_index_from_screen_based_position( mouse_point, &tile_selection_panel, &selected_texture_atlas_index );
             if( current_mode == TILE_MODE ) {
-                add_selected_tile_to_position( mouse_point, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
+                add_selected_tile_to_position( mouse_point, &tile_selection_panel, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
             }
             else if (current_mode == DOT_MODE ) {
                 add_dot_to_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_dots );

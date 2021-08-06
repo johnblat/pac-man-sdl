@@ -357,6 +357,7 @@ void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS
             
             score->score_number += 10;
 
+
         }
 
     }
@@ -740,6 +741,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                 if( points_equal( entities->actors[ playerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
                     *entities->activeTimers[ eid ] = 0.0f;
                     score->score_number += *entities->scores[ eid ];
+
 
                     Mix_PlayChannel( PICKUP_EAT_CHANNEL, g_PickupEaten, 0 );
 

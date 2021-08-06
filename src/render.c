@@ -17,8 +17,6 @@
 // TextureAtlas g_texture_atlases[ MAX_TEXTURE_ATLASES ];
 // uint8_t num_texture_atlases = 0;
 
-uint8_t num_texture_atlases = 0; 
-
 int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char *filename, int num_rows, int num_cols ) {
     if( num_texture_atlases >= MAX_TEXTURE_ATLASES ) {
         fprintf(stderr, "Can't add more texture atlases. Limit of %d reached\n", MAX_TEXTURE_ATLASES );
@@ -224,6 +222,7 @@ void updateScoreTexture( Score *score, SDL_Renderer *renderer ) {
 }
 
 void updateLivesRemainingTexture(LivesRemainingUI *lr ) {
+    lr->livesRemaining = gLivesRemaining;
     snprintf( lr->text, 16, "Lives: %d", lr->livesRemaining );
     SDL_Surface *lr_surface = TTF_RenderText_Solid(lr->font, lr->text, lr->color );
 

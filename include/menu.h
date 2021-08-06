@@ -8,6 +8,8 @@
 #include "interpolation.h"
 #include "globalData.h"
 #include "render.h"
+#include "commonEventHandling.h"
+#include "menuState.h"
 
 typedef enum MainMenuSelection {
     PLAY_GAME,
@@ -31,10 +33,17 @@ SDL_Texture *gMainMenuExitTextTexture = NULL;
 SDL_Rect gMainMenuPlayGameTextDestRect;
 SDL_Rect gMainMenuExitTextDestRect;
 
+
+
 // End Main Menu
 
 // Join Game
 
+typedef struct UIComponent {
+    char text[32];
+    SDL_Rect destRect;
+    SDL_Texture *texture;
+} UIComponent;
 
 SDL_Rect gP1JoinPanelRect;
 SDL_Rect gP2JoinPanelRect;
@@ -157,6 +166,9 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
     SDL_bool selected = SDL_FALSE;
 
     while( SDL_PollEvent( event ) != 0 ) {
+        SDL_bool shouldBreak = commonEventHandling(event);
+        if( shouldBreak ) break;
+
         if( event->type == SDL_CONTROLLERBUTTONUP ) {
             if( event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP ) {
                 move_up = SDL_TRUE;
@@ -178,6 +190,17 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
             else if( event->key.keysym.sym == SDLK_RETURN ) {
                 selected = SDL_TRUE;
             }
+            else if( event->key.keysym.sym == MoreLivesCheatCode[moreLivesCheatCodeIdx]) {
+                moreLivesCheatCodeIdx++;
+                if( moreLivesCheatCodeIdx == numMoreLivesCheatCodeKeys ) {
+                    moreLivesCheatCodeEnabled = SDL_TRUE;
+                    Mix_PlayChannel(EXTRA_LIFE_CHANNEL, g_ExtraLifeSound, 0);
+                }
+            }
+            else {
+                moreLivesCheatCodeIdx = 0;
+            }
+            
         }
     }
 
@@ -246,10 +269,9 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
     SDL_bool start_release = SDL_FALSE;
 
     while( SDL_PollEvent( event ) != 0 ) {
-        if( event->type == SDL_QUIT ) {
-            gProgramState = EXIT_STATE;
-            break;
-        }
+        SDL_bool shouldBreak = commonEventHandling( event );
+        if( shouldBreak ) break;
+
         else if( event->type == SDL_CONTROLLERDEVICEADDED ) {
             if( ! (g_NumGamepads>=MAX_NUM_GAME_CONTROLLERS ) ) {
                 Sint32 joyStickDeviceId = event->cdevice.which;
@@ -300,7 +322,7 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
             if ( event->key.keysym.sym == SDLK_RETURN ) {
                 start_release = SDL_TRUE;
             }
-            if( event->key.keysym.sym != SDLK_RETURN && event->key.keysym.sym != SDLK_x ) {
+            if( event->key.keysym.sym != SDLK_RETURN && event->key.keysym.sym != SDLK_x && event->key.keysym.sym != SDLK_F11 ) {
                 // full players?
                 if( gNumPlayers >= 4 ) {
                     break;
@@ -427,6 +449,22 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
     //  or a keybind if the keyboard was pressed
     if( back_release == SDL_TRUE ) {
         gMenuState = MAIN_MENU_SCREEN_MENU_STATE;
+        gNumPlayers = 0;
+        // get rid of controllers because we use NULL to tell whether or not a player needs to be assigned a controller in the Join Game Screen
+        // TODO: Figure out a better way to do this
+        for( int eid = 0; eid < g_NumEntities; eid++ ) {
+            if( entities->gameControllerIds[eid]== NULL) {
+                continue;
+            }
+            free(entities->gameControllerIds[eid]);
+            entities->gameControllerIds[eid] = NULL;
+        }
+        // also set keybinds to null. Setting up join game needs this null to reason about it.
+        for( int eid = 0; eid < g_NumEntities;eid++ ) {
+            if( entities->keybinds[eid] != NULL ) {
+                entities->keybinds[eid] = NULL;
+            }
+        }
         return;
     }
     if( start_release == SDL_TRUE && gNumPlayers > 0 ) {
@@ -464,6 +502,9 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
 void titleScreenProcess(LevelConfig *levelConfig, Entities *entities, TileMap *tilemap, SDL_Event *event, Blink *startMenuBlink, float deltaTime );
 inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, TileMap *tilemap, SDL_Event *event, Blink *startMenuBlink, float deltaTime ) {
     while( SDL_PollEvent( event ) != 0 ) {
+        SDL_bool shouldBreak = commonEventHandling(event);
+        if( shouldBreak ) break;
+
         if( event->type == SDL_QUIT ) {
             gProgramState = EXIT_STATE;
             break;
@@ -479,10 +520,7 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
                 gQuit = 1;
                 break;
             }
-            if( event->key.keysym.sym == SDLK_F11 ) {
-                Uint32 windowFlags = SDL_GetWindowFlags( gWindow );
-                SDL_SetWindowFullscreen( gWindow, windowFlags ^= SDL_WINDOW_FULLSCREEN );
-            }
+
         }
         if( event->type == SDL_CONTROLLERDEVICEADDED ) {
             if( ! (g_NumGamepads>=MAX_NUM_GAME_CONTROLLERS ) ) {

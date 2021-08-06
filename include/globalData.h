@@ -11,7 +11,7 @@
 
 SDL_bool g_show_debug_info = SDL_FALSE;
 
-SDL_bool gIsFullscreen = SDL_FALSE;
+SDL_bool gIsFullscreen = SDL_TRUE;
 
 unsigned int gCurrentLevel;
 
@@ -55,6 +55,25 @@ TTF_Font *gFont = NULL;
 ProgramState gProgramState = MENU_PROGRAM_STATE;
 MenuState gMenuState = TITLE_SCREEN_MENU_STATE;
 GamePlayingState gGamePlayingState = GAME_PLAYING;
+
+int gExtraLifeMilestones[4] = {10000,50000,100000,200000};
+unsigned int gNumExtraLifeMilestones = 4;
+unsigned int gCurrentExtraLifeMilestoneIdx = 0;
+
+
+// cheat
+SDL_KeyCode MoreLivesCheatCode[5] = {SDLK_c, SDLK_h, SDLK_e, SDLK_a, SDLK_t };
+unsigned int moreLivesCheatCodeIdx = 0;
+unsigned int numMoreLivesCheatCodeKeys = 5;
+SDL_bool moreLivesCheatCodeEnabled = SDL_FALSE;
+
+
+// viewport
+// int gViewportWidth = 1920;
+// int gViewportHeight = 1080;
+
+// int gCanvasWidth = SCREEN_WIDTH;
+// int gCanvasHeight = SCREEN_HEIGHT;
 
 
 #endif 

@@ -139,7 +139,7 @@ int main( int argc, char *argv[] ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
     }
-
+    SDL_ShowCursor(SDL_DISABLE);
     gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
     if (gRenderer == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
@@ -266,6 +266,12 @@ int main( int argc, char *argv[] ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_PickupEaten, 20 );
+
+    g_ExtraLifeSound = Mix_LoadWAV("res/sounds/extra_life.wav");
+    if( g_ExtraLifeSound == NULL ) {
+        fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
+    }
+    Mix_VolumeChunk( g_ExtraLifeSound, 20 );
    // Mix_VolumeChunk( g_GhostEatenGroovySound, 100 );
 
     g_GhostEatenSounds[ 0 ] = g_GhostEatenYeahSound;
@@ -302,8 +308,7 @@ int main( int argc, char *argv[] ) {
 
 
     // INIT TILEMAP
-    tilemap.one_way_tile.x = levelConfig.ghostPenTile.x;
-    tilemap.one_way_tile.y = levelConfig.ghostPenTile.y - 2;
+    
 
     // init messages
     for( int i = 0; i < g_NumTimedMessages; i++ ) {

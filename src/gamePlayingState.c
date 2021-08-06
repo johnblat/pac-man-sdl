@@ -16,6 +16,7 @@
 #include "resources.h"
 #include "renderProcessing.h"
 #include "gamePlayingState.h"
+#include "commonEventHandling.h"
 
 #include <SDL2/SDL.h>
 
@@ -137,6 +138,8 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
 
     load_current_level_off_disk( levelConfig, tilemap, renderer );
 
+    tilemap->one_way_tile.x = levelConfig->ghostPenTile.x;
+    tilemap->one_way_tile.y = levelConfig->ghostPenTile.y - 3;
     
 
     // pacman
@@ -193,7 +196,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         if( *entities->targetingBehaviors[i] == SHADOW_BEHAVIOR ) {
             SDL_Point blinkyTile;
             blinkyTile.x = ghost_pen_tile.x;
-            blinkyTile.y = ghost_pen_tile.y - 3; // above pen. outside of gate
+            blinkyTile.y = ghost_pen_tile.y - 4; // above pen. outside of gate
             actor_reset_data( entities->actors[i], blinkyTile );
             *entities->ghostStates[i] = STATE_NORMAL;
         }
@@ -320,15 +323,11 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     while (SDL_PollEvent( event ) != 0 ) {
         //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
-        
-        if( event->type == SDL_QUIT ) {
-            gProgramState = EXIT_STATE;
-            break;
-        }
+        SDL_bool shouldBreak = commonEventHandling(event);
+        if( shouldBreak ) break;
+ 
         if ( event->type == SDL_KEYDOWN ) {
-            if ( event->key.keysym.sym == SDLK_b ) {
-                g_show_debug_info = !g_show_debug_info;
-            }
+            
             if (event->key.keysym.sym == SDLK_v ) {
                 // ghost_vulnerable_timer = 20.0f;
                 // for( int i = 1; i < 5; ++i ) {
@@ -344,17 +343,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             if( event->key.keysym.sym == SDLK_RETURN ) {
                 gGamePlayingState = GAME_PAUSED;
                 break;
-            }
-            if( event->key.keysym.sym == SDLK_ESCAPE ) {
-                gQuit = 1;
-                break;
-            }
-            if( event->key.keysym.sym == SDLK_F11 ) {
-                Uint32 windowFlags = SDL_GetWindowFlags( gWindow );
-                SDL_SetWindowFullscreen( gWindow, windowFlags ^= SDL_WINDOW_FULLSCREEN );
-            }
-    
-        
+            }        
         }
         if( event->type == SDL_CONTROLLERBUTTONDOWN ) {
             for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
@@ -540,6 +529,12 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     processDeathTimers( entities, levelConfig, deltaTime );
     processRespawnTimers( entities, deltaTime );
 
+    if( gCurrentExtraLifeMilestoneIdx < gNumExtraLifeMilestones && gScore.score_number > gExtraLifeMilestones[ gCurrentExtraLifeMilestoneIdx ]) {
+        gLivesRemaining++;
+        gCurrentExtraLifeMilestoneIdx++;
+        Mix_PlayChannel(EXTRA_LIFE_CHANNEL, g_ExtraLifeSound, 0 );
+        updateLivesRemainingTexture( &gLivesRemainingUI );
+    }
 
     SDL_DestroyTexture( gCooldownTexture );
     char coolDownNumberText[2];
@@ -751,6 +746,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             // player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
                 gScore.score_number += *entities->scores[eid];
+
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
@@ -781,6 +777,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             // mirrored player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
                 gScore.score_number += *entities->scores[eid];
+
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
@@ -822,6 +819,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             // player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
                 gScore.score_number += *entities->scores[ eid ];
+
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
@@ -852,6 +850,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             // mirrored player eats power pellet
             if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
                 gScore.score_number += *entities->scores[eid];
+                
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
@@ -1202,19 +1201,14 @@ void gamePausedProcess( Entities *entities, SDL_Event *event, LevelConfig *level
 inline void gamePausedProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime ) {
     while (SDL_PollEvent( event ) != 0 ) {
         //int gameControllerState = SDL_GameControllerEventState( SDL_QUERY );
-        
-        if( event->type == SDL_QUIT ) {
-            gProgramState = EXIT_STATE;
-            break;
-        }
+        SDL_bool shouldBreak = commonEventHandling(event);
+        if( shouldBreak ) break;
+
         if( event->type == SDL_KEYUP ) {
             if( event->key.keysym.sym == SDLK_RETURN ) {
                 gGamePlayingState = GAME_PLAYING;
             }
-            if( event->key.keysym.sym == SDLK_F11 ) {
-                Uint32 windowFlags = SDL_GetWindowFlags( gWindow );
-                SDL_SetWindowFullscreen( gWindow, windowFlags ^= SDL_WINDOW_FULLSCREEN );
-            }
+
         }
         if( event->type == SDL_CONTROLLERBUTTONUP ) {
             for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
