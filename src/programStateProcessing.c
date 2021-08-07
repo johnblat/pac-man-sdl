@@ -23,7 +23,7 @@ void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfi
     gProgramState = GAME_PLAYING_PROGRAM_STATE;
     gGamePlayingState = LEVEL_START;
 
-    gLivesRemaining = moreLivesCheatCodeEnabled ? 50 :  2 + gNumPlayers;
+    gLivesRemaining = moreLivesCheatCodeEnabled ? 50 :  gInitialLivesRemaining + gCheatAdditionalLivesRemaining + gNumPlayers;
     moreLivesCheatCodeEnabled = SDL_FALSE;
     moreLivesCheatCodeIdx = 0;
     gLivesRemainingUI.livesRemaining = gLivesRemaining;
@@ -95,6 +95,7 @@ void mainMenuProgramStateEnter(Entities *entities) {
     gLivesRemaining = 3;
     updateLivesRemainingTexture( &gLivesRemainingUI );
     gNumPlayers = 0;
+    gCheatAdditionalLivesRemaining = 0;
 
     // deactivate all players
     EntityId pid;
