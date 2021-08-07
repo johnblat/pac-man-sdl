@@ -24,6 +24,7 @@
 #include "programState.h"
 #include "menu.h"
 #include "gamePlayingState.h"
+#include <unistd.h>
 
 //unsigned int gNumLevels = 0;
 
@@ -52,6 +53,10 @@ void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_sc
 
 
 int main( int argc, char *argv[] ) {
+    printf("Starting up...\n");
+    char cwd[128];
+    getcwd(cwd, 128);
+    printf("cwd: %s\n", cwd);
     
     TileMap tilemap;
     Entities entities;
