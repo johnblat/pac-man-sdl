@@ -20,7 +20,11 @@ unsigned int gNumLevels = 0;
 
 int determine_number_of_levels_from_dirs( ) {
     // int num_levels = 0;
+    printf("determining number of levels...\n");
     DIR *res_dir = opendir("res/levels");
+    if( res_dir == NULL ) {
+        fprintf(stderr, "Error opening levels dir\n");
+    }
     struct dirent *d;
     char *first_five_chars = "level";
     while( ( d = readdir( res_dir ) ) != NULL ) {
