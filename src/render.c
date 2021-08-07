@@ -15,7 +15,7 @@
 
 // const uint8_t MAX_TEXTURE_ATLASES = 10; 
 // TextureAtlas g_texture_atlases[ MAX_TEXTURE_ATLASES ];
-// uint8_t num_texture_atlases = 0;
+uint8_t num_texture_atlases = 0;
 
 int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char *filename, int num_rows, int num_cols ) {
     if( num_texture_atlases >= MAX_TEXTURE_ATLASES ) {
