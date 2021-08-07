@@ -67,7 +67,8 @@ unsigned int moreLivesCheatCodeIdx = 0;
 unsigned int numMoreLivesCheatCodeKeys = 5;
 SDL_bool moreLivesCheatCodeEnabled = SDL_FALSE;
 
-
+unsigned int gInitialLivesRemaining = 2;
+unsigned int gCheatAdditionalLivesRemaining = 0;
 // viewport
 // int gViewportWidth = 1920;
 // int gViewportHeight = 1080;

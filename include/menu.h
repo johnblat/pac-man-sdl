@@ -197,6 +197,10 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
                     Mix_PlayChannel(EXTRA_LIFE_CHANNEL, g_ExtraLifeSound, 0);
                 }
             }
+            else if( event->key.keysym.sym == SDLK_KP_1 ) {
+                Mix_PlayChannel(EXTRA_LIFE_CHANNEL, g_ExtraLifeSound, 0);
+                gCheatAdditionalLivesRemaining++;
+            }
             else {
                 moreLivesCheatCodeIdx = 0;
             }
