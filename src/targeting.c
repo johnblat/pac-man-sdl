@@ -7,8 +7,8 @@
 #include "tiles.h"
 
 SDL_Point shadow_home_tile = { 0, 0 };
-SDL_Point ambush_home_tile = { TILE_COLS - 1, 0 };
-SDL_Point moody_home_tile = { 0, TILE_ROWS - 1 };
+SDL_Point ambush_home_tile = { 0, TILE_ROWS - 1 };
+SDL_Point moody_home_tile = { TILE_COLS - 1, 0 };
 SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
 
 void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, int ghost_state ) {
