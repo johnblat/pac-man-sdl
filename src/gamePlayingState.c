@@ -314,6 +314,25 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         *entities->isActive[pid] = SDL_TRUE;
     }
 
+    // reset all inputmasks
+    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+        if(entities->inputMasks[i] == NULL ) {
+            continue;
+        }
+        if( ( *entities->inputMasks[i] & g_INPUT_ACTION ) ) {
+            *entities->inputMasks[ i ] ^= g_INPUT_ACTION;
+        }
+        if( ( *entities->inputMasks[ i ] & g_INPUT_DOWN ) ) {
+            *entities->inputMasks[ i ] ^= g_INPUT_DOWN;
+        }
+        if( *entities->inputMasks[i] & g_INPUT_RIGHT )
+        *entities->inputMasks[ i ] ^= g_INPUT_RIGHT;
+        if( *entities->inputMasks[i] & g_INPUT_LEFT )
+        *entities->inputMasks[ i ] ^= g_INPUT_LEFT;
+            if( *entities->inputMasks[i] & g_INPUT_UP )
+        *entities->inputMasks[ i ] ^= g_INPUT_UP;
+    }
+
     return SDL_FALSE;
 
 }
@@ -400,7 +419,9 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                         
                     }
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_X ) {
-                        *entities->inputMasks[ i ] ^= g_INPUT_ACTION;
+                        if( ( *entities->inputMasks[i] & g_INPUT_ACTION ) ) {
+                            *entities->inputMasks[ i ] ^= g_INPUT_ACTION;
+                        }
 
                     }
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
