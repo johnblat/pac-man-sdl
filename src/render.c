@@ -236,8 +236,8 @@ void updateLivesRemainingTexture(LivesRemainingUI *lr ) {
     SDL_FreeSurface(lr_surface);
 }
 
-SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color color, int screenPosCenterX, int screenPosCenterY ) {
-    SDL_Surface *surface = TTF_RenderText_Solid( gFont, text, color );
+SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color color, TTF_Font *font, int screenPosCenterX, int screenPosCenterY ) {
+    SDL_Surface *surface = TTF_RenderText_Solid( font, text, color );
     SDL_Texture *targetTexture = SDL_CreateTextureFromSurface( gRenderer, surface );
     destRect->w = surface->w;
     destRect->h = surface->h;

@@ -6,6 +6,7 @@
 #include "comparisons.h"
 #include "jb_types.h"
 #include "input.h"
+#include "globalData.h"
 
 void tile_wrap( SDL_Point *tile ) {
     if( tile->y >= TILE_ROWS ) 
@@ -139,6 +140,20 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
     }
 }
 
+void handlePlayerCollision(Actor **actors, EntityId eid ) {
+    EntityId pid = 0;
+    for( int pidx = 0; pidx < gNumPlayers; pidx++ ) {
+        pid = gPlayerIds[pidx];
+        if( pid == eid ) {
+            continue;
+        }
+        if( points_equal( actors[eid]->next_tile, actors[pid]->current_tile ) ){
+            Vector_f reversed_velocity = { -actors[ eid ]->velocity.x, -actors[ eid ]->velocity.y };
+            moveActor(actors[ eid ], reversed_velocity );
+        }
+    }
+}
+
 void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTime ) {
     uint8_t **inputMasks  = entities->inputMasks;
     Actor **actors  = entities->actors;
@@ -226,6 +241,8 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                 //         return;
                 //     }
                 // }
+                // other pac-men?
+                handlePlayerCollision(actors, i );
             }
         }
 
@@ -282,6 +299,13 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                     Vector_f reversed_velocity = { -actors[ i ]->velocity.x, -actors[ i ]->velocity.y };
                     moveActor(actors[ i ], reversed_velocity );
                 }
+                // target tile is a one_way_tile
+                if( points_equal(tilemap->one_way_tile, actors[i]->next_tile)) {
+                    Vector_f reversed_velocity = { -actors[ i ]->velocity.x, -actors[ i ]->velocity.y };
+                    moveActor(actors[ i ], reversed_velocity );
+                }
+                // other pac-men?
+                handlePlayerCollision(actors, i );
             }
         }
 
@@ -339,6 +363,8 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                     Vector_f reversed_velocity = { -actors[ i ]->velocity.x, -actors[ i ]->velocity.y };
                     moveActor(actors[ i ], reversed_velocity );
                 }
+                // other pac-men?
+                handlePlayerCollision(actors, i );
             }
         }
 
@@ -397,6 +423,8 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                     Vector_f reversed_velocity = { -actors[ i ]->velocity.x, -actors[ i ]->velocity.y };
                     moveActor(actors[ i ], reversed_velocity );
                 }
+                // other pac-men?
+                handlePlayerCollision(actors, i );
             }
         }
 

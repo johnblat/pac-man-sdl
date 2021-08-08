@@ -55,5 +55,5 @@ void updateLivesRemainingTexture(LivesRemainingUI *lr );
  */
 int render_sort( SDL_bool **isActive, RenderData **renderDatas, RenderData **renderDatasSortArr );
 
-SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color color, int screenPosCenterX, int screenPosCenterY );
+SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color color, TTF_Font *font, int screenPosCenterX, int screenPosCenterY );
 #endif

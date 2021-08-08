@@ -234,7 +234,7 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
             }
     }
 
-    // check if player should die
+   // check if player should die
     EntityId playerId;
     for( int i = 0; i < numPlayers; i++ ) {
         playerId = playerIds[ i ];

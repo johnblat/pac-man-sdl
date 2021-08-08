@@ -25,6 +25,10 @@ char *gTitleScreenText = "Press START to Play!";
 SDL_Texture *gTitleScreenTextTexture = NULL;
 SDL_Rect gTitleScreenTextDestRect;
 
+
+SDL_Texture *gTitleScreenImageTexture = NULL;
+const char *gTitleScreenImageFilename = "res/img/TitleScreenImage.png";
+
 // Main Menu Screen
 char *gMainMenuPlayGameText = "Play Game";
 char *gMainMenuExitText = "Exit";
@@ -99,13 +103,13 @@ void exitGameChosen( ) {
 
 
 void initJoinGameStuff() {
-    gJoinGameTextTexture = createTextTexture(&gJoinGameTextRect, gJoinGameText, white, SCREEN_WIDTH/2, 50 );
-    gP1TextTexture = createTextTexture(&gP1TextRect, gP1Text, white, SCREEN_WIDTH/4, SCREEN_HEIGHT/4 );
-    gP2TextTexture = createTextTexture(&gP2TextRect, gP2Text, white, (SCREEN_WIDTH/4) * 3 , SCREEN_HEIGHT/4 );
-    gP3TextTexture = createTextTexture(&gP3TextRect, gP3Text, white, SCREEN_WIDTH/4, ( SCREEN_HEIGHT/4) * 3 );
-    gP4TextTexture = createTextTexture(&gP4TextRect, gP4Text, white, (SCREEN_WIDTH/4) * 3, (SCREEN_HEIGHT/4) * 3 );
+    gJoinGameTextTexture = createTextTexture(&gJoinGameTextRect, gJoinGameText, black, gMedFont, SCREEN_WIDTH/2, 50 );
+    gP1TextTexture = createTextTexture(&gP1TextRect, gP1Text, black, gMedFont, SCREEN_WIDTH/4, SCREEN_HEIGHT/4 );
+    gP2TextTexture = createTextTexture(&gP2TextRect, gP2Text, black, gMedFont, (SCREEN_WIDTH/4) * 3 , SCREEN_HEIGHT/4 );
+    gP3TextTexture = createTextTexture(&gP3TextRect, gP3Text, black, gMedFont, SCREEN_WIDTH/4, ( SCREEN_HEIGHT/4) * 3 );
+    gP4TextTexture = createTextTexture(&gP4TextRect, gP4Text, black,  gMedFont,(SCREEN_WIDTH/4) * 3, (SCREEN_HEIGHT/4) * 3 );
 
-    gReadyTextTexture = createTextTexture(&gP1ReadyTextRect, gReadyText, white, gP1TextRect.x+(gP1TextRect.w/2), gP1TextRect.y+ 50 );
+    gReadyTextTexture = createTextTexture(&gP1ReadyTextRect, gReadyText, green, gMedFont, gP1TextRect.x+(gP1TextRect.w/2), gP1TextRect.y+ 50 );
     gP2ReadyTextRect.x = gP2TextRect.x+(gP2TextRect.w/2);
     gP2ReadyTextRect.y = gP2TextRect.y+50;
     gP2ReadyTextRect.w = gP1ReadyTextRect.w;
@@ -127,7 +131,7 @@ void initJoinGameStuff() {
     gReadyRects[ 2 ] = gP3ReadyTextRect;
     gReadyRects[ 3 ] = gP4ReadyTextRect;
 
-    gPressAToJoinTextTexture = createTextTexture(&gP1PressAToJoinTextRect, gPressAToJoinText, white, gP1TextRect.x+(gP1TextRect.w/2), gP1TextRect.y+ 50  );
+    gPressAToJoinTextTexture = createTextTexture(&gP1PressAToJoinTextRect, gPressAToJoinText, white, gMedFont, gP1TextRect.x+(gP1TextRect.w/2), gP1TextRect.y+ 50  );
     gP2PressAToJoinTextRect.x = gP2TextRect.x-(gP1PressAToJoinTextRect.w/2);
     gP2PressAToJoinTextRect.y = gP2TextRect.y+50;
     gP2PressAToJoinTextRect.w = gP1PressAToJoinTextRect.w;
@@ -151,12 +155,12 @@ void initJoinGameStuff() {
 
 
 
-    gPressStartWhenReadyTextTexture = createTextTexture(&gPressStartWhenReadyTextRect, gPressStartWhenReadyText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+    gPressStartWhenReadyTextTexture = createTextTexture(&gPressStartWhenReadyTextRect, gPressStartWhenReadyText, white, gMedFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
 }
 
 void initMainMenuScreenStuff(){
-    gMainMenuPlayGameTextTexture = createTextTexture( &gMainMenuPlayGameTextDestRect, gMainMenuPlayGameText, white, SCREEN_WIDTH / 2, 450 );
-    gMainMenuExitTextTexture = createTextTexture( &gMainMenuExitTextDestRect, gMainMenuExitText, white, SCREEN_WIDTH / 2, 550 );
+    gMainMenuPlayGameTextTexture = createTextTexture( &gMainMenuPlayGameTextDestRect, gMainMenuPlayGameText, black, gLargeFont, SCREEN_WIDTH / 2, 700 );
+    gMainMenuExitTextTexture = createTextTexture( &gMainMenuExitTextDestRect, gMainMenuExitText, black, gLargeFont, SCREEN_WIDTH / 2, 800 );
 }
 
 
@@ -259,6 +263,9 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
     // render
     SDL_SetRenderDrawColor( gRenderer, 20,20,20,255);
     SDL_RenderClear( gRenderer );
+
+    SDL_RenderCopy(gRenderer, gTitleScreenImageTexture, NULL, NULL );
+
 
     SDL_RenderCopy( gRenderer, gMainMenuPlayGameTextTexture, NULL, &gMainMenuPlayGameTextDestRect);
     SDL_RenderCopy( gRenderer, gMainMenuExitTextTexture, NULL, &gMainMenuExitTextDestRect);
@@ -477,7 +484,7 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
     }
 
     // render
-    SDL_SetRenderDrawColor( gRenderer, 20,20,20,255);
+    SDL_SetRenderDrawColor( gRenderer, pac_color.r,pac_color.g,pac_color.b,255);
     SDL_RenderClear( gRenderer );
 
     SDL_RenderCopy( gRenderer, gJoinGameTextTexture, NULL, &gJoinGameTextRect);
@@ -600,6 +607,8 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
     SDL_SetRenderDrawColor( gRenderer, 20,20,20,255);
     SDL_RenderClear( gRenderer );
 
+    SDL_RenderCopy(gRenderer, gTitleScreenImageTexture, NULL, NULL );
+    
     // display message
 
     SDL_RenderCopy( gRenderer, gTitleScreenTextTexture, NULL, &gTitleScreenTextDestRect);

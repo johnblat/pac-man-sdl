@@ -9,7 +9,15 @@
 #include "menu.h"
 #include "globalData.h"
 
+
 void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfig *levelConfig ) {
+
+    // destroy title screen texture
+    if( gTitleScreenImageTexture != NULL ) {
+        SDL_DestroyTexture(gTitleScreenImageTexture );
+        gTitleScreenImageTexture = NULL;
+    }
+
     Mix_HaltMusic();
     Mix_FreeMusic( g_Music );
     g_Music = Mix_LoadMUS( gGameMusicFilename );
@@ -81,6 +89,14 @@ void gamePlayProgramStateEnter( Entities *entities, TileMap *tilemap, LevelConfi
 }
 
 void mainMenuProgramStateEnter(Entities *entities) {
+    SDL_Surface *tsSurface = IMG_Load(gTitleScreenImageFilename);
+    if( tsSurface == NULL ) {
+        fprintf(stderr, "Something went wrong trying to open %s\n", gTitleScreenImageFilename);
+    }
+    gTitleScreenImageTexture = SDL_CreateTextureFromSurface(gRenderer, tsSurface);
+    SDL_FreeSurface( tsSurface );
+    tsSurface = NULL;
+
     gScore.score_number = 0;
     Mix_HaltChannel( GHOST_SOUND_CHANNEL );
     Mix_HaltChannel( GHOST_VULN_CHANNEL );

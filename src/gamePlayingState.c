@@ -47,9 +47,9 @@ float gLevelEndTimer = 0.0f;
 Blink ghostVulnerableBlink;
 
 void initGamePlayingStuff( ) {
-    gPauseTextTexture = createTextTexture(&gPauseTextDestRect, gPauseText, pac_color, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-    gLevelStartTextTexture = createTextTexture(&gLevelStartTextRect, gLevelStartText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
-    gLevelEndTextTexture = createTextTexture(&gLevelEndTextRect, gLevelEndText, white, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 );
+    gPauseTextTexture = createTextTexture(&gPauseTextDestRect, gPauseText, pac_color, gLargeFont, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    gLevelStartTextTexture = createTextTexture(&gLevelStartTextRect, gLevelStartText, white, gLargeFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+    gLevelEndTextTexture = createTextTexture(&gLevelEndTextRect, gLevelEndText, white, gLargeFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 );
 
     ghostVulnerableBlink = blinkInit( 0.2, 1, 255 );
     //SDL_SetTextureColorMod(g_texture_atlases[3].texture, 0,0,0);
@@ -60,7 +60,7 @@ void allGhostsVulnerableStateEnter( Entities *entities, LevelConfig *levelConfig
         if( entities->ghostStates[ eid ] == NULL ) {
             continue;
         }
-        if ( *entities->ghostStates[ eid ] != STATE_GO_TO_PEN && *entities->ghostStates[ eid ] != STATE_LEAVE_PEN && *entities->ghostStates[eid] != STATE_STAY_PEN ) {
+        if ( *entities->ghostStates[ eid ] == STATE_NORMAL ) {
 
             *entities->ghostStates[ eid ] = STATE_VULNERABLE;
             vulnerable_enter( entities, eid );
@@ -144,17 +144,33 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
 
     // pacman
     // reset players
-    for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-        if( entities->inputMasks[i] == NULL ) {
-            continue;
-        }
-        actor_reset_data( entities->actors[ i ], levelConfig->pacStartingTile );
-        *entities->inputMasks[i  ] = 0b0;
-        *entities->chargeTimers[i] = 0.0f;
-        *entities->dashTimers[i] = 0.0f;
-        *entities->inputMasks[i]= 0b0;
-        entities->actors[i]->direction = DIR_NONE;
+    EntityId pid = 0;
+    for( int i = 0; i <gNumPlayers; i++ ) {
+        pid = gPlayerIds[i];
+        SDL_Point startingTile = levelConfig->pacStartingTile;
+        startingTile.x += i;
+        actor_reset_data( entities->actors[ pid ], startingTile);
+        
+        *entities->inputMasks[pid  ] = 0b0;
+        *entities->chargeTimers[pid] = 0.0f;
+        *entities->dashTimers[pid] = 0.0f;
+        *entities->inputMasks[pid]= 0b0;
+        entities->actors[pid]->direction = DIR_NONE;
     }
+    // for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
+    //     if( entities->inputMasks[i] == NULL ) {
+    //         continue;
+    //     }
+    //     SDL_Point startingTile = levelConfig->pacStartingTile;
+    //     startingTile.x += i;
+    //     actor_reset_data( entities->actors[ i ], startingTile);
+        
+    //     *entities->inputMasks[i  ] = 0b0;
+    //     *entities->chargeTimers[i] = 0.0f;
+    //     *entities->dashTimers[i] = 0.0f;
+    //     *entities->inputMasks[i]= 0b0;
+    //     entities->actors[i]->direction = DIR_NONE;
+    // }
     
     
     //ghosts
@@ -308,7 +324,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
     }
 
     // reactivate all players
-    EntityId pid = 0;
+    //EntityId pid = 0;
     for( int i = 0; i < gNumPlayers; i++ ) {
         pid = gPlayerIds[i];
         *entities->isActive[pid] = SDL_TRUE;
@@ -560,7 +576,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     SDL_DestroyTexture( gCooldownTexture );
     char coolDownNumberText[2];
     snprintf(coolDownNumberText, 2, "%d", entities->dashCooldownStocks[ 4 ]->currentNumStock );
-    SDL_Surface *cooldownSurface = TTF_RenderText_Solid( gFont, coolDownNumberText, pac_color );
+    SDL_Surface *cooldownSurface = TTF_RenderText_Solid( gMedFont, coolDownNumberText, pac_color );
     gCooldownTexture = SDL_CreateTextureFromSurface( gRenderer, cooldownSurface );
     gCooldownRect.x =  SCREEN_WIDTH/2 - cooldownSurface->w/2;
     gCooldownRect.y =  20;

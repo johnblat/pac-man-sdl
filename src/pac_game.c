@@ -135,7 +135,7 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    Uint32 windowFlags = SDL_WINDOW_SHOWN;
+    Uint32 windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
     if( gIsFullscreen ) {
         windowFlags |= SDL_WINDOW_FULLSCREEN;
     }
@@ -290,8 +290,14 @@ int main( int argc, char *argv[] ) {
     Mix_PlayMusic(g_Music, -1 );
     
     // initialize font
-    gFont = TTF_OpenFont("res/gomarice_no_continue.ttf", 30 );
-    if ( gFont == NULL ) {
+    gMedFont = TTF_OpenFont("res/gomarice_no_continue.ttf", 30 );
+    if ( gMedFont == NULL ) {
+        fprintf(stderr, "%s\n", TTF_GetError());
+        exit( EXIT_FAILURE );
+    }
+
+    gLargeFont = TTF_OpenFont("res/gomarice_no_continue.ttf", 60);
+    if ( gLargeFont == NULL ) {
         fprintf(stderr, "%s\n", TTF_GetError());
         exit( EXIT_FAILURE );
     }
@@ -311,14 +317,13 @@ int main( int argc, char *argv[] ) {
 
 
 
-
     // INIT TILEMAP
     
 
     // init messages
     for( int i = 0; i < g_NumTimedMessages; i++ ) {
         g_TimedMessages[ i ].color = white;
-        g_TimedMessages[ i ].font = gFont;
+        g_TimedMessages[ i ].font = gMedFont;
         g_TimedMessages[ i ].remainingTime = 0.0f;
         g_TimedMessages[ i ].world_position.x = -1;
         g_TimedMessages[ i ].world_position.y = -1;
@@ -382,7 +387,7 @@ int main( int argc, char *argv[] ) {
 
     // INIT SCORE
     
-    gScore.font = gFont;
+    gScore.font = gMedFont;
     gScore.score_color = pac_color;
     gScore.score_number = 0;
     SDL_Surface *score_surface = TTF_RenderText_Solid( gScore.font, "Score : 0", gScore.score_color);
@@ -393,7 +398,7 @@ int main( int argc, char *argv[] ) {
     gScore.score_render_dst_rect.h = score_surface->h;
 
     // INIT LIVES UI
-    gLivesRemainingUI.font = gFont;
+    gLivesRemainingUI.font = gMedFont;
     gLivesRemainingUI.color = pac_color;
     gLivesRemainingUI.livesRemaining = 0;
     SDL_Surface *lr_surface = TTF_RenderText_Solid(gLivesRemainingUI.font, "Lives: 0", gLivesRemainingUI.color );
@@ -427,10 +432,10 @@ int main( int argc, char *argv[] ) {
     } 
 
     // TODO: Compress this initialization into a function
-    SDL_Surface *mainMenuTextSurface = TTF_RenderText_Solid( gFont, gTitleScreenText, white );
+    SDL_Surface *mainMenuTextSurface = TTF_RenderText_Solid( gLargeFont, gTitleScreenText, black );
     gTitleScreenTextTexture = SDL_CreateTextureFromSurface( gRenderer, mainMenuTextSurface );
-    gTitleScreenTextDestRect.x = SCREEN_WIDTH / 2 - mainMenuTextSurface->w/2 ;
-    gTitleScreenTextDestRect.y =  SCREEN_HEIGHT/2 - mainMenuTextSurface->h/2;
+    gTitleScreenTextDestRect.x = SCREEN_WIDTH / 2 - (mainMenuTextSurface->w)/2 ;
+    gTitleScreenTextDestRect.y =  SCREEN_HEIGHT * 0.75 - (mainMenuTextSurface->h)/2 ;
     gTitleScreenTextDestRect.w =  mainMenuTextSurface->w;
     gTitleScreenTextDestRect.h =  mainMenuTextSurface->h;
     SDL_FreeSurface( mainMenuTextSurface );
@@ -441,6 +446,9 @@ int main( int argc, char *argv[] ) {
     initGamePlayingStuff();
 
     Blink startMenuBlink = blinkInit( 0.33f, 255, 50);
+
+
+    mainMenuProgramStateEnter(&entities);
 
     while (!gQuit) {
         // semi-fixed timestep
@@ -501,7 +509,7 @@ int main( int argc, char *argv[] ) {
     }
     SDL_DestroyRenderer( gRenderer );
     SDL_DestroyWindow( gWindow );
-    TTF_CloseFont( gFont );
+    TTF_CloseFont( gMedFont );
 
     SDL_DestroyTexture( gScore.score_texture );
     SDL_DestroyTexture( gLivesRemainingUI.texture );

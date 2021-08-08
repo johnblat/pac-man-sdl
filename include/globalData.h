@@ -31,7 +31,10 @@ EntityId gGhostIds[ 8 ];
 unsigned int gNumGhosts = 0;
 
 SDL_Color pac_color = {200,150,0};
+SDL_Color pac_color2 = {187,187,0};
 SDL_Color white = {200,200,255};
+SDL_Color black = {0,0,0};
+SDL_Color green = {45,108,0};
 
 
 // used to track progress in level
@@ -49,7 +52,9 @@ unsigned int gLivesRemaining = 0;
 LivesRemainingUI gLivesRemainingUI;
 
 SDL_Window *gWindow = NULL;
-TTF_Font *gFont = NULL; 
+TTF_Font *gMedFont = NULL; 
+TTF_Font *gLargeFont = NULL;
+
 
 // STATES
 ProgramState gProgramState = MENU_PROGRAM_STATE;
