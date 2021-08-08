@@ -139,7 +139,7 @@ int main( int argc, char *argv[] ) {
     if( gIsFullscreen ) {
         windowFlags |= SDL_WINDOW_FULLSCREEN;
     }
-    gWindow = SDL_CreateWindow( "JB Pacmonster", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, windowFlags);
+    gWindow = SDL_CreateWindow( "Pac-Man SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, windowFlags);
     if ( gWindow == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );

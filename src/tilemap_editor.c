@@ -227,7 +227,7 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    window = SDL_CreateWindow( "JB Pacmonster", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow( "Pac-Man SDL TileMap Editor", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if ( window == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
