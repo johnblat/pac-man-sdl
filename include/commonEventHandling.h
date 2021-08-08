@@ -26,6 +26,15 @@ SDL_bool commonEventHandling(SDL_Event *event ) {
 
     
     }
+    if( event->type == SDL_WINDOWEVENT ) {
+        if( event->window.event == SDL_WINDOWEVENT_RESIZED ) {
+            SDL_Log("Window resized to %d X %d", event->window.data1, event->window.data2 );
+            float canvasWidth = event->window.data1;
+            //float canvasHeight = event->window.data2;
+            float ratio = (float)((float)canvasWidth/(float)SCREEN_WIDTH);
+            SDL_RenderSetScale( gRenderer, ratio, ratio );
+        }
+            }
     return SDL_FALSE;
 }
 
