@@ -140,16 +140,20 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
     }
 }
 
-void handlePlayerCollision(Actor **actors, EntityId eid ) {
+void handlePlayerCollision(Entities *entities, EntityId eid ) {
     EntityId pid = 0;
     for( int pidx = 0; pidx < gNumPlayers; pidx++ ) {
         pid = gPlayerIds[pidx];
         if( pid == eid ) {
             continue;
         }
-        if( points_equal( actors[eid]->next_tile, actors[pid]->current_tile ) ){
-            Vector_f reversed_velocity = { -actors[ eid ]->velocity.x, -actors[ eid ]->velocity.y };
-            moveActor(actors[ eid ], reversed_velocity );
+        // dont bump into inactive players
+        if(entities->isActive[pid] != NULL && *entities->isActive[pid] == SDL_FALSE) {
+            continue;
+        }
+        if( points_equal( entities->actors[eid]->next_tile, entities->actors[pid]->current_tile ) ){
+            Vector_f reversed_velocity = { -entities->actors[ eid ]->velocity.x, -entities->actors[ eid ]->velocity.y };
+            moveActor(entities->actors[ eid ], reversed_velocity );
         }
     }
 }
@@ -242,7 +246,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                 //     }
                 // }
                 // other pac-men?
-                handlePlayerCollision(actors, i );
+                handlePlayerCollision(entities, i );
             }
         }
 
@@ -305,7 +309,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                     moveActor(actors[ i ], reversed_velocity );
                 }
                 // other pac-men?
-                handlePlayerCollision(actors, i );
+                handlePlayerCollision(entities, i );
             }
         }
 
@@ -364,7 +368,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                     moveActor(actors[ i ], reversed_velocity );
                 }
                 // other pac-men?
-                handlePlayerCollision(actors, i );
+                handlePlayerCollision(entities, i );
             }
         }
 
@@ -424,7 +428,7 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
                     moveActor(actors[ i ], reversed_velocity );
                 }
                 // other pac-men?
-                handlePlayerCollision(actors, i );
+                handlePlayerCollision(entities, i );
             }
         }
 
