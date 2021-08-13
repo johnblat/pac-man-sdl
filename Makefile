@@ -1,7 +1,7 @@
 CC=clang
 
 OBJS = ./src/pac_game_jumbo.c
-TILEMAP_OBJS = ./src/tilemap_editor.c
+TILEMAP_OBJS = ./src/editor_jumbo.c
 
 COMPILER_FLAGS = -w -Wall -Werror -g -fno-omit-frame-pointer -std=c99
 
