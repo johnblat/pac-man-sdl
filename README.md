@@ -124,9 +124,11 @@ Credits
     - Stephen Bath
     - Colton Powell
 - Music:
+    - > :warning: **If you are going to use or distribute the music**: Contact the artists for permission!
     - **Rock Paper Funk Take Off** by Broken Groove
     - **Don't Worry We've Got Warp Speed** by Broken Groove
     - **Trust Relax Autopilot** by Broken Groove
     - **DisFunkTional** by ThatAndyGuy
     - **Optionstest** ( Main menu music ) by Colonel Sandwich 
+
 
