@@ -522,7 +522,7 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
         }
         if( event->type == SDL_KEYUP ) {
             if( event->key.keysym.sym == SDLK_RETURN ) {
-                startMenuBlink->blinkRate = 0.2;
+                startMenuBlink->blinkRate = 0.1;
                 gMenuState = MAIN_MENU_SCREEN_MENU_STATE;
                 //gamePlayProgramStateEnter( entities, tilemap, levelConfig );
                 break;

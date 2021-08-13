@@ -445,7 +445,7 @@ int main( int argc, char *argv[] ) {
     initJoinGameStuff();
     initGamePlayingStuff();
 
-    Blink startMenuBlink = blinkInit( 0.33f, 255, 50);
+    Blink startMenuBlink = blinkInit( 0.1f, 255, 50);
 
 
     mainMenuProgramStateEnter(&entities);
