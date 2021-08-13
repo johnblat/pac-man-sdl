@@ -94,6 +94,27 @@ Create the corresponsding `res/levels/level#` directory of the level to edit if 
 - The rows and cols should be specified so that the sprite clips will be broken up appropriately
 - At each texture atlas specified, it will be assigned an incrementing ID from `0, 1, 2, ... ` and so on. This ID is to be referenced in other places where specifying what texture atlas to use. For example, in `res/animated_sprites`. By specifying the ID here, you are telling the animated sprite to point to that texture atlas.
 
+Building
+========
+
+Linux:
+- For development, one can use the Makefile
+- Required libs:
+    - libSDL2, libSDL2_image, libSDL2_ttf, libSDL2_mixer (install through your distribution's package manager)
+- Run the linux scripts for building a distributable version. The chosen file format is AppImage. 
+- Required tools for scripts provided (For building a distributable):
+    - [linuxdeploy](https://github.com/linuxdeploy/linuxdeploy)
+        - Helps build the AppDir and gather library dependencies from your system
+    - [AppImageToolkit](https://github.com/AppImage/AppImageKit)
+        - Converts the AppDir into an AppImage
+    
+Windows:
+- Required libs:
+    - libSDL2, libSDL2_image, libSDL2_ttf, libSDL2_mixer (install from whatever website hosts these for windows builds)
+- Can use the windows scripts to build a distributable
+
+
+
 Credits
 =======
 
