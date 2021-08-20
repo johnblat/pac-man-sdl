@@ -75,7 +75,7 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
 
 void cooldownProcess( Entities *entities, float deltaTime ) ;
 
-void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime );
+void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, LevelConfig *levelConfig, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime );
 
 EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelConfig );
 void processTempMirrorPlayers( Entities *entities, float deltaTime );

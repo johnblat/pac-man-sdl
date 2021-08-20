@@ -32,7 +32,7 @@ void vulnerable_enter_all( Entities *entities );
 
 void vulnerable_enter( Entities *entities, EntityId ghostId );
 
-void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostId, TileMap *tm );
+void set_random_direction_and_next_tile( Entities *entities, EntityId ghostId, TileMap *tm );
 
 /**
  * Ghosts will basically wander aimlessly in the priority tiles. They will not choose targets.

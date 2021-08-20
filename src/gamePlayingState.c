@@ -72,20 +72,7 @@ void initGamePlayingStuff( ) {
     //SDL_SetTextureColorMod(g_texture_atlases[3].texture, 0,0,0);
 }
 
-void allGhostsVulnerableStateEnter( Entities *entities, LevelConfig *levelConfig ) {
-    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-        if( entities->ghostStates[ eid ] == NULL ) {
-            continue;
-        }
-        if ( *entities->ghostStates[ eid ] == STATE_NORMAL ) {
 
-            *entities->ghostStates[ eid ] = STATE_VULNERABLE;
-            vulnerable_enter( entities, eid );
-        }
-        
-    }   
-    gGhostVulnerableTimer = levelConfig->ghostVulnerableDuration;  
-}
 
 void gamePlayingStateProcess( SDL_Event *event, Entities *entities, TileMap *tilemap, LevelConfig *levelConfig, float deltaTime ){
     switch(gGamePlayingState) {
@@ -327,6 +314,8 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
 
         entities->actors[ eid ]->current_tile.x = levelConfig->pacStartingTile.x;
         entities->actors[ eid ]->current_tile.y = levelConfig->pacStartingTile.y;
+        entities->actors[eid]->next_tile = entities->actors[eid]->current_tile;
+        entities->actors[eid]->direction = DIR_UP;
 
         
 
@@ -861,80 +850,80 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     }
 
-    // process temp power pellets
-    for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-        if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid] != POWER_PELLET_PICKUP  || entities->numDots[eid] == NULL) { // its a temporary power pellet pickup. 
-            continue;
-        }
-        int numDotsEaten = g_StartingNumDots - g_NumDots;
-        if( *entities->numDots[eid] >= numDotsEaten ) { // not ready
-            continue;
-        }
+    // // process temp power pellets
+    // for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+    //     if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid] != POWER_PELLET_PICKUP  || entities->numDots[eid] == NULL) { // its a temporary power pellet pickup. 
+    //         continue;
+    //     }
+    //     int numDotsEaten = g_StartingNumDots - g_NumDots;
+    //     if( *entities->numDots[eid] >= numDotsEaten ) { // not ready
+    //         continue;
+    //     }
 
-        if( *entities->activeTimers[eid] <= 0.0f) { // its' dead
-            continue;
-        }
+    //     if( *entities->activeTimers[eid] <= 0.0f) { // its' dead
+    //         continue;
+    //     }
 
-        *entities->activeTimers[eid] -= deltaTime;
+    //     *entities->activeTimers[eid] -= deltaTime;
 
         // collide with players
-        for( int i = 0; i < gNumPlayers; i++ ) {
-            EntityId playerId = gPlayerIds[ i ];
-            // player eats power pellet
-            if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
-                gScore.score_number += *entities->scores[ eid ];
+    //     for( int i = 0; i < gNumPlayers; i++ ) {
+    //         EntityId playerId = gPlayerIds[ i ];
+    //         // player eats power pellet
+    //         if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
+    //             gScore.score_number += *entities->scores[ eid ];
 
-                g_NumGhostsEaten = 0;
-                // move it outside of the world area for now.
-                // TODO: deactivate this somehow
-                entities->actors[ eid ]->current_tile.x = -1;
-                entities->actors[ eid ]->current_tile.y = -1;
-                entities->actors[ eid ]->world_position.x = -100;
-                entities->actors[ eid ]->world_position.y = -100;
-                entities->actors[ eid ]->world_center_point.x = -100;
-                entities->actors[ eid ]->world_center_point.y = -100;
-                //g_NumDots--;
+    //             g_NumGhostsEaten = 0;
+    //             // move it outside of the world area for now.
+    //             // TODO: deactivate this somehow
+    //             entities->actors[ eid ]->current_tile.x = -1;
+    //             entities->actors[ eid ]->current_tile.y = -1;
+    //             entities->actors[ eid ]->world_position.x = -100;
+    //             entities->actors[ eid ]->world_position.y = -100;
+    //             entities->actors[ eid ]->world_center_point.x = -100;
+    //             entities->actors[ eid ]->world_center_point.y = -100;
+    //             //g_NumDots--;
 
-                // make ghosts all vulnerable state
-                allGhostsVulnerableStateEnter( entities, levelConfig );
-            }
-        }
+    //             // make ghosts all vulnerable state
+    //             allGhostsVulnerableStateEnter( entities, levelConfig );
+    //         }
+    //     }
         
-        //collide with mirror temp players
-        for( int i = 0; i < g_NumEntities; i++ ) {
+    //     //collide with mirror temp players
+    //     for( int i = 0; i < g_NumEntities; i++ ) {
             
-            if( entities->mirrorEntityRefs[ i ] == NULL ) {
-                continue;
-            }
-            if( *entities->activeTimers[i] <= 0.0f ) {
-                continue;
-            }
+    //         if( entities->mirrorEntityRefs[ i ] == NULL ) {
+    //             continue;
+    //         }
+    //         if( *entities->activeTimers[i] <= 0.0f ) {
+    //             continue;
+    //         }
 
-            EntityId mirroredTempPlayerId = i;
-            // mirrored player eats power pellet
-            if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
-                gScore.score_number += *entities->scores[eid];
+    //         EntityId mirroredTempPlayerId = i;
+    //         // mirrored player eats power pellet
+    //         if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
+    //             gScore.score_number += *entities->scores[eid];
                 
-                g_NumGhostsEaten = 0;
-                // move it outside of the world area for now.
-                // TODO: deactivate this somehow
-                entities->actors[ eid ]->current_tile.x = -1;
-                entities->actors[ eid ]->current_tile.y = -1;
-                entities->actors[ eid ]->world_position.x = -100;
-                entities->actors[ eid ]->world_position.y = -100;
-                entities->actors[ eid ]->world_center_point.x = -100;
-                entities->actors[ eid ]->world_center_point.y = -100;
-                g_NumDots--;
+    //             g_NumGhostsEaten = 0;
+    //             // move it outside of the world area for now.
+    //             // TODO: deactivate this somehow
+    //             entities->actors[ eid ]->current_tile.x = -1;
+    //             entities->actors[ eid ]->current_tile.y = -1;
+    //             entities->actors[ eid ]->world_position.x = -100;
+    //             entities->actors[ eid ]->world_position.y = -100;
+    //             entities->actors[ eid ]->world_center_point.x = -100;
+    //             entities->actors[ eid ]->world_center_point.y = -100;
+    //             g_NumDots--;
 
-                // make ghosts all vulnerable state
-                allGhostsVulnerableStateEnter( entities, levelConfig );  
-            }
+    //             // make ghosts all vulnerable state
+    //             allGhostsVulnerableStateEnter( entities, levelConfig );  
+    //         }
 
-        }
+    //     }
 
-    }
+    // }
 
-    processTemporaryPickup( entities, gPlayerIds, gNumPlayers, &gScore, tilemap, g_NumDots, deltaTime ) ;
+    processTemporaryPickup( entities, gPlayerIds, gNumPlayers, levelConfig, &gScore, tilemap, g_NumDots, deltaTime ) ;
 
 
 

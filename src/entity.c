@@ -16,6 +16,22 @@
 #include "globalData.h"
 
 
+void allGhostsVulnerableStateEnter( Entities *entities, LevelConfig *levelConfig ) {
+    for( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
+        if( entities->ghostStates[ eid ] == NULL ) {
+            continue;
+        }
+        if ( *entities->ghostStates[ eid ] == STATE_NORMAL ) {
+
+            *entities->ghostStates[ eid ] = STATE_VULNERABLE;
+            vulnerable_enter( entities, eid );
+        }
+        
+    }   
+    gGhostVulnerableTimer = levelConfig->ghostVulnerableDuration;  
+    g_NumGhostsEaten = 0;
+}
+
 unsigned int g_NumEntities = 0;
 
 EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite ) {
@@ -178,6 +194,10 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
     entities->actors[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
     entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
     entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
+    entities->actors[ entityId ]->next_tile = entities->actors[entityId]->current_tile;
+    entities->actors[entityId]->direction = DIR_LEFT;
+    entities->actors[entityId]->base_speed = levelConfig->baseSpeed;
+    entities->actors[entityId]->speed_multp = 0.5f;
 
     entities->animatedSprites[ entityId ] = init_animation( 0, 15, 1, 20 ); // need to set texture atlas later. This is an initial invalid texture atlas id.
 
@@ -711,7 +731,7 @@ void processInvincibilityTimers( Entities *entities, float deltaTime) {
     }
 }
 
-void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime ) {
+void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, LevelConfig *levelConfig, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime ) {
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
         if( entities->pickupTypes[ eid ] == NULL || entities->numDots[ eid ] == NULL || entities->activeTimers[ eid ] == NULL ) {
             continue;
@@ -737,6 +757,12 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                 blinkProcess(&pickupBlink, deltaTime);
                 entities->renderDatas[eid]->alphaMod = pickupBlink.values[pickupBlink.current_value_idx];
             }
+
+            // move it
+            if( points_equal( entities->actors[ eid ]->next_tile, entities->actors[ eid ]->current_tile ) ) {
+                set_random_direction_and_next_tile( entities, eid, tilemap );    
+            }
+            ghost_move( entities->actors, eid, tilemap, deltaTime );
 
             EntityId playerId;
             for( int i = 0; i < numPlayers; i++ ) {
@@ -782,6 +808,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                             overwriteInactiveTempMirrorPlayer( entities, playerId, 8.0f);
                             break;
                         case POWER_PELLET_PICKUP:
+                            allGhostsVulnerableStateEnter( entities, levelConfig );  
                             break;
                         case SPEED_BOOST_PICKUP:
                             overwriteSpeedBoostTimer( entities, playerId, gBaseSpeed * 1.2, 8.0f );

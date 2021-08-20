@@ -42,16 +42,16 @@ void vulnerable_enter( Entities *entities, EntityId ghostId ) {
 }
 
 
-void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostId, TileMap *tm ) {
+void set_random_direction_and_next_tile( Entities *entities, EntityId eid, TileMap *tm ) {
     SDL_Point tile_above, tile_below, tile_left, tile_right;
-    tile_above.x = entities->actors[ ghostId ]->current_tile.x;
-    tile_above.y = entities->actors[ ghostId ]->current_tile.y - 1;
-    tile_below.x = entities->actors[ ghostId ]->current_tile.x;
-    tile_below.y = entities->actors[ ghostId ]->current_tile.y + 1;
-    tile_left.x  = entities->actors[ ghostId ]->current_tile.x - 1;
-    tile_left.y  = entities->actors[ ghostId ]->current_tile.y;
-    tile_right.x = entities->actors[ ghostId ]->current_tile.x + 1;
-    tile_right.y = entities->actors[ ghostId ]->current_tile.y;
+    tile_above.x = entities->actors[ eid ]->current_tile.x;
+    tile_above.y = entities->actors[ eid ]->current_tile.y - 1;
+    tile_below.x = entities->actors[ eid ]->current_tile.x;
+    tile_below.y = entities->actors[ eid ]->current_tile.y + 1;
+    tile_left.x  = entities->actors[ eid ]->current_tile.x - 1;
+    tile_left.y  = entities->actors[ eid ]->current_tile.y;
+    tile_right.x = entities->actors[ eid ]->current_tile.x + 1;
+    tile_right.y = entities->actors[ eid ]->current_tile.y;
 
     SDL_Point surrounding_tiles[ 4 ];
     surrounding_tiles[ DIR_UP ] = tile_above;
@@ -79,7 +79,7 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
     Direction randomDirection = rand() % 4; // 4 directions besides DIR_NONE
 
     // just choosing first open tile ghost sees
-    Direction direction_to_go = opposite_directions[ entities->actors[ ghostId ]->direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
+    Direction direction_to_go = opposite_directions[ entities->actors[ eid ]->direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
 
     // handle situation if random tile chosen is a wall
     
@@ -95,7 +95,7 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
                 continue;
         }
         
-        if( i == opposite_directions[ entities->actors[ ghostId ]->direction  ] ) continue;
+        if( i == opposite_directions[ entities->actors[ eid ]->direction  ] ) continue;
 
         direction_to_go = (Direction) i;
 
@@ -108,30 +108,30 @@ void set_vulnerable_direction_and_next_tile( Entities *entities, EntityId ghostI
         if( 
             !points_equal(surrounding_tiles[ randomDirection ], tm->one_way_tile) 
             && randomDirection != DIR_DOWN) {
-                if( randomDirection != opposite_directions[ entities->actors[ ghostId ]->direction  ] ) {
+                if( randomDirection != opposite_directions[ entities->actors[ eid ]->direction  ] ) {
                     direction_to_go = randomDirection;
                 }
             }
         
     }
      
-    entities->actors[ ghostId ]->direction = direction_to_go;
-    entities->actors[ ghostId ]->next_tile.x = surrounding_tiles[ direction_to_go ].x;
-    entities->actors[ ghostId ]->next_tile.y = surrounding_tiles[ direction_to_go ].y;
+    entities->actors[ eid ]->direction = direction_to_go;
+    entities->actors[ eid ]->next_tile.x = surrounding_tiles[ direction_to_go ].x;
+    entities->actors[ eid ]->next_tile.y = surrounding_tiles[ direction_to_go ].y;
 
     // 23 is the actual tilemap on the screen height - because of offset
 
-    if( entities->actors[ ghostId ]->next_tile.y > TILE_ROWS-1 ) {
-        entities->actors[ ghostId ]->next_tile.y = 1;
+    if( entities->actors[ eid ]->next_tile.y > TILE_ROWS-1 ) {
+        entities->actors[ eid ]->next_tile.y = 1;
     } 
-    if( entities->actors[ ghostId ]->next_tile.y < 0 ){
-        entities->actors[ ghostId ]->next_tile.y = TILE_ROWS-1;
+    if( entities->actors[ eid ]->next_tile.y < 0 ){
+        entities->actors[ eid ]->next_tile.y = TILE_ROWS-1;
     }
-    if( entities->actors[ ghostId ]->next_tile.x > TILE_COLS-1 ) {
-        entities->actors[ ghostId ]->next_tile.x = 1;
+    if( entities->actors[ eid ]->next_tile.x > TILE_COLS-1 ) {
+        entities->actors[ eid ]->next_tile.x = 1;
     }
-    if( entities->actors[ ghostId ]->next_tile.x < 0 ) {
-        entities->actors[ ghostId ]->next_tile.x = TILE_COLS-1;
+    if( entities->actors[ eid ]->next_tile.x < 0 ) {
+        entities->actors[ eid ]->next_tile.x = TILE_COLS-1;
     }
 
 }
@@ -141,7 +141,7 @@ void vulnerable_process( Entities *entities, EntityId ghostId, TileMap *tilemap 
         Mix_PlayChannel( GHOST_VULN_CHANNEL, g_GhostVulnerableSound, 0 );
     }
     if( points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile ) ) {
-        set_vulnerable_direction_and_next_tile( entities, ghostId, tilemap );    
+        set_random_direction_and_next_tile( entities, ghostId, tilemap );    
     }
 }
 

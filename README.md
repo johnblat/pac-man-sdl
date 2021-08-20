@@ -127,6 +127,8 @@ Credits
     - **Rock Paper Funk Take Off** by Broken Groove
     - **Don't Worry We've Got Warp Speed** by Broken Groove
     - **Trust Relax Autopilot** by Broken Groove
+    - **Tropical Climate in the Control Room** by Broken Groove
     - **DisFunkTional** by ThatAndyGuy
+    - **Flyin Eggs in those Treetops** by TeraVex
     - **Optionstest** ( Main menu music ) by Colonel Sandwich 
 

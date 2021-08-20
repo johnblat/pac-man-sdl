@@ -1,5 +1,6 @@
 # texture_atlas_id numDotsEatenUntilActive ActiveTime ScoreReward PickupType 
 # numDotsEatenUntilActive means how many dots are eaten, then the pickup will appear on the map
-10 50 10 500 MIRROR_PICKUP
-11 150 10 500 SPEED_BOOST_PICKUP
-5 220 10 500 POWER_PELLET_PICKUP
+10 50 15 500 MIRROR_PICKUP
+11 100 10 500 SPEED_BOOST_PICKUP
+13 100 10 500 SHIELD_PICKUP 
+5 200 10 50 POWER_PELLET_PICKUP
