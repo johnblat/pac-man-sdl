@@ -8,6 +8,9 @@
 #include "string.h"
 #include "jb_types.h"
 #include "globalData.h"
+#include "autoTileGeneration.h"
+
+SDL_Color overrideTileColor = {0,0,255,100};
 
 typedef struct TileSelectionPanel {
     int num_rows;
@@ -30,10 +33,24 @@ Mode current_mode = TILE_MODE;
 
 // power pellet data
 SDL_Point poopy_point = { -1, -1 };
+idx2D poopy_idx = {-1, -1};
 int num_power_pellets = 0;
 int num_slow_tiles = 0;
 
 SDL_bool showWalls = SDL_FALSE;
+
+
+void mixAutoTilesAndOverrides(TileMap *tilemap, idx2D autoTileIdxs[TILE_ROWS][TILE_COLS], idx2D overrideIdxs[TILE_ROWS][TILE_COLS]) {
+    for( int r = 0; r < TILE_ROWS; r++ ) {
+        for( int c = 0; c < TILE_COLS; c++) {
+            tilemap->tm_texture_atlas_indexes[r][c] = autoTileIdxs[r][c];
+            if( !idx2D_equal(overrideIdxs[r][c], poopy_idx ) ) {
+                tilemap->tm_texture_atlas_indexes[r][c] = overrideIdxs[r][c];
+            }
+        }
+    }
+}
+
 
 /**
  * Returns the values in the num_rows and num_cols pointer parameters
@@ -48,7 +65,7 @@ void dimensions_of_atlas_surface( int tile_size, int *num_rows, int *num_cols, S
 /**
  * ADDING OR REMOVING TILES TO MAP
  */
-void add_selected_tile_to_position( SDL_Point mouse_position, TileSelectionPanel *panel, TwoDimensionalArrayIndex atlas_indexes[ TILE_ROWS ][ TILE_COLS ], SDL_Point tile_map_screen_position, TwoDimensionalArrayIndex selection_panel_atlas_index ) {
+void add_selected_tile_to_position( SDL_Point mouse_position, TileSelectionPanel *panel, idx2D atlas_indexes[ TILE_ROWS ][ TILE_COLS ], SDL_Point tile_map_screen_position, idx2D selection_panel_atlas_index ) {
 
     if ( mouse_position.x < panel->num_cols * panel->tile_size ) {
   
@@ -67,7 +84,7 @@ void add_selected_tile_to_position( SDL_Point mouse_position, TileSelectionPanel
 }
 
 
-void remove_tile_from_position( SDL_Point mouse_position, TwoDimensionalArrayIndex atlas_indexes[ TILE_ROWS ][ TILE_COLS ], SDL_Point tile_map_screen_position, TwoDimensionalArrayIndex selection_panel_atlas_index ) {
+void remove_tile_from_position( SDL_Point mouse_position, idx2D atlas_indexes[ TILE_ROWS ][ TILE_COLS ], SDL_Point tile_map_screen_position, idx2D selection_panel_atlas_index ) {
     if ( mouse_position.y < tile_map_screen_position.y || mouse_position.y > SCREEN_HEIGHT ) {
         return;
     }
@@ -134,7 +151,7 @@ void render_grid( SDL_Renderer *renderer, int spacing, int x, int y, int w, int 
 }
 
 
-void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *panel, TwoDimensionalArrayIndex selected_texture_atlas_index ) {
+void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *panel, idx2D selected_texture_atlas_index ) {
     // texture atlas
     SDL_Rect render_dst_rect = {0, 0, panel->num_cols * panel->tile_size, panel->num_rows * panel->tile_size };
     SDL_RenderCopy( renderer, panel->texture_atlas, NULL, &render_dst_rect );
@@ -183,7 +200,7 @@ void render_tile_selection_panel( SDL_Renderer *renderer, TileSelectionPanel *pa
 }
 
 
-void update_selected_texture_index_from_screen_based_position( SDL_Point mouse_position, TileSelectionPanel *panel, TwoDimensionalArrayIndex *selection_index ) {
+void update_selected_texture_index_from_screen_based_position( SDL_Point mouse_position, TileSelectionPanel *panel, idx2D *selection_index ) {
     if ( mouse_position.x > panel->num_cols * panel->tile_size ) {
         return;
     }
@@ -202,8 +219,21 @@ int main( int argc, char *argv[] ) {
     SDL_Renderer *renderer;
     SDL_Point mouse_point;
     TileMap tilemap;
+
+    idx2D overrideTilemapTextureIdxs[TILE_ROWS][TILE_COLS]; // used if you want to manually override a tile that was placed automatically
+    // "zero" out to poopy tile
+    for(int r = 0; r < TILE_ROWS; r++ ) {
+        for( int c = 0; c < TILE_COLS; c++ ) {
+            overrideTilemapTextureIdxs[r][c].r = -1;
+            overrideTilemapTextureIdxs[r][c].c = -1;
+        }
+    }
+    idx2D autoTiledTilemapTextureIdxs[TILE_ROWS][TILE_COLS]; // after placing "walls," the autotiler will choose what tile it thinks should go there
+    Uint8 *tsBitmasks;
+    int tsRows, tsCols;
+
     TileSelectionPanel tile_selection_panel;
-    TwoDimensionalArrayIndex selected_texture_atlas_index = {0, 0};
+    idx2D selected_texture_atlas_index = {0, 0};
     unsigned int levelNum = 0;
     LevelConfig levelConfig;
 
@@ -262,6 +292,7 @@ int main( int argc, char *argv[] ) {
     // try_load_resource_from_file( tilemap.tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
 
     load_current_level_off_disk( &levelConfig, &tilemap, renderer );
+    loadOverrideIdxs(overrideTilemapTextureIdxs);
     
     // placeholder
     tile_selection_panel.texture_atlas = tilemap.tm_texture_atlas;
@@ -281,13 +312,21 @@ int main( int argc, char *argv[] ) {
     }
 
     tile_selection_panel.num_rows = strtol(line, NULL, 10);
+    tsRows = tile_selection_panel.num_rows;
 
     memset(line, '\0', 16);
     fgets(line, 16, df);
 
     tile_selection_panel.num_cols = strtol(line, NULL, 10);
+    tsCols = tile_selection_panel.num_cols;
+    
 
     fclose(df);
+
+    // allocate bitmasks
+    tsBitmasks = (Uint8 *)malloc(sizeof(Uint8) * tsRows * tsCols);
+    try_load_resource_from_file(tsBitmasks, "res/levels/level1/tilesetBitmasks", sizeof(Uint8), tsRows*tsCols);
+
     
     // end read in dimensions
 
@@ -316,7 +355,7 @@ int main( int argc, char *argv[] ) {
             }
             if ( event.type == SDL_KEYDOWN ) {
                 if ( event.key.keysym.sym == SDLK_SPACE ) {
-                    save_resource_to_file( tilemap.tm_texture_atlas_indexes, "res/tile_texture_map", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+                    save_resource_to_file( tilemap.tm_texture_atlas_indexes, "res/tile_texture_map", sizeof( idx2D ), TOTAL_NUMBER_OF_TILES );
                 }
             }
             if ( event.type == SDL_MOUSEBUTTONDOWN ) {
@@ -337,12 +376,12 @@ int main( int argc, char *argv[] ) {
                 }
             }
             // TODO: examine and see if some of these should be key up
-            else if (event.type == SDL_KEYDOWN ) {
+            else if (event.type == SDL_KEYUP ) {
                 if ( event.key.keysym.sym == SDLK_ESCAPE ) {
                     quit = SDL_TRUE;
                 }
                 else if ( event.key.keysym.sym == SDLK_s ) {
-                    save_current_level_to_disk( &levelConfig, &tilemap);
+                    save_current_level_to_disk( &levelConfig, &tilemap, overrideTilemapTextureIdxs);
 
                     SDL_SetRenderDrawColor(renderer, 0,100,0,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -352,13 +391,8 @@ int main( int argc, char *argv[] ) {
                     
                 }
                 else if ( event.key.keysym.sym == SDLK_l ) {
-                    try_load_resource_from_file( tilemap.tm_texture_atlas_indexes, "res/maze_file", sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
-                    try_load_resource_from_file( tilemap.tm_dots, "res/dots", sizeof( char ), TOTAL_NUMBER_OF_TILES );
-                    try_load_resource_from_file( tilemap.tm_walls, "res/walls", sizeof( char ), TOTAL_NUMBER_OF_TILES );
-                    try_load_resource_from_file( &levelConfig.pacStartingTile, "res/pac_starting_tile", sizeof( SDL_Point ), 1 );
-                    try_load_resource_from_file( &levelConfig.powerPelletTiles, "res/power_pellets", sizeof( SDL_Point ), 4); 
-                    try_load_resource_from_file( &levelConfig.ghostPenTile, "res/ghost_pen_tile", sizeof( SDL_Point ), 1 );
-                    try_load_resource_from_file( tilemap.tm_slow_tiles, "res/slow_tiles", sizeof( SDL_Point ), MAX_SLOW_TILES );
+                    load_current_level_off_disk( &levelConfig, &tilemap, renderer );
+                    loadOverrideIdxs(overrideTilemapTextureIdxs);
 
                     SDL_SetRenderDrawColor(renderer, 255,100,100,255);
                     SDL_Rect screen_rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -439,13 +473,6 @@ int main( int argc, char *argv[] ) {
             }
         }
 
-        if( current_key_states[ SDL_SCANCODE_W ] && current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
-            showWalls = !showWalls;
-        }
-
-        if( current_key_states[ SDL_SCANCODE_W ] && !current_key_states[ SDL_SCANCODE_LSHIFT ] ) {
-            showWalls = !showWalls;
-        }
 
         if ( left_button_pressed ) {
             SDL_GetMouseState( &mouse_point.x, &mouse_point.y );
@@ -462,7 +489,7 @@ int main( int argc, char *argv[] ) {
             //TODO: add selected tile to position
             update_selected_texture_index_from_screen_based_position( mouse_point, &tile_selection_panel, &selected_texture_atlas_index );
             if( current_mode == TILE_MODE ) {
-                add_selected_tile_to_position( mouse_point, &tile_selection_panel, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
+                add_selected_tile_to_position( mouse_point, &tile_selection_panel, overrideTilemapTextureIdxs, tilemap.tm_screen_position, selected_texture_atlas_index );
             }
             else if (current_mode == DOT_MODE ) {
                 add_dot_to_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_dots );
@@ -537,7 +564,7 @@ int main( int argc, char *argv[] ) {
             //TODO Add selected tile to position
             //tile_map[ tile_grid_point.y ][ tile_grid_point.x ] = '\0';
             if( current_mode == TILE_MODE ) {
-                remove_tile_from_position( mouse_point, tilemap.tm_texture_atlas_indexes, tilemap.tm_screen_position, selected_texture_atlas_index );
+                remove_tile_from_position( mouse_point, overrideTilemapTextureIdxs, tilemap.tm_screen_position, selected_texture_atlas_index );
             }
             else if( current_mode == DOT_MODE ) {
                 remove_dot_from_position( mouse_point, tilemap.tm_screen_position, tilemap.tm_dots );
@@ -596,7 +623,10 @@ int main( int argc, char *argv[] ) {
         SDL_RenderClear( renderer );
 
         
-
+        generateAutoTiledMap(gRenderer, &tilemap, autoTiledTilemapTextureIdxs, tsBitmasks, tsRows, tsCols  );
+        mixAutoTilesAndOverrides(&tilemap, autoTiledTilemapTextureIdxs, overrideTilemapTextureIdxs);
+        //temp
+        
         tm_render_with_screen_position_offset( renderer, &tilemap );
 
         SDL_SetRenderDrawColor( renderer, 242, 241, 57, 150 );
@@ -650,9 +680,28 @@ int main( int argc, char *argv[] ) {
                 }
             } 
         }
+
+        // render the override tiles
+        SDL_SetRenderDrawColor(renderer, overrideTileColor.r, overrideTileColor.g, overrideTileColor.b, overrideTileColor.a);
+        for( int r = 0; r < TILE_ROWS; r++ ) {
+            for(int c = 0; c < TILE_COLS; c++) {
+                if( !idx2D_equal(overrideTilemapTextureIdxs[r][c], poopy_idx) ) {
+                    SDL_Rect rect = {
+                            tilemap.tm_screen_position.x + ( TILE_SIZE * c ),
+                            tilemap.tm_screen_position.y + ( TILE_SIZE * r ),
+                            TILE_SIZE,
+                            TILE_SIZE
+                        };
+                        
+                        SDL_RenderFillRect( renderer, &rect );
+                }
+                
+            }
+        }
             
-        
-        render_tile_selection_panel( renderer, &tile_selection_panel, selected_texture_atlas_index );
+        if( current_mode == TILE_MODE ) {
+            render_tile_selection_panel( renderer, &tile_selection_panel, selected_texture_atlas_index );
+        }
         
         
 
@@ -667,7 +716,7 @@ int main( int argc, char *argv[] ) {
         int y = SCREEN_HEIGHT * 0.5 + TILE_SIZE;
         SDL_RenderDrawLine( renderer, x, 0, x, SCREEN_HEIGHT);
 
-        SDL_RenderDrawLine( renderer, 0, y, SCREEN_WIDTH, y );
+        SDL_RenderDrawLine( renderer, 0, y + 80 , SCREEN_WIDTH, y + 80 ); // + 80 cuz hud
 
         SDL_RenderPresent(renderer);
         SDL_Delay(10);

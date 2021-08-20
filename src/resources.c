@@ -152,7 +152,7 @@ void initializePowerPelletsFromFile( ) {
 
 }
 
-void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
+void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap, idx2D overrideIdxs[TILE_ROWS][TILE_COLS] ) {
 
     char *res_level_dir = "res/levels/";
     char level_dirname[ MAX_FILENAME_SIZE ];
@@ -172,6 +172,7 @@ void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
     char *slowTilesFileName = "slow_tiles";
     char *tileTextureMapFileName = "tile_texture_map";
     char *wallsFileName = "walls";
+    char *overrideIdxsFileName = "overrideIdxs_TM_Editor";
     //char *tilesetFileName = "tileset.png";
 
     char fullResourcePath[ MAX_FILENAME_SIZE ];
@@ -193,12 +194,35 @@ void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap ) {
     save_resource_to_file( tilemap->tm_slow_tiles, fullResourcePath, sizeof( SDL_Point ), MAX_SLOW_TILES );
 
     build_resource_file_path( fullResourcePath, fullLevelDir, tileTextureMapFileName );
-    save_resource_to_file( tilemap->tm_texture_atlas_indexes, fullResourcePath, sizeof( TwoDimensionalArrayIndex ), TOTAL_NUMBER_OF_TILES );
+    save_resource_to_file( tilemap->tm_texture_atlas_indexes, fullResourcePath, sizeof( idx2D ), TOTAL_NUMBER_OF_TILES );
 
     build_resource_file_path( fullResourcePath, fullLevelDir, wallsFileName );
     save_resource_to_file( tilemap->tm_walls, fullResourcePath, sizeof( char ), TOTAL_NUMBER_OF_TILES );
 
+    build_resource_file_path(fullResourcePath, fullLevelDir, overrideIdxsFileName );
+    save_resource_to_file(overrideIdxs, fullResourcePath, sizeof(idx2D), TOTAL_NUMBER_OF_TILES);
 
+
+}
+
+void loadOverrideIdxs(idx2D overrideIdxs[TILE_ROWS][TILE_COLS]) {
+    if( gCurrentLevel > gNumLevels ) {
+        fprintf( stderr, "Could not load level resource for override Idxs because requested level number greater than %d. Max is %d\n", gNumLevels, gCurrentLevel );
+    }
+
+    char *res_level_dir = "res/levels/";
+    char level_dirname[ MAX_FILENAME_SIZE ];
+    memset( level_dirname, '\0', MAX_FILENAME_SIZE );
+    snprintf(level_dirname, MAX_FILENAME_SIZE, "level%d/", gCurrentLevel );
+    char fullLevelDir[ MAX_FILENAME_SIZE ];
+    memset( fullLevelDir, '\0', MAX_FILENAME_SIZE );
+    strncat(fullLevelDir, res_level_dir, 11 );
+    strncat(fullLevelDir, level_dirname, MAX_FILENAME_SIZE );
+    char fullResourcePath[ MAX_FILENAME_SIZE ];
+
+    char *overrideIdxsFilename = "overrideIdxs_TM_Editor";
+    build_resource_file_path(fullResourcePath, fullLevelDir, overrideIdxsFilename);
+    try_load_resource_from_file(overrideIdxs, fullResourcePath, sizeof(idx2D), TOTAL_NUMBER_OF_TILES);
 }
 
 void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer ) { 
@@ -332,7 +356,7 @@ void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SD
     try_load_resource_from_file( tilemap->tm_slow_tiles , fullResourcePath, sizeof( SDL_Point ), MAX_SLOW_TILES );
 
     build_resource_file_path( fullResourcePath, fullLevelDir, tileTextureMapFileName );
-    try_load_resource_from_file( tilemap->tm_texture_atlas_indexes, fullResourcePath, sizeof(TwoDimensionalArrayIndex), TOTAL_NUMBER_OF_TILES );
+    try_load_resource_from_file( tilemap->tm_texture_atlas_indexes, fullResourcePath, sizeof(idx2D), TOTAL_NUMBER_OF_TILES );
 
     build_resource_file_path( fullResourcePath, fullLevelDir, wallsFileName );
     try_load_resource_from_file( tilemap->tm_walls, fullResourcePath, sizeof( char ), TOTAL_NUMBER_OF_TILES );

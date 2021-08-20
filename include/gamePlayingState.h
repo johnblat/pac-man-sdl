@@ -26,7 +26,9 @@ typedef enum {
     GAME_PLAYING,
     GAME_PAUSED,
     LEVEL_START,
-    LEVEL_END
+    LEVEL_END,
+    GAME_OVER,
+    GAME_CLEAR
 } GamePlayingState;
 
 
@@ -54,5 +56,9 @@ inline void gameLevelStartProcess( Entities *entities, SDL_Event *event, LevelCo
 
 void gameLevelEndProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime ) ;
 inline void gameLevelEndProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime ) ;
+
+void gameGameOverProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime);
+
+void gameGameClearProcess(Entities *entities, SDL_Event *event, LevelConfig *evelConfig, float deltaTime);
 
 #endif

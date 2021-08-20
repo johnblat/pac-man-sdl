@@ -18,7 +18,7 @@
 // const int DOT_PADDING = 15;
 // const float DOT_SPEED = 12;
 
-const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX = { -1, -1 };
+const idx2D EMPTY_TILE_TEXTURE_ATLAS_INDEX = { -1, -1 };
 const SDL_Point TILE_NONE = { -1, -1 };
 const int  MAX_SLOW_TILES = 21;
 
@@ -182,9 +182,21 @@ void tm_render_with_screen_position_offset( SDL_Renderer *renderer, TileMap *tm 
                     DOT_SIZE
                 };
                 
+                
                 // TODO: Set this depending on the level. Keep global color values
                 SDL_SetRenderDrawColor(renderer, 234,255,0,255);
                 SDL_RenderFillRect( renderer, &dot_rect );
+            
+                // shadow
+                SDL_Rect dot_shadow_rect = {
+                    dot_rect.x,
+                    tm->tm_screen_position.y + ( TILE_SIZE * row ) + TILE_SIZE-10,
+                    DOT_SIZE,
+                    DOT_SIZE*0.45
+                };
+
+                SDL_SetRenderDrawColor(renderer, 0,0,0,100);
+                SDL_RenderFillRect(renderer, &dot_shadow_rect);
             }
         }
     } 

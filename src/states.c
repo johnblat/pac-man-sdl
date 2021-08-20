@@ -312,7 +312,7 @@ void leave_pen_enter( Entities *entities, EntityId ghostId ) {
     entities->actors[ ghostId ]->speed_multp = 0.8f;
 
     entities->actors[ ghostId ]->target_tile.x = entities->actors[ ghostId ]->current_tile.x;
-    entities->actors[ ghostId ]->target_tile.y = entities->actors[ ghostId ]->current_tile.y - 3;
+    entities->actors[ ghostId ]->target_tile.y = entities->actors[ ghostId ]->current_tile.y - 4;
     
     entities->actors[ ghostId ]->direction = DIR_UP;
 }

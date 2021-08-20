@@ -22,9 +22,11 @@ void initializePlayersFromFiles( Entities *entities, LevelConfig *levelConfig, u
 
 void initializeGhostsFromFile( Entities *entities, LevelConfig *levelConfig, const char *animatedSpritesFilename  );
 
-void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap );
+void save_current_level_to_disk( LevelConfig *levelConfig, TileMap *tilemap, idx2D overrideIdxs[TILE_ROWS][TILE_COLS] );
 
 void load_current_level_off_disk( LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer *renderer) ;
+
+void loadOverrideIdxs(idx2D overrideIdxs[TILE_ROWS][TILE_COLS]);
 
 void load_global_texture_atlases_from_config_file( SDL_Renderer *renderer );
 

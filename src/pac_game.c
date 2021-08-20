@@ -196,9 +196,8 @@ int main( int argc, char *argv[] ) {
     }
     // end game controller
 
-    //Load music
+    // pragma region Load music
     g_Music = Mix_LoadMUS( gMenuMusicFilename );
-    // g_Music = Mix_LoadMUS( "res/sounds/test/Dont-Worry-We-Got-Warp-Spe.mp3" );
     if( g_Music == NULL )
     {
         printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() );
@@ -220,13 +219,13 @@ int main( int argc, char *argv[] ) {
     if( g_PacChompSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
-    Mix_VolumeChunk( g_PacChompSound, 30 );
+    Mix_VolumeChunk( g_PacChompSound, 20 );
 
     g_PacChompSound2 = Mix_LoadWAV("res/sounds/wakka_wakka2.wav");
     if( g_PacChompSound2 == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
-    Mix_VolumeChunk( g_PacChompSound2, 30 );
+    Mix_VolumeChunk( g_PacChompSound2, 20 );
 
     g_GhostEatenYeahSound = Mix_LoadWAV("res/sounds/yeah.wav");
     if( g_GhostEatenYeahSound == NULL ) {
@@ -284,7 +283,9 @@ int main( int argc, char *argv[] ) {
     g_GhostEatenSounds[ 2 ] = g_GhostEatenCoolSound;
     g_GhostEatenSounds[ 3 ] = g_GhostEatenGroovySound;
 
-    Mix_VolumeMusic( 20 );
+    Mix_VolumeMusic( 128 );
+
+    // pragma endregion
     
 
     Mix_PlayMusic(g_Music, -1 );
@@ -310,7 +311,7 @@ int main( int argc, char *argv[] ) {
 
     
     for( int i = 0; i < 4; i++ ) {
-        AnimatedSprite *powerPelletSprite = init_animation( 5, 12, 1, 6 );
+        AnimatedSprite *powerPelletSprite = init_animation( 5, 12, 1, 20 );
         createPowerPellet( &entities, powerPelletSprite, levelConfig.powerPelletTiles[ i ] );
     }
     

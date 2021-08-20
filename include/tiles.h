@@ -34,11 +34,11 @@ typedef struct {
 /**
  * STRUCTS
  */
-typedef struct TwoDimensionalArrayIndex {
+typedef struct idx2D {
     int r, c;
-} TwoDimensionalArrayIndex;
+} idx2D;
 
-extern const TwoDimensionalArrayIndex EMPTY_TILE_TEXTURE_ATLAS_INDEX;
+extern const idx2D EMPTY_TILE_TEXTURE_ATLAS_INDEX;
 extern const SDL_Point TILE_NONE;
 extern const int MAX_SLOW_TILES;
 
@@ -57,7 +57,7 @@ typedef struct TileMap {
      * This ultimately represents the texture clip of each tile in the tilemap
      * It will either pull from a tile in the texture atlas, or it won't ( it will be (-1, -1 ) )
      */
-    TwoDimensionalArrayIndex tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ];
+    idx2D tm_texture_atlas_indexes[ TILE_ROWS ][ TILE_COLS ];
 
     /**
      * Represents a tile that pacman and ghosts cannot move through

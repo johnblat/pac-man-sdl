@@ -179,7 +179,7 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
     entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
     entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
 
-    entities->animatedSprites[ entityId ] = init_animation( 0, 1, 1, 1 ); // need to set texture atlas later. This is an initial invalid texture atlas id.
+    entities->animatedSprites[ entityId ] = init_animation( 0, 15, 1, 20 ); // need to set texture atlas later. This is an initial invalid texture atlas id.
 
     *entities->activeTimers[ entityId ] = 0.0f;
     *entities->pickupTypes[ entityId ] = NONE_PICKUP; // this will be skipped over. Its a NULL-like value for the pickup type
@@ -706,7 +706,8 @@ void processInvincibilityTimers( Entities *entities, float deltaTime) {
             continue;
         }
         *entities->invincibilityTimers[eid] -= deltaTime;
-        entities->renderDatas[eid]->alphaMod -= 100; // make player semi transparent to appear immune to hurt
+        
+        // entities->renderDatas[eid]->alphaMod -= 100; // make player semi transparent to appear immune to hurt
     }
 }
 
@@ -730,6 +731,12 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
             entities->renderDatas[ eid ]->alphaMod = 255;
             // SDL_Texture *texture = g_texture_atlases[ entities->animatedSprites[ eid ]->texture_atlas_id ].texture;
             // SDL_SetTextureAlphaMod( texture, 255 );
+
+            // issue if more than one active
+            if(*entities->activeTimers[eid] < 3.0f) {
+                blinkProcess(&pickupBlink, deltaTime);
+                entities->renderDatas[eid]->alphaMod = pickupBlink.values[pickupBlink.current_value_idx];
+            }
 
             EntityId playerId;
             for( int i = 0; i < numPlayers; i++ ) {

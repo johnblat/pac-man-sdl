@@ -79,6 +79,11 @@ SDL_Rect gP2PressAToJoinTextRect;
 SDL_Rect gP3PressAToJoinTextRect;
 SDL_Rect gP4PressAToJoinTextRect;
 SDL_Rect gPressAToJoinTextRects[4];
+SDL_Rect gP1PanelRect;
+SDL_Rect gP2PanelRect;
+SDL_Rect gP3PanelRect;
+SDL_Rect gP4PanelRect;
+SDL_Rect gPanelRects[4];
 SDL_Rect gP1ReadyTextRect;
 SDL_Rect gP2ReadyTextRect;
 SDL_Rect gP3ReadyTextRect;
@@ -153,9 +158,32 @@ void initJoinGameStuff() {
     gPressAToJoinTextRects[ 2 ] = gP3PressAToJoinTextRect;
     gPressAToJoinTextRects[ 3 ] = gP4PressAToJoinTextRect;
 
+    gP1PanelRect.x = gP1PressAToJoinTextRect.x - 50;
+    gP1PanelRect.y = gP1PressAToJoinTextRect.y - 10;
+    gP1PanelRect.w = 500;
+    gP1PanelRect.h = 200;
 
+    gP2PanelRect.x = gP2PressAToJoinTextRect.x - 50;
+    gP2PanelRect.y = gP2PressAToJoinTextRect.y - 10;
+    gP2PanelRect.w = 500;
+    gP2PanelRect.h = 200;
 
-    gPressStartWhenReadyTextTexture = createTextTexture(&gPressStartWhenReadyTextRect, gPressStartWhenReadyText, white, gMedFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+    gP3PanelRect.x = gP3PressAToJoinTextRect.x - 50;
+    gP3PanelRect.y = gP3PressAToJoinTextRect.y - 10;
+    gP3PanelRect.w = 500;
+    gP3PanelRect.h = 200;
+
+    gP4PanelRect.x = gP4PressAToJoinTextRect.x - 50;
+    gP4PanelRect.y = gP4PressAToJoinTextRect.y - 10;
+    gP4PanelRect.w = 500;
+    gP4PanelRect.h = 200;
+
+    gPanelRects[0] = gP1PanelRect;
+    gPanelRects[1] = gP2PanelRect;
+    gPanelRects[2] = gP3PanelRect;
+    gPanelRects[3] = gP4PanelRect;
+
+    gPressStartWhenReadyTextTexture = createTextTexture(&gPressStartWhenReadyTextRect, gPressStartWhenReadyText, lightBlue, gMedFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 100);
 }
 
 void initMainMenuScreenStuff(){
@@ -193,6 +221,7 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
             }
             else if( event->key.keysym.sym == SDLK_RETURN ) {
                 selected = SDL_TRUE;
+                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound, 0);
             }
             else if( event->key.keysym.sym == MoreLivesCheatCode[moreLivesCheatCodeIdx]) {
                 moreLivesCheatCodeIdx++;
@@ -219,12 +248,14 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
         else {
             gCurrentMainMenuSelection--;
         }
+        Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound2, 0);
     }
     else if (move_down) {
         gCurrentMainMenuSelection++;
         if( gCurrentMainMenuSelection == NUM_MAIN_MENU_SELECTIONS ) {
             gCurrentMainMenuSelection = 0;
         }
+        Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound2, 0);
     }
     else if( selected) {
         switch( gCurrentMainMenuSelection ) {
@@ -328,6 +359,7 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
 
         else if( event->type == SDL_KEYUP ) {
             if( event->key.keysym.sym == SDLK_x ) {
+                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound2, 0);
                 back_release = SDL_TRUE;
             }
             if ( event->key.keysym.sym == SDLK_RETURN ) {
@@ -370,10 +402,13 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
                         break;
                     }
                 }
+                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound, 0);
+
             }
         }
         else if( event->type == SDL_CONTROLLERBUTTONUP ) {
             if( event->cbutton.button == SDL_CONTROLLER_BUTTON_B ) {
+                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound2, 0);
                 back_release = SDL_TRUE;
             }
             else if( event->cbutton.button != SDL_CONTROLLER_BUTTON_B && event->cbutton.button != SDL_CONTROLLER_BUTTON_START ) { // a player wants to join
@@ -443,6 +478,8 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
                     *entities->gameControllerIds[eid] = eventGameControllerId;
                     break;
                 }
+                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound, 0);
+
                 
             }
             else if( event->cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
@@ -493,6 +530,12 @@ void joinGameProcess( SDL_Event *event, LevelConfig *levelConfig, Entities *enti
     SDL_RenderCopy( gRenderer, gP3TextTexture, NULL, &gP3TextRect);
     SDL_RenderCopy( gRenderer, gP4TextTexture, NULL, &gP4TextRect);
 
+    SDL_SetRenderDrawColor(gRenderer, 235,45,64,255);
+
+    for( int i = 0; i < 4; i++ ) {
+        SDL_RenderFillRect(gRenderer, &gPanelRects[i]);
+    }
+
     for( int i = 0; i < gNumPlayers; i++ ) {
         SDL_Rect readyRect = gReadyRects[ i ];
         SDL_RenderCopy( gRenderer, gReadyTextTexture, NULL,  &readyRect );
@@ -525,6 +568,8 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
                 startMenuBlink->blinkRate = 0.1;
                 gMenuState = MAIN_MENU_SCREEN_MENU_STATE;
                 //gamePlayProgramStateEnter( entities, tilemap, levelConfig );
+                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound, 0);
+
                 break;
             }
             if( event->key.keysym.sym == SDLK_ESCAPE ) {
@@ -593,6 +638,8 @@ inline void titleScreenProcess( LevelConfig *levelConfig, Entities *entities, Ti
                     if( event->cbutton.button == SDL_CONTROLLER_BUTTON_START ) {
                         gMenuState = MAIN_MENU_SCREEN_MENU_STATE;
                         //gamePlayProgramStateEnter( entities, tilemap, levelConfig );
+                        Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound, 0);
+
                         break;                                    
                     }
                 }

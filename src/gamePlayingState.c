@@ -38,20 +38,37 @@ const char *gLevelEndText = "LEVEL CLEARED!";
 SDL_Texture *gLevelEndTextTexture = NULL;
 SDL_Rect gLevelEndTextRect;
 
-const float gLevelStartDuration = 3.0f; 
+const char *gGameOverText = "GAME OVER!";
+SDL_Texture *gGameOverTextTexture = NULL;
+SDL_Rect gGameOverTextRect;
+
+const char *gGameClearText = "GAME CLEARED!";
+SDL_Texture *gGameClearTextTexture = NULL;
+SDL_Rect gGameClearTextRect;
+
+const float gLevelStartDuration = 1.5f; 
 float gLevelStartTimer = 0.0f;
 const float gLevelEndDuration = 1.5f;
 float gLevelEndTimer = 0.0f;
+const float gGameOverDuration = 3.0f;
+float gGameOverTimer = 0.0f;
+const float gGameClearDuration = 3.0f;
+float gGameClearTimer = 0.0f;
 
 
 Blink ghostVulnerableBlink;
+Blink invincibleTimerAlmostUpBlink;
 
 void initGamePlayingStuff( ) {
     gPauseTextTexture = createTextTexture(&gPauseTextDestRect, gPauseText, pac_color, gLargeFont, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
     gLevelStartTextTexture = createTextTexture(&gLevelStartTextRect, gLevelStartText, white, gLargeFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
     gLevelEndTextTexture = createTextTexture(&gLevelEndTextRect, gLevelEndText, white, gLargeFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 );
+    gGameOverTextTexture = createTextTexture(&gGameOverTextRect, gGameOverText, white, gLargeFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+    gGameClearTextTexture = createTextTexture(&gGameClearTextRect, gGameClearText, white, gLargeFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
 
     ghostVulnerableBlink = blinkInit( 0.2, 1, 255 );
+    invincibleTimerAlmostUpBlink = blinkInit(0.15,0,150);
+    pickupBlink = blinkInit(0.1, 0, 255);
     //SDL_SetTextureColorMod(g_texture_atlases[3].texture, 0,0,0);
 }
 
@@ -83,6 +100,12 @@ void gamePlayingStateProcess( SDL_Event *event, Entities *entities, TileMap *til
             break;
         case LEVEL_END:
             gameLevelEndProcess( entities, event, levelConfig, deltaTime );
+            break;
+        case GAME_OVER:
+            gameGameOverProcess( entities, event, levelConfig, deltaTime );
+            break;
+        case GAME_CLEAR:
+            gameGameClearProcess( entities, event, levelConfig, deltaTime );
             break;
     }
 }
@@ -454,7 +477,9 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     // GAME OVER?
     if( isGameOver( entities ) ) {
-        mainMenuProgramStateEnter(entities);
+        gGamePlayingState = GAME_OVER;
+        Mix_HaltMusic();
+        //mainMenuProgramStateEnter(entities);
         
         return;
     }
@@ -464,7 +489,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         
         SDL_bool gameCleared = level_advance( levelConfig, tilemap, gRenderer, entities );
         if( gameCleared ) {
-            mainMenuProgramStateEnter(entities);
+            gGamePlayingState = GAME_CLEAR;
+            //mainMenuProgramStateEnter(entities);
             return;
         }
         Mix_HaltChannel( GHOST_SOUND_CHANNEL );
@@ -751,6 +777,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             case STATE_LEAVE_PEN:
                 if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ eid ]->target_tile ) ) {
                     *entities->ghostStates[ eid ] = STATE_NORMAL;
+                    //entities->actors[eid]->direction = DIR_LEFT;
                     normal_enter( entities, eid );
                 }
                 
@@ -1043,6 +1070,17 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     renderDataForAnimatedSpriteProcess( gRenderer, entities );
 
+    for(int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
+        if(entities->invincibilityTimers[eid] != NULL && *entities->invincibilityTimers[eid] > 0.0f ) {
+            SDL_SetRenderDrawColor(gRenderer, 255,20,255,150);
+            blinkProcess(&invincibleTimerAlmostUpBlink, deltaTime);
+            if(*entities->invincibilityTimers[eid] < 3.0f) {
+                SDL_SetRenderDrawColor(gRenderer, 255,20,255,invincibleTimerAlmostUpBlink.values[invincibleTimerAlmostUpBlink.current_value_idx]);
+            }
+            SDL_Point canvasPt = world_point_to_screen_point(entities->actors[eid]->world_center_point, tilemap->tm_screen_position);
+            renderCircleFill(gRenderer, canvasPt.x, canvasPt.y, 50);
+        }
+    }
     
 
     SDL_Rect black_bar = {0,0, 1920, TILE_SIZE * 2};
@@ -1054,6 +1092,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
     //SDL_RenderCopy(gRenderer, gCooldownTexture, NULL, &gCooldownRect);
 
     renderDashStockRects( ) ;
+
+    // SDL_Rect scoreRect = g_texture_atlases[16].sprite_clips[0];
+    // scoreRect.x = SCREEN_WIDTH/2 - (scoreRect.w/2);
+    // SDL_RenderCopy(gRenderer, g_texture_atlases[16].texture, NULL, &scoreRect  );
 
 
     /****
@@ -1303,6 +1345,38 @@ inline void gameLevelEndProcess( Entities *entities, SDL_Event *event, LevelConf
     if( gLevelEndTimer >= gLevelEndDuration ) {
         gGamePlayingState = LEVEL_START;
         gLevelEndTimer = 0.0f;
+        return;
+    }
+}
+
+void gameGameOverProcess( Entities *entities, SDL_Event *event, LevelConfig *levelConfig, float deltaTime){
+    SDL_SetRenderDrawColor( gRenderer, 200,20,20,255 );
+    SDL_RenderClear( gRenderer );
+    SDL_RenderCopy( gRenderer, gGameOverTextTexture, NULL, &gGameOverTextRect );
+    SDL_RenderPresent( gRenderer );
+
+    gGameOverTimer += deltaTime;
+    if( gGameOverTimer >= gGameOverDuration ) {
+        gProgramState = MENU_PROGRAM_STATE;
+        mainMenuProgramStateEnter(entities);
+        gGamePlayingState = LEVEL_START;
+        gGameOverTimer = 0.0f;
+        return;
+    }
+}
+
+void gameGameClearProcess(Entities *entities, SDL_Event *event, LevelConfig *evelConfig, float deltaTime){
+    SDL_SetRenderDrawColor( gRenderer, 0,200,20,255 );
+    SDL_RenderClear( gRenderer );
+    SDL_RenderCopy( gRenderer, gGameClearTextTexture, NULL, &gGameClearTextRect );
+    SDL_RenderPresent( gRenderer );
+
+    gGameClearTimer += deltaTime;
+    if( gGameClearTimer >= gGameClearDuration ) {
+        gProgramState = MENU_PROGRAM_STATE;
+        mainMenuProgramStateEnter(entities);
+        gGamePlayingState = LEVEL_START;
+        gGameClearTimer = 0.0f;
         return;
     }
 }

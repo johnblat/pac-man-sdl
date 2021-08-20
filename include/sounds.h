@@ -7,9 +7,9 @@ Mix_Music *g_Music = NULL;
 
 //const char *gGameMusicFilename = "res/sounds/D"
 //const char *gGameMusicFilename = "res/sounds/Dont-Worry-We-Got-Warp-Speed.mp3";
-char gGameMusicFilename[ 64 ] = "res/sounds/That Andy Guy - DisFunkTional.ogg";
+char gGameMusicFilename[ 64 ] = "res/sounds/music-normalized/That Andy Guy - DisFunkTional.ogg";
 
-const char *gMenuMusicFilename = "res/sounds/optionstest.mp3";
+const char *gMenuMusicFilename = "res/sounds/music-normalized/optionstest.ogg";
 
 Mix_Chunk *g_GhostSound = NULL;
 Mix_Chunk *g_GhostVulnerableSound = NULL;

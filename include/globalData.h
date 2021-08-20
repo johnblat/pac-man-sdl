@@ -35,6 +35,8 @@ SDL_Color pac_color2 = {187,187,0};
 SDL_Color white = {200,200,255};
 SDL_Color black = {0,0,0};
 SDL_Color green = {45,108,0};
+SDL_Color red = {150,0,0,0};
+SDL_Color lightBlue = {117,105,249,255};
 
 
 // used to track progress in level
@@ -74,6 +76,8 @@ SDL_bool moreLivesCheatCodeEnabled = SDL_FALSE;
 
 unsigned int gInitialLivesRemaining = 2;
 unsigned int gCheatAdditionalLivesRemaining = 0;
+
+Blink pickupBlink;
 // viewport
 // int gViewportWidth = 1920;
 // int gViewportHeight = 1080;

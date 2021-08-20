@@ -248,3 +248,29 @@ SDL_Texture *createTextTexture( SDL_Rect *destRect, const char *text, SDL_Color 
 
     return targetTexture;
 }
+
+void renderCircleFill( SDL_Renderer *renderer, Uint32 centerX, Uint32 centerY, Uint32 radius) {
+    int x = 0;
+    int y = radius;
+    int d = 3 - 2 * radius;
+
+    SDL_RenderDrawLine(renderer,centerX + x , centerY +  y, centerX - x , centerY +  y  );
+    SDL_RenderDrawLine(renderer, centerX + x , centerY -  y, centerX - x , centerY -  y );
+    SDL_RenderDrawLine(renderer, centerX + y , centerY +  x, centerX - y , centerY +  x);
+    SDL_RenderDrawLine(renderer, centerX + y , centerY -  x, centerX - y , centerY -  x);
+
+    while( y >= x ) {
+        x++;
+        if( d > 0 ) {
+            y--;
+            d = d + 4 * ( x - y ) + 10;
+        }
+        else {
+            d = d + 4 * x + 6;
+        }
+        SDL_RenderDrawLine( renderer, centerX + x , centerY +  y, centerX - x , centerY +  y);
+        SDL_RenderDrawLine( renderer, centerX + x , centerY -  y, centerX - x , centerY -  y );
+        SDL_RenderDrawLine( renderer, centerX + y , centerY +  x , centerX - y , centerY +  x);
+        SDL_RenderDrawLine( renderer,  centerX + y , centerY -  x, centerX - y , centerY -  x );
+    }
+}
