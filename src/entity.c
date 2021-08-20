@@ -527,7 +527,7 @@ void processDeathTimers( Entities *entities, LevelConfig *levelConfig, float del
                 entities->renderDatas[eid]->scale -= deltaTime * 1.5;
             }
         }
-        if( *entities->deathTimers[eid] <= 0.0f ) {
+        if( *entities->deathTimers[eid] <= 0.0f && *entities->isActive[eid] == SDL_TRUE ) {
             entities->actors[eid]->current_tile = levelConfig->pacStartingTile;
             //entities->actors[eid]->current_tile.y -= 1;
             entities->actors[eid]->next_tile = levelConfig->pacStartingTile;

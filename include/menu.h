@@ -95,15 +95,6 @@ SDL_Rect gPressStartWhenReadyTextRect;
 
 
 
-// End Join Game
-
-void playGameChosen( ) {
-
-}
-
-void exitGameChosen( ) {
-
-}
 
 
 
@@ -221,7 +212,6 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
             }
             else if( event->key.keysym.sym == SDLK_RETURN ) {
                 selected = SDL_TRUE;
-                Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound, 0);
             }
             else if( event->key.keysym.sym == MoreLivesCheatCode[moreLivesCheatCodeIdx]) {
                 moreLivesCheatCodeIdx++;
@@ -258,6 +248,7 @@ void mainMenuScreenProcess( SDL_Event *event, Entities *entities, TileMap *tilem
         Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound2, 0);
     }
     else if( selected) {
+        Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound, 0);
         switch( gCurrentMainMenuSelection ) {
             case PLAY_GAME:
                 gMenuState = JOIN_GAME_MENU_STATE;
