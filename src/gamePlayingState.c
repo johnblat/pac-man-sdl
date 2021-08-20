@@ -340,6 +340,8 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
     for( int i = 0; i < gNumPlayers; i++ ) {
         pid = gPlayerIds[i];
         *entities->isActive[pid] = SDL_TRUE;
+        entities->renderDatas[pid]->alphaMod = 255; // need to be visible too
+        entities->renderDatas[pid]->scale = 1.0f;
     }
 
     // reset all inputmasks
