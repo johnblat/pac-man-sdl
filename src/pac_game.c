@@ -203,75 +203,75 @@ int main( int argc, char *argv[] ) {
         printf( "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError() );
     }
 
-    g_GhostSound = Mix_LoadWAV("res/sounds/ghosts_ambient.wav");
+    g_GhostSound = Mix_LoadWAV("res/sounds/sfx/arrangement/ghosts_ambient.wav");
     if( g_GhostSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_GhostSound, 5 );
 
-    g_GhostVulnerableSound = Mix_LoadWAV("res/sounds/ghosts_ambient_scared1.wav");
+    g_GhostVulnerableSound = Mix_LoadWAV("res/sounds/sfx/arrangement/ghosts_ambient_scared1.wav");
     if( g_GhostVulnerableSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_GhostVulnerableSound, 10 );
 
-    g_PacChompSound = Mix_LoadWAV("res/sounds/wakka_wakka1.wav");
+    g_PacChompSound = Mix_LoadWAV("res/sounds/sfx/arrangement/wakka_wakka1.wav");
     if( g_PacChompSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_PacChompSound, 20 );
 
-    g_PacChompSound2 = Mix_LoadWAV("res/sounds/wakka_wakka2.wav");
+    g_PacChompSound2 = Mix_LoadWAV("res/sounds/sfx/arrangement/wakka_wakka2.wav");
     if( g_PacChompSound2 == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_PacChompSound2, 20 );
 
-    g_GhostEatenYeahSound = Mix_LoadWAV("res/sounds/yeah.wav");
+    g_GhostEatenYeahSound = Mix_LoadWAV("res/sounds/sfx/yeah.wav");
     if( g_GhostEatenYeahSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
 
-    g_GhostEatenSweetSound = Mix_LoadWAV("res/sounds/sweet.wav");
+    g_GhostEatenSweetSound = Mix_LoadWAV("res/sounds/sfx/sweet.wav");
     if( g_GhostEatenSweetSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
 
-    g_GhostEatenCoolSound = Mix_LoadWAV("res/sounds/cool.wav");
+    g_GhostEatenCoolSound = Mix_LoadWAV("res/sounds/sfx/cool.wav");
     if( g_GhostEatenCoolSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
 
-    g_GhostEatenGroovySound = Mix_LoadWAV("res/sounds/groovy.wav");
+    g_GhostEatenGroovySound = Mix_LoadWAV("res/sounds/sfx/groovy.wav");
     if( g_GhostEatenGroovySound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
 
-    g_PacDieSound = Mix_LoadWAV("res/sounds/life_lost.wav");
+    g_PacDieSound = Mix_LoadWAV("res/sounds/sfx/arrangement/life_lost.wav");
     if( g_PacDieSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_PacDieSound, 30 );
 
-    g_PacRespawnSound = Mix_LoadWAV("res/sounds/respawn.wav");
+    g_PacRespawnSound = Mix_LoadWAV("res/sounds/sfx/arrangement/respawn.wav");
     if( g_PacRespawnSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_PacRespawnSound, 30 );
 
-    g_GhostEatSound = Mix_LoadWAV("res/sounds/ghost_eaten.wav");
+    g_GhostEatSound = Mix_LoadWAV("res/sounds/sfx/arrangement/ghost_eaten.wav");
     if( g_GhostEatSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_GhostEatSound, 20 );
 
-    g_PickupEaten = Mix_LoadWAV("res/sounds/powerup.wav");
+    g_PickupEaten = Mix_LoadWAV("res/sounds/sfx/arrangement/powerup.wav");
     if( g_PickupEaten == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
     Mix_VolumeChunk( g_PickupEaten, 20 );
 
-    g_ExtraLifeSound = Mix_LoadWAV("res/sounds/extra_life.wav");
+    g_ExtraLifeSound = Mix_LoadWAV("res/sounds/sfx/arrangement/extra_life.wav");
     if( g_ExtraLifeSound == NULL ) {
         fprintf( stderr, "failed to load sound: %s\n", Mix_GetError() );
     }
