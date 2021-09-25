@@ -653,8 +653,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     }
 
                     // eat ghost if pacman touches
-                    if ( entities->actors[ playerId ]->current_tile.x == entities->actors[ eid ]->current_tile.x 
-                    && entities->actors[ playerId ]->current_tile.y == entities->actors[ eid ]->current_tile.y ) {
+                    if ( entitiesIntersecting(entities, playerId, eid) ) {
                         Mix_PlayChannel( GHOST_EAT_CHANNEL , g_GhostEatSound, 0 );
                         Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
                         gScore.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
@@ -712,7 +711,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
                     EntityId mirroredTempPlayerId = i;
                         // eat ghost if pacman touches
-                    if ( points_equal( entities->actors[ mirroredTempPlayerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
+                    if ( entitiesIntersecting(entities, mirroredTempPlayerId, eid) ) {
                         Mix_PlayChannel( -1, g_PacChompSound, 0 );
                         Mix_PlayChannel( -1, g_GhostEatenSounds[ g_NumGhostsEaten ], 0);
                         gScore.score_number+=g_GhostPointValues[ g_NumGhostsEaten ];
@@ -992,6 +991,11 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             continue;
         }
         ghost_move( entities->actors, i, tilemap, deltaTime );
+        //align
+        entities->collisionRects[i]->x = entities->actors[i]->world_center_point.x - ACTOR_SIZE*0.5;
+        entities->collisionRects[i]->y = entities->actors[i]->world_center_point.y - ACTOR_SIZE*0.5;
+        entities->collisionRects[i]->w = ACTOR_SIZE;
+        entities->collisionRects[i]->h = ACTOR_SIZE;
     }
     
     /*********************
@@ -1203,64 +1207,17 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             SDL_RenderDrawRect( gRenderer, &tileRect );
         }
 
+        //collisionRect
+        for(int eid = 0; eid < MAX_NUM_ENTITIES; eid++){
+            if(entities->collisionRects[eid] == NULL){
+                continue;
+            }
 
-        // current_tile
-        // for(int i = 0; i < 4; ++i) {
-        //     SDL_SetRenderDrawColor( renderer, pac_color.r, pac_color.g, pac_color.b,150);
-        //     SDL_Rect tile_rect = { actors[ i ]->current_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->current_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE,TILE_SIZE};
-        //     SDL_RenderFillRect( renderer, &tile_rect);
-        // }
-        
-        // // next tile 
-        // for( int i = 0; i < 5; ++i ) {
-        //     SDL_SetRenderDrawColor( renderer,  pac_color.r, pac_color.g, pac_color.b, 225 );
-        //     SDL_Rect next_rect = { actors[ i ]->next_tile.x * TILE_SIZE + tilemap.tm_screen_position.x, actors[ i ]->next_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-        //     SDL_RenderFillRect( renderer, &next_rect );
-
-        // }
-
-        // SDL_SetRenderDrawColor( renderer, 255,0,0,255);
-        // SDL_Rect b_target_rect = { actors[ 1 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 1 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-        // SDL_RenderDrawRect( renderer, &b_target_rect );
-
-        // SDL_SetRenderDrawColor( renderer, 255,150,255,255);
-        // SDL_Rect p_target_rect = { actors[ 2 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 2 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-        // SDL_RenderDrawRect( renderer, &p_target_rect );
-
-        // SDL_SetRenderDrawColor( renderer, 3,252,248,255);
-        // SDL_Rect i_target_rect = { actors[ 3 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 3 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-        // SDL_RenderDrawRect( renderer, &i_target_rect );
-
-        // SDL_SetRenderDrawColor( renderer, 235, 155, 52,255);
-        // SDL_Rect c_target_rect = { actors[ 4 ]->target_tile.x * TILE_SIZE+ tilemap.tm_screen_position.x, actors[ 4 ]->target_tile.y * TILE_SIZE + tilemap.tm_screen_position.y, TILE_SIZE, TILE_SIZE };
-        // SDL_RenderDrawRect( renderer, &c_target_rect );
-        
-        // // pacman center point
-        // SDL_SetRenderDrawColor( renderer, 255,255,255,255);
-        // SDL_Point points_to_draw[ 25 ];
-        
-        // //CENTER
-        // set_cross( actors[ 0 ]->world_center_point, 0, tilemap.tm_screen_position, points_to_draw );
-        
-        // // SENSORS
-        // set_cross( actors[ 0 ]->world_top_sensor, 5, tilemap.tm_screen_position, points_to_draw );
-        // set_cross( actors[ 0 ]->world_bottom_sensor, 10, tilemap.tm_screen_position, points_to_draw );
-        // set_cross( actors[ 0 ]->world_left_sensor, 15, tilemap.tm_screen_position,points_to_draw );
-        // set_cross( actors[ 0 ]->world_right_sensor, 20,tilemap.tm_screen_position, points_to_draw );
-
-        // SDL_RenderDrawPoints( renderer, points_to_draw, 25 );
-
-        // // GHOST PEN
-        // SDL_SetRenderDrawColor( renderer, 255,255,255,50);
-        // SDL_Point ghost_pen_screen_point = world_point_to_screen_point( ghost_pen_position, tilemap.tm_screen_position );
-        // SDL_Rect pen_rect = { ghost_pen_screen_point.x, ghost_pen_screen_point.y, TILE_SIZE, TILE_SIZE };
-        // SDL_RenderFillRect( renderer, &pen_rect);
-
-        // // GHOST PEN ENTRANCE
-        // SDL_SetRenderDrawColor( renderer, 255,255,255,50);
-        // SDL_Point ghost_pen_entrance_screen_point = tile_grid_point_to_screen_point(tilemap.one_way_tile, tilemap.tm_screen_position);//world_point_to_screen_point( tilemap.one_way_tile, tilemap.tm_screen_position );
-        // SDL_Rect pen_entrance_rect = { ghost_pen_entrance_screen_point.x, ghost_pen_entrance_screen_point.y, TILE_SIZE, TILE_SIZE };
-        // SDL_RenderFillRect( renderer, &pen_entrance_rect);
+            SDL_SetRenderDrawColor(gRenderer, 0,0,255,150);
+            SDL_Point realPt = world_point_to_screen_point((SDL_Point){entities->collisionRects[eid]->x, entities->collisionRects[eid]->y}, tilemap->tm_screen_position);
+            SDL_Rect rect = {realPt.x, realPt.y, entities->collisionRects[eid]->w, entities->collisionRects[eid]->h};
+            SDL_RenderFillRect(gRenderer, &rect);
+        }
 
     }
     SDL_RenderPresent( gRenderer );

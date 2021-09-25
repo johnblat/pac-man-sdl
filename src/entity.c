@@ -51,6 +51,7 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->isActive[entityId] = (SDL_bool *)malloc(sizeof(SDL_bool));
     entities->deathTimers[entityId] = (float *)malloc(sizeof(float));
     entities->respawnTimers[entityId] = (float *)malloc(sizeof(float));
+    entities->collisionRects[entityId] = (SDL_Rect *)malloc(sizeof(SDL_Rect));
 
     //initialize
     // position
@@ -113,6 +114,12 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     *entities->deathTimers[entityId] = 0.0f;
     *entities->respawnTimers[entityId] = 0.0f;
 
+    entities->collisionRects[entityId]->x = entities->actors[entityId]->world_center_point.x - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->y = entities->actors[entityId]->world_center_point.y - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->w = ACTOR_SIZE;
+    entities->collisionRects[entityId]->h = ACTOR_SIZE;
+
+
     return entityId;
 }
 
@@ -127,6 +134,7 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->ghostStates[ entityId] = (GhostState *)malloc(sizeof(GhostState));
     entities->stopTimers[entityId] = (float *) malloc(sizeof(float));
     entities->numDots[entityId] = (unsigned int *)malloc(sizeof(unsigned int));
+    entities->collisionRects[entityId] = (SDL_Rect *)malloc(sizeof(SDL_Rect));
 
     //initialize
     // position
@@ -166,6 +174,11 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
     *entities->numDots[entityId] = 0;
 
+    entities->collisionRects[entityId]->x = entities->actors[entityId]->world_center_point.x - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->y = entities->actors[entityId]->world_center_point.y - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->w = ACTOR_SIZE;
+    entities->collisionRects[entityId]->h = ACTOR_SIZE;
+
     return entityId;
 }
 
@@ -182,6 +195,8 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
     entities->activeTimers[ entityId ] = (float *) malloc(sizeof(float));
     entities->pickupTypes[ entityId] = (PickupType *)malloc(sizeof( PickupType )) ;
     entities->numDots[ entityId ] = (unsigned int *) malloc( sizeof( unsigned int ) );
+    entities->collisionRects[entityId] = (SDL_Rect *)malloc(sizeof(SDL_Rect));
+
 
     entities->positions[ entityId ]->current_tile = levelConfig->pacStartingTile;
     entities->positions[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
@@ -210,44 +225,15 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
     entities->scores[ entityId ] = (unsigned int *)malloc( sizeof(unsigned int));
     *entities->scores[ entityId ] = 0;
 
+    entities->collisionRects[entityId]->x = entities->actors[entityId]->world_center_point.x - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->y = entities->actors[entityId]->world_center_point.y - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->w = ACTOR_SIZE;
+    entities->collisionRects[entityId]->h = ACTOR_SIZE;
     return entityId;
 
 
 }
 
-EntityId createFruit( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, unsigned int numDots  ) {
-    EntityId entityId = g_NumEntities;
-    g_NumEntities++;
-
-    entities->positions[ entityId ] = (Position * ) malloc( sizeof( Position ) );
-    entities->actors[ entityId ] = (Actor * ) malloc( sizeof( Actor ) );
-    entities->activeTimers[ entityId ] = (float *) malloc(sizeof(float));
-    entities->pickupTypes[ entityId] = (PickupType *)malloc(sizeof( PickupType )) ;
-    entities->numDots[ entityId ] = (unsigned int *) malloc( sizeof( unsigned int ) );
-
-
-    entities->positions[ entityId ]->current_tile = levelConfig->pacStartingTile;
-    entities->positions[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
-    entities->positions[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
-    entities->positions[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
-    entities->positions[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
-
-    entities->actors[ entityId ]->current_tile = levelConfig->pacStartingTile;
-    entities->actors[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
-    entities->actors[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
-    entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
-    entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
-
-    entities->animatedSprites[ entityId ] = animatedSprite;
-
-    *entities->activeTimers[ entityId ] = 10.0f;
-    *entities->pickupTypes[ entityId ] = FRUIT_PICKUP;
-    *entities->numDots[ entityId ] = numDots;
-
-    entities->renderDatas[ entityId ] = renderDataInit();
-
-    return entityId;
-}
 
 void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime, LevelConfig *levelConfig ) {
     Actor **actors = entities->actors;
@@ -763,6 +749,10 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                 set_random_direction_and_next_tile( entities, eid, tilemap );    
             }
             ghost_move( entities->actors, eid, tilemap, deltaTime );
+            entities->collisionRects[eid]->x = entities->actors[eid]->world_center_point.x - ACTOR_SIZE*0.5;
+            entities->collisionRects[eid]->y = entities->actors[eid]->world_center_point.y - ACTOR_SIZE*0.5;
+            entities->collisionRects[eid]->w = ACTOR_SIZE;
+            entities->collisionRects[eid]->h = ACTOR_SIZE;
 
             EntityId playerId;
             for( int i = 0; i < numPlayers; i++ ) {
@@ -771,7 +761,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                     continue;
                 }
                 // player picks up
-                if( points_equal( entities->actors[ playerId ]->current_tile, entities->actors[ eid ]->current_tile ) ) {
+                if( entitiesIntersecting(entities, playerId, eid) ) {
                     *entities->activeTimers[ eid ] = 0.0f;
                     score->score_number += *entities->scores[ eid ];
 
@@ -833,4 +823,12 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
         }
 
     }
+}
+
+SDL_bool entitiesIntersecting(Entities *entities, EntityId eid1, EntityId eid2 ){
+    SDL_Rect resultRect;
+    if ( SDL_IntersectRect(entities->collisionRects[eid1], entities->collisionRects[eid2], &resultRect) ){
+        return SDL_TRUE;
+    }
+    return SDL_FALSE;
 }

@@ -93,6 +93,7 @@ int main( int argc, char *argv[] ) {
         entities.mirrorEntityRefs[i] = NULL;
         entities.deathTimers[i] = NULL;
         entities.respawnTimers[i] = NULL;
+        entities.collisionRects[i] = NULL;
         
 
 
@@ -632,6 +633,10 @@ int main( int argc, char *argv[] ) {
         if( entities.respawnTimers[i] != NULL ) {
             free(entities.respawnTimers[i]);
             entities.respawnTimers[i] = NULL;
+        }
+        if( entities.collisionRects[i] != NULL ) {
+            free(entities.collisionRects[i]);
+            entities.collisionRects[i] = NULL;
         }
         
     }

@@ -248,7 +248,8 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
         if( *entities->deathTimers[playerId] > 0.0f ) {
             continue;
         }
-        if ( points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
+    
+        if ( entitiesIntersecting(entities, playerId, ghostId )){// points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
             //Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
             *entities->deathTimers[playerId] = 2.0f;
             Mix_PlayChannel(PAC_DIE_CHANNEL, g_PacDieSound, 0 );

@@ -36,6 +36,7 @@ typedef struct CoolDownStock {
 typedef struct Entities {
     SDL_bool           *isActive          [ MAX_NUM_ENTITIES ]; // process. If deactivated, can be overwritten
     Position           *positions         [ MAX_NUM_ENTITIES ];
+    SDL_Rect            *collisionRects[MAX_NUM_ENTITIES];
     Actor              *actors            [ MAX_NUM_ENTITIES ]; 
     AnimatedSprite     *animatedSprites   [ MAX_NUM_ENTITIES ]; 
     RenderData         *renderDatas       [ MAX_NUM_ENTITIES ]; 
@@ -97,6 +98,6 @@ void processInvincibilityTimers( Entities *entities, float deltaTime) ;
 
 void processDeathTimers( Entities *entities, LevelConfig *levelConfig, float deltaTime );
 void processRespawnTimers( Entities *entities, float deltaTime );
-
+SDL_bool entitiesIntersecting(Entities *entities, EntityId eid1, EntityId eid2 );
 
 #endif

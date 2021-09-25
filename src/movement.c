@@ -457,7 +457,11 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
         if( actors[ i ]->velocity.x < 0 && actors[ i ]->velocity.y > 0 ) { // down-left
             entities->animatedSprites[ i ]->current_anim_row = 7;
         }
-
+        //align
+        entities->collisionRects[i]->x = entities->actors[i]->world_center_point.x - ACTOR_SIZE*0.5;
+        entities->collisionRects[i]->y = entities->actors[i]->world_center_point.y - ACTOR_SIZE*0.5;
+        entities->collisionRects[i]->w = ACTOR_SIZE;
+        entities->collisionRects[i]->h = ACTOR_SIZE;
 
     }
     
@@ -517,6 +521,8 @@ void moveActor( Actor *actor, Vector_f velocity ) {
     }
 
     actor_align_world_data_based_on_world_position( actor );
+
+    
 }
 
 float g_PAC_DASH_SPEED_MULTR = 2.5f;
