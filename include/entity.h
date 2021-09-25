@@ -32,12 +32,25 @@ typedef struct CoolDownStock {
     float cooldownTimer; // timer for rechargine stock
 } CooldownStock;
 
+typedef struct Sensor{
+    SDL_Point   worldTopSensor;   // relative position inside the tilemapped world.
+    SDL_Point   worldBottomSensor;// relative position inside the tilemapped world.
+    SDL_Point   worldLeftSensor;  // relative position inside the tilemapped world.
+    SDL_Point   worldRightSensor; // relative position inside the tilemapped world.
+} Sensor;
 
 typedef struct Entities {
     SDL_bool           *isActive          [ MAX_NUM_ENTITIES ]; // process. If deactivated, can be overwritten
-    Position           *positions         [ MAX_NUM_ENTITIES ];
+    Position_f          *worldPositions[MAX_NUM_ENTITIES]; //center pt
+    SDL_Point           *currentTiles[MAX_NUM_ENTITIES];
+    SDL_Point           *nextTiles[MAX_NUM_ENTITIES];
+    SDL_Point           *targetTiles[MAX_NUM_ENTITIES];
     SDL_Rect            *collisionRects[MAX_NUM_ENTITIES];
-    Actor              *actors            [ MAX_NUM_ENTITIES ]; 
+    Sensor              *sensors[MAX_NUM_ENTITIES];
+    Direction           *directions[MAX_NUM_ENTITIES];
+    float               *baseSpeeds[MAX_NUM_ENTITIES];
+    float               *speedMultipliers[MAX_NUM_ENTITIES];
+    Vector_f            *velocities[MAX_NUM_ENTITIES];
     AnimatedSprite     *animatedSprites   [ MAX_NUM_ENTITIES ]; 
     RenderData         *renderDatas       [ MAX_NUM_ENTITIES ]; 
     GhostState         *ghostStates       [ MAX_NUM_ENTITIES ];

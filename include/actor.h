@@ -27,12 +27,12 @@ typedef enum Direction {
 extern Direction opposite_directions[ 4 ];
 
 
-typedef struct Position {
-    Position_f  world_position; // relative position inside the tilemapped world. 
-    SDL_Point   world_center_point; // 
-    SDL_Point   current_tile; // tm coord where the actor currently is
+// typedef struct Position {
+//     Position_f  world_position; // relative position inside the tilemapped world. 
+//     SDL_Point   world_center_point; // 
+//     SDL_Point   current_tile; // tm coord where the actor currently is
 
-} Position;
+// } Position;
 
 typedef struct Actor {
     Position_f  world_position; // relative position inside the tilemapped world. 
