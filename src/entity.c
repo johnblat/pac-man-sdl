@@ -10,10 +10,11 @@
 #include "render.h"
 #include "targeting.h"
 #include "levelConfig.h"
-#include "actor.h"
 #include "entity.h"
 #include "UI.h"
 #include "globalData.h"
+
+Direction opposite_directions[5] = {DIR_UP, DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
 
 
 void allGhostsVulnerableStateEnter( Entities *entities, LevelConfig *levelConfig ) {
@@ -62,29 +63,29 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     //initialize
 
     *entities->worldPositions[entityId] = (Position_f){
-        levelConfig->pacStartingTile.x * TILE_SIZE + (ACTOR_SIZE*0.5), 
-        levelConfig->pacStartingTile.y * TILE_SIZE + (ACTOR_SIZE*0.5)
+        levelConfig->pacStartingTile.x * TILE_SIZE + (TILE_SIZE*0.5), 
+        levelConfig->pacStartingTile.y * TILE_SIZE + (TILE_SIZE*0.5)
     };
 
     *entities->currentTiles[entityId] = levelConfig->pacStartingTile;
 
     entities->sensors[entityId]->worldTopSensor = (SDL_Point){
         entities->worldPositions[entityId]->x,
-        entities->worldPositions[entityId]->y - (ACTOR_SIZE*0.5)
+        entities->worldPositions[entityId]->y - (TILE_SIZE*0.5)
     };
 
     entities->sensors[entityId]->worldBottomSensor = (SDL_Point){
         entities->worldPositions[entityId]->x,
-        entities->worldPositions[entityId]->y + (ACTOR_SIZE*0.5)
+        entities->worldPositions[entityId]->y + (TILE_SIZE*0.5)
     };
 
     entities->sensors[entityId]->worldLeftSensor = (SDL_Point){
-        entities->worldPositions[entityId]->x - (ACTOR_SIZE*0.5),
+        entities->worldPositions[entityId]->x - (TILE_SIZE*0.5),
         entities->worldPositions[entityId]->y 
     };
 
     entities->sensors[entityId]->worldRightSensor = (SDL_Point){
-        entities->worldPositions[entityId]->x + (ACTOR_SIZE*0.5),
+        entities->worldPositions[entityId]->x + (TILE_SIZE*0.5),
         entities->worldPositions[entityId]->y
     };
 
@@ -126,10 +127,10 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     *entities->respawnTimers[entityId] = 0.0f;
 
     *entities->collisionRects[entityId] = (SDL_Rect){
-        entities->worldPositions[entityId]->x - ACTOR_SIZE*0.5,
-        entities->worldPositions[entityId]->y - ACTOR_SIZE*0.5,
-        ACTOR_SIZE,
-        ACTOR_SIZE
+        entities->worldPositions[entityId]->x - TILE_SIZE*0.5,
+        entities->worldPositions[entityId]->y - TILE_SIZE*0.5,
+        TILE_SIZE,
+        TILE_SIZE
     };
 
     return entityId;
@@ -157,8 +158,8 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     //initialize
 
     *entities->worldPositions[entityId] = (Position_f){
-        levelConfig->ghostPenTile.x * TILE_SIZE + (ACTOR_SIZE*0.5),
-        levelConfig->ghostPenTile.y * TILE_SIZE + (ACTOR_SIZE*0.5)
+        levelConfig->ghostPenTile.x * TILE_SIZE + (TILE_SIZE*0.5),
+        levelConfig->ghostPenTile.y * TILE_SIZE + (TILE_SIZE*0.5)
     };
 
     *entities->currentTiles[entityId] = levelConfig->ghostPenTile;
@@ -191,10 +192,10 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
     *entities->numDots[entityId] = 0;
 
-    entities->collisionRects[entityId]->x = entities->worldPositions[entityId]->x - ACTOR_SIZE*0.5;
-    entities->collisionRects[entityId]->y = entities->worldPositions[entityId]->y - ACTOR_SIZE*0.5;
-    entities->collisionRects[entityId]->w = ACTOR_SIZE;
-    entities->collisionRects[entityId]->h = ACTOR_SIZE;
+    entities->collisionRects[entityId]->x = entities->worldPositions[entityId]->x - TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->y = entities->worldPositions[entityId]->y - TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->w = TILE_SIZE;
+    entities->collisionRects[entityId]->h = TILE_SIZE;
 
     return entityId;
 }
@@ -622,11 +623,11 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
             int difference = entities->worldPositions[playerId]->x - midWorldPointX;
             entities->worldPositions[eid]->x = midWorldPointX - difference;
         }
-        entities->worldPositions[eid]->x -= ACTOR_SIZE;
+        entities->worldPositions[eid]->x -= TILE_SIZE;
 
 
-        entities->worldPositions[eid]->x = entities->worldPositions[eid]->x + ACTOR_SIZE/2;
-        entities->worldPositions[eid]->y = entities->worldPositions[eid]->y + ACTOR_SIZE/2;
+        entities->worldPositions[eid]->x = entities->worldPositions[eid]->x + TILE_SIZE/2;
+        entities->worldPositions[eid]->y = entities->worldPositions[eid]->y + TILE_SIZE/2;
 
         entities->velocities[eid]->x = -entities->velocities[playerId]->x;
         entities->velocities[eid]->y = entities->velocities[playerId]->y;
@@ -755,10 +756,10 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                 set_random_direction_and_next_tile( entities, eid, tilemap );    
             }
             ghost_move( entities, eid, tilemap, deltaTime );
-            entities->collisionRects[eid]->x = entities->worldPositions[eid]->x - ACTOR_SIZE*0.5;
-            entities->collisionRects[eid]->y = entities->worldPositions[eid]->y - ACTOR_SIZE*0.5;
-            entities->collisionRects[eid]->w = ACTOR_SIZE;
-            entities->collisionRects[eid]->h = ACTOR_SIZE;
+            entities->collisionRects[eid]->x = entities->worldPositions[eid]->x - TILE_SIZE*0.5;
+            entities->collisionRects[eid]->y = entities->worldPositions[eid]->y - TILE_SIZE*0.5;
+            entities->collisionRects[eid]->w = TILE_SIZE;
+            entities->collisionRects[eid]->h = TILE_SIZE;
 
             EntityId playerId;
             for( int i = 0; i < numPlayers; i++ ) {

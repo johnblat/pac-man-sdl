@@ -1,7 +1,6 @@
 #include <SDL2/SDL.h>
 #include <stdlib.h>
 #include "animation.h"
-#include "actor.h"
 #include "entity.h"
 
 AnimatedSprite *init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim ){

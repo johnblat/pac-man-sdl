@@ -1,6 +1,5 @@
 #include "entity.h"
 #include "targeting.h"
-#include "actor.h"
 #include "render.h"
 #include "targeting.h"
 #include "movement.h"

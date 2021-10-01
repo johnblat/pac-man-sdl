@@ -3,7 +3,6 @@
 
 #include <SDL2/SDL_gamecontroller.h>
 #include "render.h"
-#include "actor.h"
 #include "ghostStates.h"
 #include "animation.h"
 #include "levelConfig.h"
@@ -28,12 +27,12 @@ typedef enum Direction {
     DIR_NONE
 } Direction;
 
-extern Direction opposite_directions[ 4 ];
+extern Direction opposite_directions[ 5 ];
 /**
  * Actor is responsible for interacting with other actors, objects, and the world itself via simulation
  */
 
-#define ACTOR_SIZE TILE_SIZE
+#define TILE_SIZE 40
 
 
 

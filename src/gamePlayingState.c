@@ -59,6 +59,49 @@ float gGameClearTimer = 0.0f;
 Blink ghostVulnerableBlink;
 Blink invincibleTimerAlmostUpBlink;
 
+void resetPositionalData( Entities *entities, EntityId eid, SDL_Point initial_tile ) {
+    *entities->worldPositions[eid] = (Position_f){
+        initial_tile.x * TILE_SIZE + (TILE_SIZE*0.5), 
+        initial_tile.y * TILE_SIZE + (TILE_SIZE*0.5)
+    };
+
+    if(entities->sensors[eid] != NULL){
+        entities->sensors[eid]->worldTopSensor = (SDL_Point){
+        entities->worldPositions[eid]->x,
+        entities->worldPositions[eid]->y - (TILE_SIZE*0.5)
+        };
+
+        entities->sensors[eid]->worldBottomSensor = (SDL_Point){
+            entities->worldPositions[eid]->x,
+            entities->worldPositions[eid]->y + (TILE_SIZE*0.5)
+        };
+
+        entities->sensors[eid]->worldLeftSensor = (SDL_Point){
+            entities->worldPositions[eid]->x - (TILE_SIZE*0.5),
+            entities->worldPositions[eid]->y 
+        };
+
+        entities->sensors[eid]->worldRightSensor = (SDL_Point){
+            entities->worldPositions[eid]->x + (TILE_SIZE*0.5),
+            entities->worldPositions[eid]->y
+        };
+    }
+    
+
+    *entities->collisionRects[eid] = (SDL_Rect){
+        entities->worldPositions[eid]->x - TILE_SIZE*0.5,
+        entities->worldPositions[eid]->y - TILE_SIZE*0.5,
+        TILE_SIZE,
+        TILE_SIZE
+    };
+
+    *entities->directions[eid] = DIR_NONE;
+
+    *entities->currentTiles[eid] = initial_tile;
+    *entities->nextTiles[eid] = *entities->currentTiles[eid];
+}
+
+
 void initGamePlayingStuff( ) {
     gPauseTextTexture = createTextTexture(&gPauseTextDestRect, gPauseText, pac_color, gLargeFont, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
     gLevelStartTextTexture = createTextTexture(&gLevelStartTextRect, gLevelStartText, white, gLargeFont, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
@@ -159,7 +202,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         pid = gPlayerIds[i];
         SDL_Point startingTile = levelConfig->pacStartingTile;
         startingTile.x += i;
-        actor_reset_data( entities, pid, startingTile);
+        resetPositionalData( entities, pid, startingTile);
         
         *entities->inputMasks[pid  ] = 0b0;
         *entities->chargeTimers[pid] = 0.0f;
@@ -195,7 +238,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             startingTile.y = ghost_pen_tile.y;
         }
 
-        actor_reset_data( entities, i, startingTile );
+        resetPositionalData( entities, i, startingTile );
         entities->animatedSprites[i ]->texture_atlas_id = entities->animatedSprites[i]->default_texture_atlas_id;
         *entities->ghostStates[ i ] = STATE_STAY_PEN;
         stayPenEnter( entities, levelConfig, i );
@@ -209,7 +252,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             SDL_Point blinkyTile;
             blinkyTile.x = ghost_pen_tile.x;
             blinkyTile.y = ghost_pen_tile.y - 4; // above pen. outside of gate
-            actor_reset_data( entities, i, blinkyTile );
+            resetPositionalData( entities, i, blinkyTile );
             *entities->ghostStates[i] = STATE_NORMAL;
         }
     }
@@ -903,10 +946,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         }
         ghost_move( entities, i, tilemap, deltaTime );
         //align
-        entities->collisionRects[i]->x = entities->worldPositions[i]->x - ACTOR_SIZE*0.5;
-        entities->collisionRects[i]->y = entities->worldPositions[i]->y - ACTOR_SIZE*0.5;
-        entities->collisionRects[i]->w = ACTOR_SIZE;
-        entities->collisionRects[i]->h = ACTOR_SIZE;
+        entities->collisionRects[i]->x = entities->worldPositions[i]->x - TILE_SIZE*0.5;
+        entities->collisionRects[i]->y = entities->worldPositions[i]->y - TILE_SIZE*0.5;
+        entities->collisionRects[i]->w = TILE_SIZE;
+        entities->collisionRects[i]->h = TILE_SIZE;
     }
     
     /*********************

@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "render.h"
 #include "renderProcessing.h"
-#include "actor.h"
 #include "entity.h"
 #include <assert.h>
 #include "animation.h"

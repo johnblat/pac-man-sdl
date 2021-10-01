@@ -1,5 +1,4 @@
 #include <SDL2/SDL.h>
-#include "actor.h"
 #include "entity.h"
 #include "movement.h"
 #include "tiles.h"
@@ -17,6 +16,43 @@ void tile_wrap( SDL_Point *tile ) {
         tile->x = 0;
     if( tile->x < 0 )
         tile->x = TILE_COLS - 1;
+}
+
+
+void alignWorldDataBasedOnWorldPosition( Entities *entities, EntityId eid ) {
+
+    entities->currentTiles[eid]->x = entities->worldPositions[eid]->x / TILE_SIZE;
+    entities->currentTiles[eid]->y = entities->worldPositions[eid]->y / TILE_SIZE;
+
+    if(entities->sensors[eid] != NULL){
+        entities->sensors[eid]->worldTopSensor = (SDL_Point){
+            entities->worldPositions[eid]->x,
+            entities->worldPositions[eid]->y - (TILE_SIZE*0.5)
+        };
+
+        entities->sensors[eid]->worldBottomSensor = (SDL_Point){
+            entities->worldPositions[eid]->x,
+            entities->worldPositions[eid]->y + (TILE_SIZE*0.5)
+        };
+
+        entities->sensors[eid]->worldLeftSensor = (SDL_Point){
+            entities->worldPositions[eid]->x - (TILE_SIZE*0.5),
+            entities->worldPositions[eid]->y 
+        };
+
+        entities->sensors[eid]->worldRightSensor = (SDL_Point){
+            entities->worldPositions[eid]->x + (TILE_SIZE*0.5),
+            entities->worldPositions[eid]->y
+        };
+    }
+    
+
+    *entities->collisionRects[eid] = (SDL_Rect){
+        entities->worldPositions[eid]->x - TILE_SIZE*0.5,
+        entities->worldPositions[eid]->y - TILE_SIZE*0.5,
+        TILE_SIZE,
+        TILE_SIZE
+    };
 }
 
 static void trySetDirection( Entities *entities, EntityId entityId, TileMap *tilemap ) {
@@ -163,13 +199,13 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             if( entities->velocities[i]->x > 0 ) {
                 if( entities->worldPositions[i]->x > tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5);
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
             else if( entities->velocities[i]->x < 0 ) {
                 if( entities->worldPositions[i]->x < tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5);
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
 
@@ -222,13 +258,13 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             if( entities->velocities[i]->x > 0 ) {
                 if( entities->worldPositions[i]->x > tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5) ;
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
             else if( entities->velocities[i]->x < 0 ) {
                 if( entities->worldPositions[i]->x < tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5);
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
 
@@ -286,13 +322,13 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             if( entities->velocities[i]->y > 0 ) {
                 if( entities->worldPositions[i]->y > tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5) ;
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
             else if( entities->velocities[i]->y < 0 ) {
                 if( entities->worldPositions[i]->y < tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5) ;
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
 
@@ -346,13 +382,13 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             if( entities->velocities[i]->y > 0 ) {
                 if( entities->worldPositions[i]->y > tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5);
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
             else if( entities->velocities[i]->y < 0 ) {
                 if( entities->worldPositions[i]->y < tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
                     entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5);
-                    actor_align_world_data_based_on_world_position(entities, i);
+                    alignWorldDataBasedOnWorldPosition(entities, i);
                 }
             }
 
@@ -401,10 +437,10 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             entities->animatedSprites[ i ]->current_anim_row = 7;
         }
         //align
-        entities->collisionRects[i]->x = entities->worldPositions[i]->x - ACTOR_SIZE*0.5;
-        entities->collisionRects[i]->y = entities->worldPositions[i]->y - ACTOR_SIZE*0.5;
-        entities->collisionRects[i]->w = ACTOR_SIZE;
-        entities->collisionRects[i]->h = ACTOR_SIZE;
+        entities->collisionRects[i]->x = entities->worldPositions[i]->x - TILE_SIZE*0.5;
+        entities->collisionRects[i]->y = entities->worldPositions[i]->y - TILE_SIZE*0.5;
+        entities->collisionRects[i]->w = TILE_SIZE;
+        entities->collisionRects[i]->h = TILE_SIZE;
 
     }
     
@@ -434,7 +470,7 @@ void moveActor( Entities *entities, EntityId eid, Vector_f velocity ) {
         entities->worldPositions[eid]->y = TILE_ROWS * TILE_SIZE;
     }
 
-    actor_align_world_data_based_on_world_position( entities, eid );
+    alignWorldDataBasedOnWorldPosition( entities, eid );
 
     
 }
@@ -578,28 +614,28 @@ void ghost_move( Entities *entities, EntityId ghostId, TileMap *tm, float delta_
         if( velocity.x > 0 && !( *entities->directions[ghostId] == DIR_RIGHT )) { // right
             if( entities->worldPositions[ghostId]->x > tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) {
                 entities->worldPositions[ghostId]->x = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) ;
-                actor_align_world_data_based_on_world_position(entities, ghostId );
+                alignWorldDataBasedOnWorldPosition(entities, ghostId );
 
             }
         }
         else if( velocity.x < 0 && !( *entities->directions[ghostId] == DIR_LEFT )) { // left
             if( entities->worldPositions[ghostId]->x < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) {
                 entities->worldPositions[ghostId]->x = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) ;
-                actor_align_world_data_based_on_world_position(entities, ghostId );
+                alignWorldDataBasedOnWorldPosition(entities, ghostId );
 
             }
         }
         else if( velocity.y > 0 && !( *entities->directions[ghostId] == DIR_DOWN )) { // down
             if( entities->worldPositions[ghostId]->y > tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) {
                 entities->worldPositions[ghostId]->y = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) ;
-                actor_align_world_data_based_on_world_position(entities, ghostId );
+                alignWorldDataBasedOnWorldPosition(entities, ghostId );
 
             }
         }
         else if( velocity.y < 0 && !( *entities->directions[ghostId] == DIR_UP )) { // up
             if( entities->worldPositions[ghostId]->y < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) {
                 entities->worldPositions[ghostId]->y = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) ;
-                actor_align_world_data_based_on_world_position(entities, ghostId );
+                alignWorldDataBasedOnWorldPosition(entities, ghostId );
 
             }
         }
@@ -640,13 +676,13 @@ void pac_try_move( Entities *entities, EntityId eid, TileMap *tm, float delta_ti
         if( entities->velocities[eid]->x > 0 ) {
             if( entities->worldPositions[eid]->x > tile_grid_point_to_world_point(*entities->currentTiles[eid]).x + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->x = tile_grid_point_to_world_point(*entities->currentTiles[eid]).x ;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
         else if( entities->velocities[eid]->x < 0 ) {
             if( entities->worldPositions[eid]->x < tile_grid_point_to_world_point(*entities->currentTiles[eid]).x + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->x = tile_grid_point_to_world_point(*entities->currentTiles[eid]).x;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
 
@@ -696,13 +732,13 @@ void pac_try_move( Entities *entities, EntityId eid, TileMap *tm, float delta_ti
         if( entities->velocities[eid]->x > 0 ) {
             if( entities->worldPositions[eid]->x > tile_grid_point_to_world_point(*entities->currentTiles[eid]).x + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->x = tile_grid_point_to_world_point(*entities->currentTiles[eid]).x ;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
         else if( entities->velocities[eid]->x < 0 ) {
             if( entities->worldPositions[eid]->x < tile_grid_point_to_world_point(*entities->currentTiles[eid]).x + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->x = tile_grid_point_to_world_point(*entities->currentTiles[eid]).x;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
 
@@ -753,13 +789,13 @@ void pac_try_move( Entities *entities, EntityId eid, TileMap *tm, float delta_ti
         if( entities->velocities[eid]->y > 0 ) {
             if( entities->worldPositions[eid]->y > tile_grid_point_to_world_point(*entities->currentTiles[eid]).y + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->y = tile_grid_point_to_world_point(*entities->currentTiles[eid]).y ;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
         else if( entities->velocities[eid]->y < 0 ) {
             if( entities->worldPositions[eid]->y < tile_grid_point_to_world_point(*entities->currentTiles[eid]).y + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->y = tile_grid_point_to_world_point(*entities->currentTiles[eid]).y ;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
 
@@ -811,13 +847,13 @@ void pac_try_move( Entities *entities, EntityId eid, TileMap *tm, float delta_ti
         if( entities->velocities[eid]->y > 0 ) {
             if( entities->worldPositions[eid]->y > tile_grid_point_to_world_point(*entities->currentTiles[eid]).y + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->y = tile_grid_point_to_world_point(*entities->currentTiles[eid]).y;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
         else if( entities->velocities[eid]->y < 0 ) {
             if( entities->worldPositions[eid]->y < tile_grid_point_to_world_point(*entities->currentTiles[eid]).y + (TILE_SIZE * 0.5 ) ) {
                 entities->worldPositions[eid]->y = tile_grid_point_to_world_point(*entities->currentTiles[eid]).y;
-                actor_align_world_data_based_on_world_position( entities, eid );
+                alignWorldDataBasedOnWorldPosition( entities, eid );
             }
         }
 

@@ -1,12 +1,12 @@
 #ifndef MOVEMENT_H
 #define MOVEMENT_H
 
-#include "actor.h"
 #include "tiles.h"
 #include "entity.h"
 #include <inttypes.h>
 
 
+void alignWorldDataBasedOnWorldPosition( Entities *entities, EntityId eid );
 
 
 void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTime );

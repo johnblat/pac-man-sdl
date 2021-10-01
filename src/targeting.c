@@ -1,7 +1,6 @@
 #include <SDL2/SDL.h>
 #include "stdio.h"
 #include "targeting.h"
-#include "actor.h"
 #include "states.h"
 #include "comparisons.h"
 #include "tiles.h"

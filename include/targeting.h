@@ -2,7 +2,6 @@
 #define TARGETING_H
 
 #include "entity.h"
-#include "actor.h"
 #include <inttypes.h>
 #include "tiles.h"
 

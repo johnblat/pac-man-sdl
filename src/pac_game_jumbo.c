@@ -1,5 +1,4 @@
 #include "entity.c"
-#include "actor.c"
 #include "animation.c"
 #include "movement.c"
 #include "render.c"

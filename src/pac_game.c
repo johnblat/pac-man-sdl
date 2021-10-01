@@ -5,7 +5,6 @@
 #include <SDL2/SDL_gamecontroller.h>
 #include <stdio.h>
 #include "entity.h"
-#include "actor.h"
 #include "movement.h"
 #include "animation.h"
 #include "states.h"
