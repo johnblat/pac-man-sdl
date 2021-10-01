@@ -170,7 +170,7 @@ void renderDataForAnimatedSpriteProcess( SDL_Renderer *renderer, Entities *entit
 
 void set_render_clip_values_based_on_positions_and_animation( Entities *entities, SDL_Point offset ) {
     for ( int eid = 0; eid < MAX_NUM_ENTITIES; ++eid ) {
-        if( entities->animatedSprites[ eid ] == NULL || entities->positions[ eid ] == NULL || entities->renderDatas[ eid ] == NULL ) {
+        if( entities->animatedSprites[ eid ] == NULL || entities->worldPositions[ eid ] == NULL || entities->renderDatas[ eid ] == NULL ) {
             continue;
         }
         uint8_t texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
@@ -187,8 +187,8 @@ void set_render_clip_values_based_on_positions_and_animation( Entities *entities
         entities->renderDatas[eid]->dest_rect.w *= entities->renderDatas[eid]->scale;
         entities->renderDatas[eid]->dest_rect.h *= entities->renderDatas[eid]->scale;
 
-        int centerx = entities->actors[eid]->world_center_point.x;
-        int centery = entities->actors[eid]->world_center_point.y;
+        int centerx = entities->worldPositions[eid]->x;
+        int centery = entities->worldPositions[eid]->y;
 
 
         int w = entities->renderDatas[eid]->dest_rect.w;

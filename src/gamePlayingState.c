@@ -159,28 +159,14 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         pid = gPlayerIds[i];
         SDL_Point startingTile = levelConfig->pacStartingTile;
         startingTile.x += i;
-        actor_reset_data( entities->actors[ pid ], startingTile);
+        actor_reset_data( entities, pid, startingTile);
         
         *entities->inputMasks[pid  ] = 0b0;
         *entities->chargeTimers[pid] = 0.0f;
         *entities->dashTimers[pid] = 0.0f;
         *entities->inputMasks[pid]= 0b0;
-        entities->actors[pid]->direction = DIR_NONE;
+        *entities->directions[pid] = DIR_NONE;
     }
-    // for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-    //     if( entities->inputMasks[i] == NULL ) {
-    //         continue;
-    //     }
-    //     SDL_Point startingTile = levelConfig->pacStartingTile;
-    //     startingTile.x += i;
-    //     actor_reset_data( entities->actors[ i ], startingTile);
-        
-    //     *entities->inputMasks[i  ] = 0b0;
-    //     *entities->chargeTimers[i] = 0.0f;
-    //     *entities->dashTimers[i] = 0.0f;
-    //     *entities->inputMasks[i]= 0b0;
-    //     entities->actors[i]->direction = DIR_NONE;
-    // }
     
     
     //ghosts
@@ -209,7 +195,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             startingTile.y = ghost_pen_tile.y;
         }
 
-        actor_reset_data( entities->actors[ i ], startingTile );
+        actor_reset_data( entities, i, startingTile );
         entities->animatedSprites[i ]->texture_atlas_id = entities->animatedSprites[i]->default_texture_atlas_id;
         *entities->ghostStates[ i ] = STATE_STAY_PEN;
         stayPenEnter( entities, levelConfig, i );
@@ -223,7 +209,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             SDL_Point blinkyTile;
             blinkyTile.x = ghost_pen_tile.x;
             blinkyTile.y = ghost_pen_tile.y - 4; // above pen. outside of gate
-            actor_reset_data( entities->actors[i], blinkyTile );
+            actor_reset_data( entities, i, blinkyTile );
             *entities->ghostStates[i] = STATE_NORMAL;
         }
     }
@@ -276,11 +262,9 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             continue;
         }
         
-        entities->actors[ eid ]->current_tile = levelConfig->powerPelletTiles[ ppIdx ];
-        entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
-        entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
-        entities->actors[eid]->world_center_point.x = entities->actors[eid]->world_position.x + ACTOR_SIZE/2;
-        entities->actors[eid]->world_center_point.y = entities->actors[eid]->world_position.y + ACTOR_SIZE/2;
+        *entities->currentTiles[eid] = levelConfig->powerPelletTiles[ ppIdx ];
+    entities->worldPositions[eid]->x = tile_grid_point_to_world_point(*entities->currentTiles[eid] ).x + (TILE_SIZE*0.5);
+    entities->worldPositions[eid]->y = tile_grid_point_to_world_point(*entities->currentTiles[eid] ).y + (TILE_SIZE*0.5);
 
         g_NumDots++;
         ppIdx++;
@@ -312,15 +296,15 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
             break; // loaded in all the pickup configs for the level
         }
 
-        entities->actors[ eid ]->current_tile.x = levelConfig->pacStartingTile.x;
-        entities->actors[ eid ]->current_tile.y = levelConfig->pacStartingTile.y;
-        entities->actors[eid]->next_tile = entities->actors[eid]->current_tile;
-        entities->actors[eid]->direction = DIR_UP;
+        entities->currentTiles[eid]->x = levelConfig->pacStartingTile.x;
+        entities->currentTiles[eid]->y = levelConfig->pacStartingTile.y;
+        *entities->nextTiles[eid] = *entities->currentTiles[eid];
+        *entities->directions[eid] = DIR_UP;
 
         
 
-        entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).x;
-        entities->actors[ eid ]->world_position.y = tile_grid_point_to_world_point(entities->actors[ eid ]->current_tile ).y;
+        entities->worldPositions[eid]->x = tile_grid_point_to_world_point(*entities->currentTiles[eid] ).x + TILE_SIZE*0.5;
+        entities->worldPositions[eid]->y = tile_grid_point_to_world_point(*entities->currentTiles[eid] ).y + TILE_SIZE*0.5;
 
         *entities->pickupTypes[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].pickupType;
         *entities->activeTimers[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].activeTime;
@@ -328,8 +312,7 @@ SDL_bool level_advance(LevelConfig *levelConfig, TileMap *tilemap, SDL_Renderer 
         *entities->scores[ eid ] = levelConfig->pickupConfigs[ pickupIdx ].scoreReward;
         entities->animatedSprites[ eid ]->texture_atlas_id = levelConfig->pickupConfigs[ pickupIdx ].textureAtlasId;
         entities->animatedSprites[ eid ]->default_texture_atlas_id = entities->animatedSprites[ eid ]->texture_atlas_id;
-        entities->actors[eid]->world_center_point.x = entities->actors[eid]->world_position.x + ACTOR_SIZE/2;
-        entities->actors[eid]->world_center_point.y = entities->actors[eid]->world_position.y + ACTOR_SIZE/2;
+
 
         pickupIdx++; // will go to the next one if any
 
@@ -611,7 +594,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         if( entities->slowTimers[ eid ] == NULL ) {
             continue;
         }
-        if( tilemap->tm_dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x' ) {
+        if( tilemap->tm_dots[ entities->currentTiles[eid]->y ][ entities->currentTiles[eid]->x ] == 'x' ) {
             *entities->slowTimers[ eid ] = 0.05f;
         }
     }
@@ -661,15 +644,15 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                         *entities->ghostStates[ eid ] = STATE_GO_TO_PEN;
                         uint8_t texture_atlas_id = 4;
                         entities->animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
-                        entities->actors[ eid ]->next_tile = entities->actors[ eid ]->current_tile;
-                        entities->actors[ eid ]->target_tile = levelConfig->ghostPenTile;
-                        entities->actors[ eid ]->speed_multp = 1.6f;
+                        *entities->nextTiles[eid] = *entities->currentTiles[eid];
+                        *entities->targetTiles[eid] = levelConfig->ghostPenTile;
+                        *entities->speedMultipliers[eid] = 1.6f;
 
                         // show message
                         for( int i = 0; i < g_NumTimedMessages; i++ ) {
                             if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
                                 g_TimedMessages[ i ].remainingTime = 0.85f;
-                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities->actors[ playerId ]->current_tile );
+                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( *entities->currentTiles[playerId] );
                                 snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
                                 g_TimedMessages[ i ].color = white;
                                 SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
@@ -719,15 +702,15 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                         *entities->ghostStates[ eid ] = STATE_GO_TO_PEN;
                         uint8_t texture_atlas_id = 4;
                         entities->animatedSprites[ eid ]->texture_atlas_id = texture_atlas_id;
-                        entities->actors[ eid ]->next_tile = entities->actors[ eid ]->current_tile;
-                        entities->actors[ eid ]->target_tile = levelConfig->ghostPenTile;
-                        entities->actors[ eid ]->speed_multp = 1.6f;
+                        *entities->nextTiles[eid] = *entities->currentTiles[eid];
+                        *entities->targetTiles[eid] = levelConfig->ghostPenTile;
+                        *entities->speedMultipliers[eid] = 1.6f;
 
                         // show message
                         for( int i = 0; i < g_NumTimedMessages; i++ ) {
                             if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
                                 g_TimedMessages[ i ].remainingTime = 0.85f;
-                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities->actors[ mirroredTempPlayerId ]->current_tile );
+                                g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( *entities->currentTiles[mirroredTempPlayerId] );
                                 snprintf( g_TimedMessages[ i ].message, 8, "%d", g_GhostPointValues[ g_NumGhostsEaten - 1 ] );
                                 g_TimedMessages[ i ].color = white;
                                 SDL_Surface *msgSurface = TTF_RenderText_Solid( g_TimedMessages[ i ].font,  g_TimedMessages[ i ].message, g_TimedMessages[ i ].color );
@@ -754,7 +737,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             case STATE_GO_TO_PEN :
                 // ghost is in pen
                 
-                if( points_equal(entities->actors[ eid ]->current_tile, levelConfig->ghostPenTile ) && entities->actors[ eid ]->world_center_point.y >= tile_grid_point_to_world_point(levelConfig->ghostPenTile).y/2) {
+                if( points_equal(*entities->currentTiles[eid], levelConfig->ghostPenTile ) && entities->worldPositions[eid]->y >= tile_grid_point_to_world_point(levelConfig->ghostPenTile).y/2) {
 
                     *entities->ghostStates[ eid ] = STATE_LEAVE_PEN;
                     leave_pen_enter( entities, eid );
@@ -765,9 +748,9 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             case STATE_NORMAL :
                 break;
             case STATE_LEAVE_PEN:
-                if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ eid ]->target_tile ) ) {
+                if( points_equal( *entities->currentTiles[eid], *entities->targetTiles[eid] ) ) {
                     *entities->ghostStates[ eid ] = STATE_NORMAL;
-                    //entities->actors[eid]->direction = DIR_LEFT;
+                    //*entities->directions[eid] = DIR_LEFT;
                     normal_enter( entities, eid );
                 }
                 
@@ -798,18 +781,18 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                 continue;
             }
             // player eats power pellet
-            if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
+            if( points_equal( *entities->currentTiles[eid], *entities->currentTiles[playerId] ) ) {
                 gScore.score_number += *entities->scores[eid];
 
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
-                entities->actors[ eid ]->current_tile.x = -1;
-                entities->actors[ eid ]->current_tile.y = -1;
-                entities->actors[ eid ]->world_position.x = -100;
-                entities->actors[ eid ]->world_position.y = -100;
-                entities->actors[ eid ]->world_center_point.x = -100;
-                entities->actors[ eid ]->world_center_point.y = -100;
+                entities->currentTiles[eid]->x = -1;
+                entities->currentTiles[eid]->y = -1;
+                entities->worldPositions[eid]->x = -100;
+                entities->worldPositions[eid]->y = -100;
+                entities->worldPositions[eid]->x = -100;
+                entities->worldPositions[eid]->y = -100;
                 g_NumDots--;
 
                 // make ghosts all vulnerable state
@@ -829,18 +812,18 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
             EntityId mirroredTempPlayerId = i;
             // mirrored player eats power pellet
-            if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
+            if( points_equal( *entities->currentTiles[eid], *entities->currentTiles[mirroredTempPlayerId] ) ) {
                 gScore.score_number += *entities->scores[eid];
 
                 g_NumGhostsEaten = 0;
                 // move it outside of the world area for now.
                 // TODO: deactivate this somehow
-                entities->actors[ eid ]->current_tile.x = -1;
-                entities->actors[ eid ]->current_tile.y = -1;
-                entities->actors[ eid ]->world_position.x = -100;
-                entities->actors[ eid ]->world_position.y = -100;
-                entities->actors[ eid ]->world_center_point.x = -100;
-                entities->actors[ eid ]->world_center_point.y = -100;
+                entities->currentTiles[eid]->x = -1;
+                entities->currentTiles[eid]->y = -1;
+                entities->worldPositions[eid]->x = -100;
+                entities->worldPositions[eid]->y = -100;
+                entities->worldPositions[eid]->x = -100;
+                entities->worldPositions[eid]->y = -100;
                 g_NumDots--;
 
                 // make ghosts all vulnerable state
@@ -851,78 +834,6 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
 
     }
 
-    // // process temp power pellets
-    // for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
-    //     if( entities->pickupTypes[ eid ] == NULL || *entities->pickupTypes[ eid] != POWER_PELLET_PICKUP  || entities->numDots[eid] == NULL) { // its a temporary power pellet pickup. 
-    //         continue;
-    //     }
-    //     int numDotsEaten = g_StartingNumDots - g_NumDots;
-    //     if( *entities->numDots[eid] >= numDotsEaten ) { // not ready
-    //         continue;
-    //     }
-
-    //     if( *entities->activeTimers[eid] <= 0.0f) { // its' dead
-    //         continue;
-    //     }
-
-    //     *entities->activeTimers[eid] -= deltaTime;
-
-        // collide with players
-    //     for( int i = 0; i < gNumPlayers; i++ ) {
-    //         EntityId playerId = gPlayerIds[ i ];
-    //         // player eats power pellet
-    //         if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ playerId ]->current_tile ) ) {
-    //             gScore.score_number += *entities->scores[ eid ];
-
-    //             g_NumGhostsEaten = 0;
-    //             // move it outside of the world area for now.
-    //             // TODO: deactivate this somehow
-    //             entities->actors[ eid ]->current_tile.x = -1;
-    //             entities->actors[ eid ]->current_tile.y = -1;
-    //             entities->actors[ eid ]->world_position.x = -100;
-    //             entities->actors[ eid ]->world_position.y = -100;
-    //             entities->actors[ eid ]->world_center_point.x = -100;
-    //             entities->actors[ eid ]->world_center_point.y = -100;
-    //             //g_NumDots--;
-
-    //             // make ghosts all vulnerable state
-    //             allGhostsVulnerableStateEnter( entities, levelConfig );
-    //         }
-    //     }
-        
-    //     //collide with mirror temp players
-    //     for( int i = 0; i < g_NumEntities; i++ ) {
-            
-    //         if( entities->mirrorEntityRefs[ i ] == NULL ) {
-    //             continue;
-    //         }
-    //         if( *entities->activeTimers[i] <= 0.0f ) {
-    //             continue;
-    //         }
-
-    //         EntityId mirroredTempPlayerId = i;
-    //         // mirrored player eats power pellet
-    //         if( points_equal( entities->actors[ eid ]->current_tile, entities->actors[ mirroredTempPlayerId ]->current_tile ) ) {
-    //             gScore.score_number += *entities->scores[eid];
-                
-    //             g_NumGhostsEaten = 0;
-    //             // move it outside of the world area for now.
-    //             // TODO: deactivate this somehow
-    //             entities->actors[ eid ]->current_tile.x = -1;
-    //             entities->actors[ eid ]->current_tile.y = -1;
-    //             entities->actors[ eid ]->world_position.x = -100;
-    //             entities->actors[ eid ]->world_position.y = -100;
-    //             entities->actors[ eid ]->world_center_point.x = -100;
-    //             entities->actors[ eid ]->world_center_point.y = -100;
-    //             g_NumDots--;
-
-    //             // make ghosts all vulnerable state
-    //             allGhostsVulnerableStateEnter( entities, levelConfig );  
-    //         }
-
-    //     }
-
-    // }
 
     processTemporaryPickup( entities, gPlayerIds, gNumPlayers, levelConfig, &gScore, tilemap, g_NumDots, deltaTime ) ;
 
@@ -990,10 +901,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         if( *entities->stopTimers[i] > 0.0f ) {
             continue;
         }
-        ghost_move( entities->actors, i, tilemap, deltaTime );
+        ghost_move( entities, i, tilemap, deltaTime );
         //align
-        entities->collisionRects[i]->x = entities->actors[i]->world_center_point.x - ACTOR_SIZE*0.5;
-        entities->collisionRects[i]->y = entities->actors[i]->world_center_point.y - ACTOR_SIZE*0.5;
+        entities->collisionRects[i]->x = entities->worldPositions[i]->x - ACTOR_SIZE*0.5;
+        entities->collisionRects[i]->y = entities->worldPositions[i]->y - ACTOR_SIZE*0.5;
         entities->collisionRects[i]->w = ACTOR_SIZE;
         entities->collisionRects[i]->h = ACTOR_SIZE;
     }
@@ -1008,8 +919,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             g_current_ghost_mode = MODE_SCATTER;
             for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
                 if( entities->ghostStates[ i ] != NULL && *entities->ghostStates[ i ] == STATE_NORMAL ) {
-                    entities->actors[ i ]->direction = opposite_directions[ entities->actors[ i ]->direction ];
-                    entities->actors[ i ]->next_tile = entities->actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
+                    *entities->directions[i] = opposite_directions[ *entities->directions[i] ];
+                    *entities->nextTiles[i] = *entities->currentTiles[i]; // need to do this so that the ghost will want to set a new next tile
                 }
                 
             }
@@ -1018,8 +929,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             g_current_ghost_mode = MODE_CHASE;
             for( int i = 0; i < MAX_NUM_ENTITIES; ++i ) {
                 if( entities->ghostStates[ i ] != NULL && *entities->ghostStates[ i ] == STATE_NORMAL ) {
-                    entities->actors[ i ]->direction = opposite_directions[ entities->actors[ i ]->direction ];
-                    entities->actors[ i ]->next_tile = entities->actors[ i ]->current_tile; // need to do this so that the ghost will want to set a new next tile
+                    *entities->directions[i] = opposite_directions[ *entities->directions[i] ];
+                    *entities->nextTiles[i] = *entities->currentTiles[i]; // need to do this so that the ghost will want to set a new next tile
                 }
 
             }
@@ -1072,7 +983,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             if(*entities->invincibilityTimers[eid] < 3.0f) {
                 SDL_SetRenderDrawColor(gRenderer, 255,20,255,invincibleTimerAlmostUpBlink.values[invincibleTimerAlmostUpBlink.current_value_idx]);
             }
-            SDL_Point canvasPt = world_point_to_screen_point(entities->actors[eid]->world_center_point, tilemap->tm_screen_position);
+            SDL_Point canvasPt = world_point_to_screen_point(
+                (SDL_Point){entities->worldPositions[eid]->x, entities->worldPositions[eid]->y }
+                , tilemap->tm_screen_position
+            );
             renderCircleFill(gRenderer, canvasPt.x, canvasPt.y, 50);
         }
     }
@@ -1162,20 +1076,20 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         SDL_Point screenPoint;
         // current tile
         for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-            if( entities->actors[ i ] == NULL ) {
+            if( entities->currentTiles[i] == NULL ) {
                 continue;
             }
-            screenPoint = tile_grid_point_to_screen_point( entities->actors[ i ]->current_tile, tilemap->tm_screen_position );
+            screenPoint = tile_grid_point_to_screen_point( *entities->currentTiles[i], tilemap->tm_screen_position );
             tileRect.x = screenPoint.x;    
             tileRect.y = screenPoint.y;    
             tileRect.w = TILE_SIZE;    
             tileRect.h = TILE_SIZE;    
             SDL_RenderFillRect( gRenderer, &tileRect);
 
-            screenPoint = tile_grid_point_to_screen_point( entities->actors[ i ]->next_tile, tilemap->tm_screen_position );
-            tileRect.x = screenPoint.x;    
-            tileRect.y = screenPoint.y; 
-            SDL_RenderFillRect( gRenderer, &tileRect);
+            // screenPoint = tile_grid_point_to_screen_point( *entities->nextTiles[i], tilemap->tm_screen_position );
+            // tileRect.x = screenPoint.x;    
+            // tileRect.y = screenPoint.y; 
+            // SDL_RenderFillRect( gRenderer, &tileRect);
 
         }
         // target tile
@@ -1201,7 +1115,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
                     SDL_SetRenderDrawColor( gRenderer, 255,255,255,255);
                     break;
             }
-            screenPoint = tile_grid_point_to_screen_point( entities->actors[ i ]->target_tile, tilemap->tm_screen_position );
+            screenPoint = tile_grid_point_to_screen_point( *entities->targetTiles[i], tilemap->tm_screen_position );
             tileRect.x = screenPoint.x;
             tileRect.y = screenPoint.y;
             SDL_RenderDrawRect( gRenderer, &tileRect );
@@ -1217,6 +1131,15 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
             SDL_Point realPt = world_point_to_screen_point((SDL_Point){entities->collisionRects[eid]->x, entities->collisionRects[eid]->y}, tilemap->tm_screen_position);
             SDL_Rect rect = {realPt.x, realPt.y, entities->collisionRects[eid]->w, entities->collisionRects[eid]->h};
             SDL_RenderFillRect(gRenderer, &rect);
+        }
+        // sensors
+        for(int eid = 0; eid < MAX_NUM_ENTITIES; eid++){
+            if(entities->worldPositions[eid] == NULL){
+                continue;
+            }
+            SDL_Point realPt = world_point_to_screen_point((SDL_Point){entities->worldPositions[eid]->x, entities->worldPositions[eid]->y}, tilemap->tm_screen_position);
+            SDL_SetRenderDrawColor(gRenderer, 255,255,255,255);
+            SDL_RenderDrawPoint(gRenderer, realPt.x, realPt.y);
         }
 
     }

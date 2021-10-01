@@ -11,16 +11,16 @@ SDL_Point ambush_home_tile = { 0, TILE_ROWS - 1 };
 SDL_Point moody_home_tile = { TILE_COLS - 1, 0 };
 SDL_Point pokey_home_tile = { TILE_COLS - 1, TILE_ROWS - 1};
 
-void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, int ghost_state ) {
+void set_direction_and_next_tile_shortest_to_target( Entities *entities, EntityId eid, TileMap *tm, int ghost_state ) {
     SDL_Point tile_above, tile_below, tile_left, tile_right;
-    tile_above.x = actor->current_tile.x;
-    tile_above.y = actor->current_tile.y - 1;
-    tile_below.x = actor->current_tile.x;
-    tile_below.y = actor->current_tile.y + 1;
-    tile_left.x = actor->current_tile.x - 1;
-    tile_left.y = actor->current_tile.y;
-    tile_right.x = actor->current_tile.x + 1;
-    tile_right.y = actor->current_tile.y;
+    tile_above.x = entities->currentTiles[eid]->x;
+    tile_above.y = entities->currentTiles[eid]->y - 1;
+    tile_below.x = entities->currentTiles[eid]->x;
+    tile_below.y = entities->currentTiles[eid]->y + 1;
+    tile_left.x = entities->currentTiles[eid]->x - 1;
+    tile_left.y = entities->currentTiles[eid]->y;
+    tile_right.x = entities->currentTiles[eid]->x + 1;
+    tile_right.y = entities->currentTiles[eid]->y;
 
     SDL_Point surrounding_tiles[ 4 ];
     surrounding_tiles[ DIR_UP ] = tile_above;
@@ -44,10 +44,30 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, 
         }
     }
 
-    float above_to_target_dist = distance(tile_above.x, tile_above.y,  actor->target_tile.x, actor->target_tile.y ); 
-    float below_to_target_dist = distance(tile_below.x, tile_below.y,  actor->target_tile.x, actor->target_tile.y ); 
-    float left_to_target_dist  = distance(tile_left.x, tile_left.y,  actor->target_tile.x, actor->target_tile.y ); 
-    float right_to_target_dist = distance(tile_right.x, tile_right.y,  actor->target_tile.x, actor->target_tile.y ); 
+    float above_to_target_dist = distance(
+        tile_above.x, 
+        tile_above.y,  
+        entities->targetTiles[eid]->x, 
+        entities->targetTiles[eid]->y 
+    ); 
+    float below_to_target_dist = distance(
+        tile_below.x, 
+        tile_below.y,  
+        entities->targetTiles[eid]->x, 
+        entities->targetTiles[eid]->y 
+    ); 
+    float left_to_target_dist  = distance(
+        tile_left.x, 
+        tile_left.y,  
+        entities->targetTiles[eid]->x, 
+        entities->targetTiles[eid]->y 
+    ); 
+    float right_to_target_dist = distance(
+        tile_right.x, 
+        tile_right.y,  
+        entities->targetTiles[eid]->x, 
+        entities->targetTiles[eid]->y 
+    ); 
 
 
     float lengths[ 4 ];
@@ -63,7 +83,7 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, 
     opposite_directions[ DIR_RIGHT ] = DIR_LEFT;
     opposite_directions[ DIR_NONE ] = DIR_UP; // just something in case their direction is none
 
-    int shortest_direction = opposite_directions[ actor->direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
+    int shortest_direction = opposite_directions[ *entities->directions[eid] ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
     float shortest_length = 9999.0f; // just some high number
 
 
@@ -79,7 +99,7 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, 
                 continue;
         }
 
-        if( i == opposite_directions[ actor->direction  ] ) continue;
+        if( i == opposite_directions[ *entities->directions[eid]  ] ) continue;
 
         if ( lengths[ i ] < shortest_length ) {
             shortest_direction = i;
@@ -88,25 +108,25 @@ void set_direction_and_next_tile_shortest_to_target( Actor *actor, TileMap *tm, 
     }
 
     // 23 is the actual tilemap on the screen height - because of offset
-    actor->direction = (Direction) shortest_direction;
-    actor->next_tile = surrounding_tiles[ shortest_direction ];
-    if( actor->next_tile.y > TILE_ROWS-1 ) {
-        actor->next_tile.y = 1;
+    *entities->directions[eid] = (Direction) shortest_direction;
+    *entities->nextTiles[eid] = surrounding_tiles[ shortest_direction ];
+    if( entities->nextTiles[eid]->y > TILE_ROWS-1 ) {
+        entities->nextTiles[eid]->y = 1;
     } 
-    if( actor->next_tile.y < 0 ){
-        actor->next_tile.y =  TILE_ROWS-1;
+    if( entities->nextTiles[eid]->y < 0 ){
+        entities->nextTiles[eid]->y =  TILE_ROWS-1;
     }
-    if( actor->next_tile.x >  TILE_COLS-1 ) {
-        actor->next_tile.x = 1;
+    if( entities->nextTiles[eid]->x >  TILE_COLS-1 ) {
+        entities->nextTiles[eid]->x = 1;
     }
-    if( actor->next_tile.x < 0 ) {
-        actor->next_tile.x =  TILE_COLS-1;
+    if( entities->nextTiles[eid]->x < 0 ) {
+        entities->nextTiles[eid]->x =  TILE_COLS-1;
     }
 }
 
 
 void set_scatter_target_tile(  Entities *entities, EntityId ghostId, SDL_Point home_tile  ) {
-    entities->actors[ ghostId ]->target_tile = home_tile;
+    *entities->targetTiles[ghostId] = home_tile;
 }
 
 EntityId closestEntityToEntity( Entities *entities, EntityId entityId, EntityId *entityIds, unsigned int numEntities ) {
@@ -123,7 +143,12 @@ EntityId closestEntityToEntity( Entities *entities, EntityId entityId, EntityId 
         if ( entities->isActive[currentEntityId] != NULL && *entities->isActive[currentEntityId] == SDL_FALSE ) {
             continue;
         }
-        currentDistance = distance( entities->actors[ entityId ]->world_center_point.x, entities->actors[ entityId ]->world_center_point.y, entities->actors[ currentEntityId ]->world_center_point.x, entities->actors[ currentEntityId ]->world_center_point.y );
+        currentDistance = distance( 
+            entities->worldPositions[entityId]->x, 
+            entities->worldPositions[entityId]->y, 
+            entities->worldPositions[currentEntityId]->x, 
+            entities->worldPositions[currentEntityId]->y 
+        );
         if( currentDistance < closestDistance ) {
             closestDistance = currentDistance;
             closestEntityId = currentEntityId;
@@ -135,46 +160,46 @@ EntityId closestEntityToEntity( Entities *entities, EntityId entityId, EntityId 
 }
 
 void set_shadow_target_tile( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers ){
-    Actor *ghostActor = entities->actors[ ghostId ];
+    // Actor *ghostActor = entities->actors[ ghostId ];
     if( numPlayers == 1 ) { // single player? automatically going to be closest player
-        ghostActor->target_tile = entities->actors[ playerIds[0] ]->current_tile;
+        *entities->targetTiles[ghostId] = *entities->currentTiles[playerIds[0]];//entities->actors[ playerIds[0] ]->current_tile;
         return;
     }
     // determine which player is closest
     EntityId closestPlayerId = closestEntityToEntity( entities, ghostId, playerIds, numPlayers );
 
-    ghostActor->target_tile = entities->actors[ closestPlayerId ]->current_tile;
+    *entities->targetTiles[ghostId] = *entities->currentTiles[closestPlayerId];//entities->actors[ closestPlayerId ]->current_tile;
 
 }
 
 
 inline void set_ambush_target_tile( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers ) {
-    Actor *ghostActor = entities->actors[ ghostId ];
+    // Actor *ghostActor = entities->actors[ ghostId ];
     
     // determine which player is closest
     EntityId closestPlayerId = closestEntityToEntity( entities, ghostId, playerIds, numPlayers );
 
     // target tile is in front of player based on their direction
-    switch( entities->actors[ closestPlayerId ]->direction ) {
+    switch( *entities->directions[closestPlayerId] ) {
         case DIR_UP:
-            ghostActor->target_tile.x =  entities->actors[ closestPlayerId]->current_tile.x;
-            ghostActor->target_tile.y = entities->actors[ closestPlayerId]->current_tile.y - 4;
+            entities->targetTiles[ghostId]->x =  entities->currentTiles[closestPlayerId]->x;
+            entities->targetTiles[ghostId]->y = entities->currentTiles[closestPlayerId]->y - 4;
             break;
         case DIR_DOWN:
-            ghostActor->target_tile.x =  entities->actors[ closestPlayerId]->current_tile.x;
-            ghostActor->target_tile.y =  entities->actors[ closestPlayerId]->current_tile.y + 4;
+            entities->targetTiles[ghostId]->x =  entities->currentTiles[closestPlayerId]->x;
+            entities->targetTiles[ghostId]->y =  entities->currentTiles[closestPlayerId]->y + 4;
             break;
         case DIR_LEFT:
-            ghostActor->target_tile.x =  entities->actors[ closestPlayerId]->current_tile.x - 4;
-            ghostActor->target_tile.y =  entities->actors[ closestPlayerId]->current_tile.y;
+            entities->targetTiles[ghostId]->x =  entities->currentTiles[closestPlayerId]->x - 4;
+            entities->targetTiles[ghostId]->y =  entities->currentTiles[closestPlayerId]->y;
             break;
         case DIR_RIGHT:
-            ghostActor->target_tile.x =  entities->actors[ closestPlayerId]->current_tile.x + 4;
-            ghostActor->target_tile.y =  entities->actors[ closestPlayerId]->current_tile.y;
+            entities->targetTiles[ghostId]->x =  entities->currentTiles[closestPlayerId]->x + 4;
+            entities->targetTiles[ghostId]->y =  entities->currentTiles[closestPlayerId]->y;
             break;
         default :
-            ghostActor->target_tile.x =  entities->actors[ closestPlayerId]->current_tile.x;
-            ghostActor->target_tile.y =  entities->actors[ closestPlayerId]->current_tile.y;
+            entities->targetTiles[ghostId]->x =  entities->currentTiles[closestPlayerId]->x;
+            entities->targetTiles[ghostId]->y =  entities->currentTiles[closestPlayerId]->y;
             break;
     }   
 }
@@ -186,103 +211,104 @@ inline void set_moody_target_tile(Entities *entities, EntityId ghostId, EntityId
     EntityId closestPlayerId = closestEntityToEntity( entities, ghostId, playerIds, numPlayers );
 
     // find shadowghost to compare with for this targeting algorithm
-    Actor *shadowGhostActor = NULL;
+    //Actor *shadowGhostActor = NULL;
+    EntityId shadowGhostId = INVALID_ENTITY_ID;
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++ ) {
         if( entities->targetingBehaviors[ eid ] == NULL ) {
             continue;
         }
         if( *entities->targetingBehaviors[ eid ] == SHADOW_BEHAVIOR ) {
-            shadowGhostActor = entities->actors[ eid ];
+            shadowGhostId = eid;
             break;
         }
     }
     // handle any error finding a shadow ghost
-    if( shadowGhostActor == NULL ) {
+    if( shadowGhostId == INVALID_ENTITY_ID ) {
         fprintf( stderr, "Something went wrong. Moody tried to find shadow entity, but not found\n");
         fprintf( stderr, "Just setting moody as if shadow\n");
-        entities->actors[ ghostId ]->target_tile = entities->actors[ closestPlayerId ]->current_tile;
+        entities->targetTiles[ghostId] = entities->currentTiles[closestPlayerId];
         return;
     }
 
     // determine target tile
-    SDL_Point shadowGhostCurrentTile = shadowGhostActor->current_tile;
+    SDL_Point shadowGhostCurrentTile = *entities->currentTiles[shadowGhostId];
     SDL_Point offset_tile;
     int tiles_x;
     int tiles_y;
 
-    switch( entities->actors[ closestPlayerId ]->direction ) {
+    switch( *entities->directions[closestPlayerId] ) {
         case DIR_UP:
-            offset_tile.x = entities->actors[ closestPlayerId ]->current_tile.x;
-            offset_tile.y = entities->actors[ closestPlayerId ]->current_tile.y - 2;
+            offset_tile.x = entities->currentTiles[closestPlayerId]->x;
+            offset_tile.y = entities->currentTiles[closestPlayerId]->y - 2;
             
 
             tiles_x = offset_tile.x - shadowGhostCurrentTile.x;
             tiles_y = offset_tile.y - shadowGhostCurrentTile.y;
 
-            entities->actors[ ghostId ]->target_tile.x = offset_tile.x + tiles_x;
-            entities->actors[ ghostId ]->target_tile.y = offset_tile.y + tiles_y;
+            entities->targetTiles[ghostId]->x = offset_tile.x + tiles_x;
+            entities->targetTiles[ghostId]->y = offset_tile.y + tiles_y;
 
             break;
         case DIR_DOWN:
-            offset_tile.x = entities->actors[ closestPlayerId ]->current_tile.x;
-            offset_tile.y = entities->actors[ closestPlayerId ]->current_tile.y + 2;
+            offset_tile.x = entities->currentTiles[closestPlayerId]->x;
+            offset_tile.y = entities->currentTiles[closestPlayerId]->y + 2;
 
             tiles_x = offset_tile.x - shadowGhostCurrentTile.x;
             tiles_y = offset_tile.y - shadowGhostCurrentTile.y;
 
-            entities->actors[ ghostId ]->target_tile.x = offset_tile.x + tiles_x;
-            entities->actors[ ghostId ]->target_tile.y = offset_tile.y + tiles_y;
+            entities->targetTiles[ghostId]->x = offset_tile.x + tiles_x;
+            entities->targetTiles[ghostId]->y = offset_tile.y + tiles_y;
 
             break;
         case DIR_LEFT:
-            offset_tile.x = entities->actors[ closestPlayerId ]->current_tile.x - 2;
-            offset_tile.y = entities->actors[ closestPlayerId ]->current_tile.y;
+            offset_tile.x = entities->currentTiles[closestPlayerId]->x - 2;
+            offset_tile.y = entities->currentTiles[closestPlayerId]->y;
 
             tiles_x = offset_tile.x - shadowGhostCurrentTile.x;
             tiles_y = offset_tile.y - shadowGhostCurrentTile.y;
 
-            entities->actors[ ghostId ]->target_tile.x = offset_tile.x + tiles_x;
-            entities->actors[ ghostId ]->target_tile.y = offset_tile.y + tiles_y;
+            entities->targetTiles[ghostId]->x = offset_tile.x + tiles_x;
+            entities->targetTiles[ghostId]->y = offset_tile.y + tiles_y;
 
             break;
         case DIR_RIGHT:
-            offset_tile.x = entities->actors[ closestPlayerId ]->current_tile.x + 2;
-            offset_tile.y = entities->actors[ closestPlayerId ]->current_tile.y;
+            offset_tile.x = entities->currentTiles[closestPlayerId]->x + 2;
+            offset_tile.y = entities->currentTiles[closestPlayerId]->y;
 
             tiles_x = offset_tile.x - shadowGhostCurrentTile.x;
             tiles_y = offset_tile.y - shadowGhostCurrentTile.y;
 
-            entities->actors[ ghostId ]->target_tile.x = offset_tile.x + tiles_x;
-            entities->actors[ ghostId ]->target_tile.y = offset_tile.y + tiles_y;
+            entities->targetTiles[ghostId]->x = offset_tile.x + tiles_x;
+            entities->targetTiles[ghostId]->y = offset_tile.y + tiles_y;
 
             break;
         default :
-            offset_tile.x = entities->actors[ closestPlayerId ]->current_tile.x;
-            offset_tile.y = entities->actors[ closestPlayerId ]->current_tile.y;
+            offset_tile.x = entities->currentTiles[closestPlayerId]->x;
+            offset_tile.y = entities->currentTiles[closestPlayerId]->y;
 
             tiles_x = offset_tile.x - shadowGhostCurrentTile.x;
             tiles_y = offset_tile.y - shadowGhostCurrentTile.y;
 
-            entities->actors[ ghostId ]->target_tile.x = offset_tile.x + tiles_x;
-            entities->actors[ ghostId ]->target_tile.y = offset_tile.y + tiles_y;
+            entities->targetTiles[ghostId]->x = offset_tile.x + tiles_x;
+            entities->targetTiles[ghostId]->y = offset_tile.y + tiles_y;
 
             break;
     }
-    if ( entities->actors[ ghostId ]->target_tile.x < 0 ) entities->actors[ ghostId ]->target_tile.x = 0;
-    if ( entities->actors[ ghostId ]->target_tile.y < 0 ) entities->actors[ ghostId ]->target_tile.y = 0;
+    if ( entities->targetTiles[ghostId]->x < 0 ) entities->targetTiles[ghostId]->x = 0;
+    if ( entities->targetTiles[ghostId]->y < 0 ) entities->targetTiles[ghostId]->y = 0;
 
-    if ( entities->actors[ ghostId ]->target_tile.x > TILE_COLS - 1 ) entities->actors[ ghostId ]->target_tile.x = TILE_COLS - 1;
-    if ( entities->actors[ ghostId ]->target_tile.y > TILE_ROWS - 1 ) entities->actors[ ghostId ]->target_tile.y = TILE_ROWS - 1;
+    if ( entities->targetTiles[ghostId]->x > TILE_COLS - 1 ) entities->targetTiles[ghostId]->x = TILE_COLS - 1;
+    if ( entities->targetTiles[ghostId]->y > TILE_ROWS - 1 ) entities->targetTiles[ghostId]->y = TILE_ROWS - 1;
 
 }
 
 inline void set_pokey_target_tile( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers ) {
    // SDL_Point b_tile_above, b_tile_below, b_tile_left, b_tile_right;
     float shadow_range = 64;
-    SDL_Point ghostCurrentTile = entities->actors[ ghostId ]->current_tile;
+    SDL_Point ghostCurrentTile = *entities->currentTiles[ghostId];
 
     EntityId closestPlayerId = closestEntityToEntity( entities, ghostId, playerIds, numPlayers );
-    SDL_Point pac_current_tile = entities->actors[ closestPlayerId ]->current_tile;
+    SDL_Point pac_current_tile = *entities->currentTiles[closestPlayerId];
 
     float distance_to_pacman = distance( ghostCurrentTile.x, ghostCurrentTile.y, pac_current_tile.x, pac_current_tile.y );
 

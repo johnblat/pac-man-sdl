@@ -7,18 +7,16 @@
 #include <inttypes.h>
 
 
-void actor_set_current_tile( Actor *actor);
+
 
 void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTime );
 
 void dashTimersProcess( Entities *entities, float deltaTime );
 
-void moveActors( Entities *entities ) ;
+void moveActor( Entities *entities, EntityId eid, Vector_f vel );
 
-void moveActor( Actor *actor, Vector_f vel );
+void ghost_move( Entities *entities, EntityId ghostId, TileMap *tm, float delta_time ) ;
 
-void ghost_move( Actor **actors, EntityId ghostId, TileMap *tm, float delta_time ) ;
-
-void pac_try_move( Actor *pacmonster,  TileMap *tm, float delta_time );
+void pac_try_move( Entities *entities, EntityId eid,  TileMap *tm, float delta_time );
 
 #endif

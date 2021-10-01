@@ -11,11 +11,30 @@
 #include "inttypes.h"
 #include "pickup.h"
 #include "input.h"
+#include "sprite.h"
 
 #define MAX_NUM_ENTITIES 32
 #define INVALID_ENTITY_ID MAX_NUM_ENTITIES
 typedef unsigned int EntityId;
 extern unsigned int g_NumEntities;
+
+#define distance(x1, y1, x2, y2) ( (x2 - x1 ) * (x2 - x1) + (y2 - y1) * (y2 - y1) )
+
+typedef enum Direction {
+    DIR_DOWN,
+    DIR_UP,
+    DIR_LEFT,
+    DIR_RIGHT,
+    DIR_NONE
+} Direction;
+
+extern Direction opposite_directions[ 4 ];
+/**
+ * Actor is responsible for interacting with other actors, objects, and the world itself via simulation
+ */
+
+#define ACTOR_SIZE TILE_SIZE
+
 
 
 

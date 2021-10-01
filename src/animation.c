@@ -38,7 +38,7 @@ void animatedSpriteIncProcess( AnimatedSprite **animatedSprites, float delta_tim
 }
 
 // send actors + 1 as argument - will get first ghost
-void set_animation_row( AnimatedSprite *animated_sprite, Actor *actor ) {
+void set_animation_row( AnimatedSprite *animated_sprite, Direction direction ) {
     // switch ghost direction and set to proper anim row
-    animated_sprite->current_anim_row = ( uint8_t ) actor->direction;
+    animated_sprite->current_anim_row = ( uint8_t ) direction;
 }

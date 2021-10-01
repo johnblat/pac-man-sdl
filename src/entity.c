@@ -56,12 +56,14 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     entities->deathTimers[entityId] = (float *)malloc(sizeof(float));
     entities->respawnTimers[entityId] = (float *)malloc(sizeof(float));
     entities->collisionRects[entityId] = (SDL_Rect *)malloc(sizeof(SDL_Rect));
+    entities->sensors[entityId] = (Sensor *)malloc(sizeof(Sensor));
+    entities->directions[entityId] = (Direction *)malloc(sizeof(Direction));
 
     //initialize
 
     *entities->worldPositions[entityId] = (Position_f){
-        levelConfig->pacStartingTile.x * TILE_SIZE,
-        levelConfig->pacStartingTile.y * TILE_SIZE
+        levelConfig->pacStartingTile.x * TILE_SIZE + (ACTOR_SIZE*0.5), 
+        levelConfig->pacStartingTile.y * TILE_SIZE + (ACTOR_SIZE*0.5)
     };
 
     *entities->currentTiles[entityId] = levelConfig->pacStartingTile;
@@ -138,40 +140,45 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
     g_NumEntities++;
 
     // allocate
-    entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
-    entities->actors         [ entityId ] = ( Actor * )                 malloc( sizeof( Actor ) );
-    entities->targetingBehaviors     [ entityId ] = (TargetingBehavior *)              malloc(sizeof(TargetingBehavior));
-    entities->ghostStates[ entityId] = (GhostState *)malloc(sizeof(GhostState));
-    entities->stopTimers[entityId] = (float *) malloc(sizeof(float));
-    entities->numDots[entityId] = (unsigned int *)malloc(sizeof(unsigned int));
-    entities->collisionRects[entityId] = (SDL_Rect *)malloc(sizeof(SDL_Rect));
+    entities->worldPositions[entityId] =        (Position_f *)malloc(sizeof(Position_f));
+    entities->currentTiles[entityId] =          (SDL_Point *)malloc(sizeof(SDL_Point));
+    entities->directions[entityId] =            (Direction *)malloc(sizeof(Direction));
+    entities->nextTiles[entityId] =             (SDL_Point *)malloc(sizeof(SDL_Point));
+    entities->baseSpeeds[entityId] =            (float *)malloc(sizeof(float));
+    entities->speedMultipliers[entityId] =      (float *)malloc(sizeof(float));
+    entities->velocities[entityId] =            (Vector_f *)malloc(sizeof(Vector_f));
+    entities->targetTiles[entityId] =           (SDL_Point *)malloc(sizeof(SDL_Point));
+    entities->targetingBehaviors[ entityId ] =  (TargetingBehavior *)malloc(sizeof(TargetingBehavior));
+    entities->ghostStates[ entityId] =          (GhostState *)malloc(sizeof(GhostState));
+    entities->stopTimers[entityId] =            (float *) malloc(sizeof(float));
+    entities->numDots[entityId] =               (unsigned int *)malloc(sizeof(unsigned int));
+    entities->collisionRects[entityId] =        (SDL_Rect *)malloc(sizeof(SDL_Rect));
 
     //initialize
-    // position
-    entities->positions[ entityId ]->current_tile = levelConfig->ghostPenTile;
-    entities->positions[ entityId ]->world_position.x = levelConfig->ghostPenTile.x * TILE_SIZE;
-    entities->positions[ entityId ]->world_position.y = levelConfig->ghostPenTile.y * TILE_SIZE;
 
-    entities->positions[ entityId ]->world_center_point.x = ( int ) entities->positions[ entityId ]->world_position.x + ( ACTOR_SIZE / 2 );
-    entities->positions[ entityId ]->world_center_point.y = ( int ) entities->positions[ entityId ]->world_position.y + ( ACTOR_SIZE / 2 );
-    //actor
-    entities->actors[ entityId ]->current_tile = levelConfig->ghostPenTile;
-    entities->actors[ entityId ]->world_position.x = levelConfig->ghostPenTile.x * TILE_SIZE;
-    entities->actors[ entityId ]->world_position.y = levelConfig->ghostPenTile.y * TILE_SIZE;
+    *entities->worldPositions[entityId] = (Position_f){
+        levelConfig->ghostPenTile.x * TILE_SIZE + (ACTOR_SIZE*0.5),
+        levelConfig->ghostPenTile.y * TILE_SIZE + (ACTOR_SIZE*0.5)
+    };
 
-    entities->actors[ entityId ]->world_center_point.x = ( int ) entities->actors[ entityId ]->world_position.x + ( ACTOR_SIZE / 2 );
-    entities->actors[ entityId ]->world_center_point.y = ( int ) entities->actors[ entityId ]->world_position.y + ( ACTOR_SIZE / 2 );
+    *entities->currentTiles[entityId] = levelConfig->ghostPenTile;
 
-    entities->actors[ entityId ]->velocity.x = 0.0f;
-    entities->actors[ entityId ]->velocity.y = 0.0f;
+    *entities->directions[entityId] = DIR_NONE;
 
-    entities->actors[ entityId ]->direction = DIR_NONE;
+    *entities->nextTiles[entityId] = *entities->currentTiles[entityId];
 
-    entities->actors[ entityId ]->next_tile = entities->positions[ entityId ]->current_tile;
-    entities->actors[ entityId ]->next_tile = entities->positions[ entityId ]->current_tile;
+    *entities->baseSpeeds[entityId] = levelConfig->baseSpeed;
 
-    entities->actors[ entityId ]->base_speed = levelConfig->baseSpeed;
-    entities->actors[ entityId ]->speed_multp = 0.85f;
+    *entities->speedMultipliers[entityId] = 0.85f;
+
+    *entities->velocities[entityId] = (Vector_f){
+        0.0f,
+        0.0f
+    };
+
+    *entities->targetTiles[entityId] = *entities->currentTiles[entityId];
+
+    *entities->targetingBehaviors[entityId] = targetingBehavior;
 
     entities->animatedSprites[ entityId ] = animatedSprite;
     entities->renderDatas[ entityId ] = renderDataInit( );
@@ -184,8 +191,8 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
     *entities->numDots[entityId] = 0;
 
-    entities->collisionRects[entityId]->x = entities->actors[entityId]->world_center_point.x - ACTOR_SIZE*0.5;
-    entities->collisionRects[entityId]->y = entities->actors[entityId]->world_center_point.y - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->x = entities->worldPositions[entityId]->x - ACTOR_SIZE*0.5;
+    entities->collisionRects[entityId]->y = entities->worldPositions[entityId]->y - ACTOR_SIZE*0.5;
     entities->collisionRects[entityId]->w = ACTOR_SIZE;
     entities->collisionRects[entityId]->h = ACTOR_SIZE;
 
@@ -200,60 +207,67 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
     EntityId entityId = g_NumEntities;
     g_NumEntities++;
 
-    entities->positions[ entityId ] = (Position * ) malloc( sizeof( Position ) );
-    entities->actors[ entityId ] = (Actor * ) malloc( sizeof( Actor ) );
+    // allocate
+    entities->worldPositions[entityId] = (Position_f *)malloc(sizeof(Position_f));
+    entities->currentTiles[entityId] = (SDL_Point *)malloc(sizeof(SDL_Point));
+    entities->nextTiles[entityId] = (SDL_Point *)malloc(sizeof(SDL_Point));
+    entities->directions[entityId] = (Direction *)malloc(sizeof(Direction));
+    entities->baseSpeeds[entityId] = (float *)malloc(sizeof(float));
+    entities->speedMultipliers[entityId] = (float *)malloc(sizeof(float));
     entities->activeTimers[ entityId ] = (float *) malloc(sizeof(float));
     entities->pickupTypes[ entityId] = (PickupType *)malloc(sizeof( PickupType )) ;
     entities->numDots[ entityId ] = (unsigned int *) malloc( sizeof( unsigned int ) );
     entities->collisionRects[entityId] = (SDL_Rect *)malloc(sizeof(SDL_Rect));
+    entities->scores[ entityId ] = (unsigned int *)malloc( sizeof(unsigned int));
 
+    // initialize
 
-    entities->positions[ entityId ]->current_tile = levelConfig->pacStartingTile;
-    entities->positions[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
-    entities->positions[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
-    entities->positions[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
-    entities->positions[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
+    *entities->worldPositions[entityId] = (Position_f){
+        levelConfig->pacStartingTile.x * TILE_SIZE + (TILE_SIZE*0.5),
+        levelConfig->pacStartingTile.y * TILE_SIZE + (TILE_SIZE*0.5)
+    };
 
-    entities->actors[ entityId ]->current_tile = levelConfig->pacStartingTile;
-    entities->actors[ entityId ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
-    entities->actors[ entityId ]->world_position.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y;
-    entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x + ACTOR_SIZE/2;
-    entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y + ACTOR_SIZE/2;
-    entities->actors[ entityId ]->next_tile = entities->actors[entityId]->current_tile;
-    entities->actors[entityId]->direction = DIR_LEFT;
-    entities->actors[entityId]->base_speed = levelConfig->baseSpeed;
-    entities->actors[entityId]->speed_multp = 0.5f;
+    *entities->currentTiles[entityId] = levelConfig->pacStartingTile;
+
+    *entities->nextTiles[entityId] = *entities->currentTiles[entityId];
+
+    *entities->directions[entityId] = DIR_LEFT;
+
+    *entities->baseSpeeds[entityId] = levelConfig->baseSpeed;
+
+    *entities->speedMultipliers[entityId] = 0.5f;
+
+    *entities->activeTimers[entityId] = 0.0f;
+
+    *entities->pickupTypes[entityId] = NONE_PICKUP;
+
+    *entities->numDots[entityId] = 0;
+
+    *entities->collisionRects[entityId] = (SDL_Rect){
+        entities->worldPositions[entityId]->x - (TILE_SIZE*0.5),
+        entities->worldPositions[entityId]->y - (TILE_SIZE*0.5),
+        TILE_SIZE,
+        TILE_SIZE
+    };
 
     entities->animatedSprites[ entityId ] = init_animation( 0, 15, 1, 20 ); // need to set texture atlas later. This is an initial invalid texture atlas id.
 
-    *entities->activeTimers[ entityId ] = 0.0f;
-    *entities->pickupTypes[ entityId ] = NONE_PICKUP; // this will be skipped over. Its a NULL-like value for the pickup type
-    *entities->numDots[ entityId ] = 0;
-
     entities->renderDatas[ entityId ] = renderDataInit();
-
-    entities->scores[ entityId ] = (unsigned int *)malloc( sizeof(unsigned int));
+    
     *entities->scores[ entityId ] = 0;
 
-    entities->collisionRects[entityId]->x = entities->actors[entityId]->world_center_point.x - ACTOR_SIZE*0.5;
-    entities->collisionRects[entityId]->y = entities->actors[entityId]->world_center_point.y - ACTOR_SIZE*0.5;
-    entities->collisionRects[entityId]->w = ACTOR_SIZE;
-    entities->collisionRects[entityId]->h = ACTOR_SIZE;
     return entityId;
-
-
 }
 
 
 void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime, LevelConfig *levelConfig ) {
-    Actor **actors = entities->actors;
     TargetingBehavior **targetingBehaviors = entities->targetingBehaviors;
     GhostState **ghostStates = entities->ghostStates;
 
 
     for( int eid = 0; eid < g_NumEntities; eid++ ) {
         // skip non ghosts
-        if( actors[ eid ] == NULL || targetingBehaviors[ eid ] == NULL || ghostStates[ eid ] == NULL ) {
+        if( targetingBehaviors[ eid ] == NULL || ghostStates[ eid ] == NULL ) {
             continue;
         }
         //Ghost state machine processing
@@ -279,7 +293,7 @@ void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPla
                 break;
         }
         
-        set_animation_row( entities->animatedSprites[ eid ], entities->actors[ eid ] );
+        set_animation_row( entities->animatedSprites[ eid ], *entities->directions[eid] );
 
         
 
@@ -290,28 +304,24 @@ EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, S
     EntityId entityId = g_NumEntities;
     g_NumEntities++;
 
-    entities->positions      [ entityId ] = (Position *)                malloc(sizeof(Position));
-    entities->actors        [ entityId ] = (Actor * ) malloc(sizeof(Actor)); // should be deprecated
+    entities->worldPositions[entityId] = (Position_f *)malloc(sizeof(Position_f));
+    entities->currentTiles[entityId] = (SDL_Point *)malloc(sizeof(SDL_Point));
     entities->pickupTypes   [ entityId ] = ( PickupType *) malloc( sizeof( PickupType ) );
     entities->scores   [ entityId ] = ( unsigned int *)malloc(sizeof(unsigned int));
 
-    entities->positions[ entityId ]->current_tile = tile;
-    entities->positions[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( tile ).x + TILE_SIZE/2;
-    entities->positions[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( tile ).y + TILE_SIZE/2;
-    entities->positions[ entityId ]->world_position.x = tile_grid_point_to_world_point( tile ).x;
-    entities->positions[ entityId ]->world_position.y = tile_grid_point_to_world_point( tile ).y;
+    *entities->worldPositions[entityId] = (Position_f){
+        tile.x * TILE_SIZE + (TILE_SIZE*0.5),
+        tile.y * TILE_SIZE + (TILE_SIZE*0.5),
+    };
 
-    entities->actors[ entityId ]->current_tile = tile;
-    entities->actors[ entityId ]->world_center_point.x = tile_grid_point_to_world_point( tile ).x + TILE_SIZE/2;
-    entities->actors[ entityId ]->world_center_point.y = tile_grid_point_to_world_point( tile ).y + TILE_SIZE/2;
-    entities->actors[ entityId ]->world_position.x = tile_grid_point_to_world_point( tile ).x;
-    entities->actors[ entityId ]->world_position.y = tile_grid_point_to_world_point( tile ).y;
+    *entities->currentTiles[entityId] = tile;
 
     entities->animatedSprites[ entityId ] = animatedSprite;
 
-    entities->renderDatas[ entityId ] = renderDataInit( );
+    entities->renderDatas[ entityId ] = renderDataInit();
 
     *entities->pickupTypes [ entityId ] = POWER_PELLET_PICKUP;
+
     *entities->scores[entityId] = 50;
 
     return entityId;
@@ -327,30 +337,26 @@ void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ],
         if( *entities->isActive[eid] == SDL_FALSE ) {
             continue;
         }
-        if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
-            
-            //if( !Mix_Playing( PAC_CHOMP_CHANNEL ))
+        if( dots[entities->currentTiles[eid]->y][entities->currentTiles[eid]->x] == 'x') {
             gPacChomp2 = !gPacChomp2;
+
             if( gPacChomp2 ) {
                 Mix_PlayChannel(PAC_CHOMP_CHANNEL, g_PacChompSound2, 0 );
             }
             else {
                 Mix_PlayChannel( PAC_CHOMP_CHANNEL2, g_PacChompSound, 0 );
-
             }
 
             // get rid of dot marker
-            dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] = ' ';
+            dots[entities->currentTiles[eid]->y][entities->currentTiles[eid]->x] = ' ';
 
             unsigned int n = *num_dots - 1;
+
             *num_dots = n;
             
             score->score_number += 10;
-
         }
     }
-        
-
 }
 
 void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score ) {
@@ -362,20 +368,17 @@ void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS
         if( *entities->activeTimers[eid] <= 0.0f ) {
             continue;
         }
-        if( dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] == 'x') {
+        if( dots[entities->currentTiles[eid]->y][entities->currentTiles[eid]->x] == 'x') {
      
             //Mix_PlayChannel( -1, g_PacChompSound, 0 );
 
             // get rid of dot marker
-            dots[ entities->actors[ eid ]->current_tile.y ][ entities->actors[ eid ]->current_tile.x ] = ' ';
+            dots[entities->currentTiles[eid]->y][entities->currentTiles[eid]->x] = ' ';
 
             g_NumDots -= 1;
             
             score->score_number += 10;
-
-
         }
-
     }
 }
 
@@ -404,23 +407,22 @@ void cooldownProcess( Entities *entities, float deltaTime ) {
 EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float activeTime ) {
     EntityId entityId = g_NumEntities++;
 
-    Actor *playerActor = entities->actors[playerId];
     AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
 
-    entities->positions[entityId] = (Position *)malloc(sizeof(Position));
-    entities->actors[ entityId ] = (Actor *)malloc(sizeof(Actor));
+    // allocate
+    entities->worldPositions[entityId] = (Position_f *)malloc(sizeof(Position_f));
+    entities->currentTiles[entityId] = (SDL_Point *)malloc(sizeof(SDL_Point));
+    entities->directions[entityId] = (Direction *)malloc(sizeof(Direction));
+    entities->velocities[entityId] = (Vector_f *)malloc(sizeof(Vector_f));
     entities->animatedSprites[ entityId ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
     entities->mirrorEntityRefs[ entityId ] = (EntityId *)malloc(sizeof(EntityId));
     entities->activeTimers[entityId]=(float *)malloc(sizeof(float));
 
-    entities->actors[entityId]->current_tile = playerActor->current_tile;
-    entities->actors[entityId]->direction = playerActor->direction;
-    entities->actors[entityId]->world_position = playerActor->world_position;
-    entities->actors[entityId]->world_center_point = playerActor->world_center_point;
-    entities->actors[entityId]->velocity.x = 0;
-    entities->actors[entityId]->velocity.y = 0;
-
-
+    // initialize
+    *entities->worldPositions[entityId] = *entities->worldPositions[playerId];
+    *entities->currentTiles[entityId] = *entities->currentTiles[playerId];
+    *entities->directions[entityId] = *entities->directions[playerId];
+    *entities->velocities[entityId] = (Vector_f){0.0f, 0.0f};
     entities->animatedSprites[entityId]->accumulator = playerAnimatedSprite->accumulator;
     entities->animatedSprites[entityId]->current_anim_row = playerAnimatedSprite->current_anim_row;
     entities->animatedSprites[entityId]->current_frame_col = playerAnimatedSprite->current_frame_col;
@@ -428,10 +430,8 @@ EntityId createTempMirrorPlayer( Entities *entities, EntityId playerId, float ac
     entities->animatedSprites[entityId]->frame_interval = playerAnimatedSprite->frame_interval;
     entities->animatedSprites[entityId]->num_frames_col = playerAnimatedSprite->num_frames_col;
     entities->animatedSprites[entityId]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
-
     entities->renderDatas[ entityId ] = renderDataInit( );
     entities->renderDatas[entityId]->alphaMod = 150;
-
     *entities->mirrorEntityRefs[entityId] = playerId;
     *entities->activeTimers[entityId] = activeTime;
 
@@ -450,19 +450,11 @@ EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerI
         if( *entities->activeTimers[eid] <= 0.0f ) {
             //EntityId entityId = ++g_NumEntities;
 
-            Actor *playerActor = entities->actors[playerId];
             AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
 
-            entities->actors[ eid ] = (Actor *)malloc(sizeof(Actor));
-            entities->animatedSprites[ eid ] = (AnimatedSprite *)malloc(sizeof(AnimatedSprite));
-            entities->mirrorEntityRefs[ eid ] = (EntityId *)malloc(sizeof(EntityId));
-            entities->activeTimers[eid]=(float *)malloc(sizeof(float));
-
-            entities->actors[eid]->current_tile = playerActor->current_tile;
-            entities->actors[eid]->direction = playerActor->direction;
-            entities->actors[eid]->world_position = playerActor->world_position;
-            entities->actors[eid]->world_center_point = playerActor->world_center_point;
-
+            *entities->currentTiles[eid] = *entities->currentTiles[playerId];
+            *entities->directions[eid] = *entities->directions[playerId];
+            *entities->worldPositions[eid] = *entities->worldPositions[playerId];
             entities->animatedSprites[eid]->accumulator = playerAnimatedSprite->accumulator;
             entities->animatedSprites[eid]->current_anim_row = playerAnimatedSprite->current_anim_row;
             entities->animatedSprites[eid]->current_frame_col = playerAnimatedSprite->current_frame_col;
@@ -471,7 +463,7 @@ EntityId overwriteInactiveTempMirrorPlayer( Entities *entities, EntityId playerI
             entities->animatedSprites[eid]->num_frames_col = playerAnimatedSprite->num_frames_col;
             entities->animatedSprites[eid]->texture_atlas_id = playerAnimatedSprite->texture_atlas_id;
 
-            entities->renderDatas[ eid ] = renderDataInit( );
+            entities->renderDatas[ eid ] = renderDataInit();
             entities->renderDatas[eid]->alphaMod = 150;
 
             *entities->mirrorEntityRefs[eid] = playerId;
@@ -500,7 +492,7 @@ void processSpeedBoostTimer( Entities *entities, float deltaTime ) {
             continue;
         }
         if(*entities->speedBoostTimers[eid] >= 0.0f ) {
-            entities->actors[ eid ]->speed_multp += 0.5;
+            *entities->speedMultipliers[eid] += 0.5f;
             *entities->speedBoostTimers[eid] -= deltaTime;
         }
     }
@@ -524,30 +516,34 @@ void processDeathTimers( Entities *entities, LevelConfig *levelConfig, float del
             }
         }
         if( *entities->deathTimers[eid] <= 0.0f && *entities->isActive[eid] == SDL_TRUE ) {
-            entities->actors[eid]->current_tile = levelConfig->pacStartingTile;
+            *entities->currentTiles[eid] = levelConfig->pacStartingTile;
             //entities->actors[eid]->current_tile.y -= 1;
-            entities->actors[eid]->next_tile = levelConfig->pacStartingTile;
-            entities->actors[ eid ]->world_position.x = tile_grid_point_to_world_point( levelConfig->pacStartingTile ).x;
-            entities->actors[ eid ]->world_position.y =  tile_grid_point_to_world_point( levelConfig->pacStartingTile ).y - 1;
-            entities->actors[ eid ]->world_center_point.x = ( int ) entities->actors[ eid ]->world_position.x + ( ACTOR_SIZE / 2 );
-            entities->actors[ eid ]->world_center_point.y = ( int ) entities->actors[ eid ]->world_position.y + ( ACTOR_SIZE / 2 );
+            *entities->nextTiles[eid] = levelConfig->pacStartingTile;
+            *entities->worldPositions[eid] = (Position_f){
+                levelConfig->pacStartingTile.x * TILE_SIZE + (TILE_SIZE*0.5),
+                (levelConfig->pacStartingTile.y ) * TILE_SIZE + (TILE_SIZE*0.5),
+            };
+            entities->sensors[eid]->worldTopSensor = (SDL_Point){
+                entities->worldPositions[eid]->x,
+                entities->worldPositions[eid]->y - (TILE_SIZE*0.5)
+            };
+            entities->sensors[eid]->worldBottomSensor = (SDL_Point){
+                entities->worldPositions[eid]->x,
+                entities->worldPositions[eid]->y + (TILE_SIZE*0.5)
+            };
+            entities->sensors[eid]->worldLeftSensor = (SDL_Point){
+                entities->worldPositions[eid]->x - (TILE_SIZE*0.5),
+                entities->worldPositions[eid]->y
+            };
+            entities->sensors[eid]->worldRightSensor = (SDL_Point){
+                entities->worldPositions[eid]->x + (TILE_SIZE*0.5),
+                entities->worldPositions[eid]->y
+            };
 
-            entities->actors[ eid ]->world_top_sensor.x = entities->actors[ eid ]->world_position.x + ( ACTOR_SIZE / 2 );
-            entities->actors[ eid ]->world_top_sensor.y = entities->actors[ eid ]->world_position.y;
-
-            entities->actors[ eid ]->world_bottom_sensor.x = entities->actors[ eid ]->world_position.x + ( ACTOR_SIZE / 2 );
-            entities->actors[ eid ]->world_bottom_sensor.y = entities->actors[ eid ]->world_position.y + ACTOR_SIZE;
-
-            entities->actors[ eid ]->world_left_sensor.x = entities->actors[ eid ]->world_position.x;
-            entities->actors[ eid ]->world_left_sensor.y = entities->actors[ eid ]->world_position.y + ( ACTOR_SIZE / 2 );
-
-            entities->actors[ eid ]->world_right_sensor.x = entities->actors[ eid ]->world_position.x + ACTOR_SIZE;
-            entities->actors[ eid ]->world_right_sensor.y = entities->actors[ eid ]->world_position.y + ( ACTOR_SIZE / 2 );    
-
-            entities->actors[ eid ]->direction = DIR_NONE;
+            *entities->directions[eid] = DIR_NONE;
 
             //actor_set_current_tile( entities->actors[ eid ] );
-            entities->actors[ eid ]->next_tile = entities->actors[ eid ]->current_tile;
+            *entities->nextTiles[eid] = *entities->currentTiles[eid];
             *entities->invincibilityTimers[ eid ] = 5.0f;
 
             *entities->respawnTimers[eid] = 0.5f;
@@ -587,79 +583,79 @@ void processTempMirrorPlayers( Entities *entities, float deltaTime ) {
         }
 
         EntityId playerId = *entities->mirrorEntityRefs[ eid ];
-        Actor *playerActor = entities->actors[playerId];
         AnimatedSprite *playerAnimatedSprite = entities->animatedSprites[playerId];
 
         const int tileCols = TILE_COLS - 1; // accidentally gave map one more than it should have
         const int midTileX = tileCols*0.5;
 
-        entities->actors[eid]->current_tile.y = playerActor->current_tile.y;
-        if( midTileX == playerActor->current_tile.x ) {
-            entities->actors[eid]->current_tile.x = playerActor->current_tile.x ;
+        
+        entities->currentTiles[eid]->y = entities->currentTiles[eid]->y;
+        if( midTileX == entities->currentTiles[playerId]->x ) {
+            entities->currentTiles[eid]->x = entities->currentTiles[playerId]->x;
         }
-        else if( playerActor->current_tile.x < midTileX ) {
-            int difference = midTileX - playerActor->current_tile.x;
-            entities->actors[eid]->current_tile.x = midTileX + difference;
+        else if( entities->currentTiles[playerId]->x < midTileX ) {
+            int difference = midTileX - entities->currentTiles[playerId]->x;
+            entities->currentTiles[eid]->x = midTileX + difference;
         }
-        else if( playerActor->current_tile.x > midTileX ) {
-            int difference = playerActor->current_tile.x - midTileX;
-            entities->actors[eid]->current_tile.x = midTileX - difference;
+        else if( entities->currentTiles[playerId]->x > midTileX ) {
+            int difference = entities->currentTiles[playerId]->x - midTileX;
+            entities->currentTiles[eid]->x = midTileX - difference;
         }
 
         const int midWorldPointX = midTileX*TILE_SIZE + TILE_SIZE*0.5;
 
-        entities->actors[eid]->direction = playerActor->direction;
-        if( entities->actors[eid]->direction == DIR_LEFT || entities->actors[eid]->direction == DIR_RIGHT) {
-            entities->actors[eid]->direction = opposite_directions[entities->actors[eid]->direction ];
+        *entities->directions[eid] = *entities->directions[playerId];
+        if( *entities->directions[eid] == DIR_LEFT || *entities->directions[eid] == DIR_RIGHT) {
+            *entities->directions[eid] = opposite_directions[*entities->directions[eid] ];
         }
 
-        entities->actors[eid]->world_position.y = playerActor->world_position.y;
+        entities->worldPositions[eid]->y = entities->worldPositions[eid]->y;
 
-        if( midWorldPointX == playerActor->world_position.x ) {
-            entities->actors[eid]->world_position.x = playerActor->world_position.x ;
+        if( midWorldPointX == entities->worldPositions[playerId]->x ) {
+            entities->worldPositions[eid]->x = entities->worldPositions[playerId]->x ;
         }
-        else if( playerActor->world_position.x < midWorldPointX ) {
-            int difference = midWorldPointX - playerActor->world_position.x;
-            entities->actors[eid]->world_position.x = midWorldPointX + difference;
+        else if( entities->worldPositions[playerId]->x < midWorldPointX ) {
+            int difference = midWorldPointX - entities->worldPositions[playerId]->x;
+            entities->worldPositions[eid]->x = midWorldPointX + difference;
         }
-        else if( playerActor->world_position.x > midWorldPointX ) {
-            int difference = playerActor->world_position.x - midWorldPointX;
-            entities->actors[eid]->world_position.x = midWorldPointX - difference;
+        else if( entities->worldPositions[playerId]->x > midWorldPointX ) {
+            int difference = entities->worldPositions[playerId]->x - midWorldPointX;
+            entities->worldPositions[eid]->x = midWorldPointX - difference;
         }
-        entities->actors[eid]->world_position.x -= ACTOR_SIZE;
+        entities->worldPositions[eid]->x -= ACTOR_SIZE;
 
 
-        entities->actors[eid]->world_center_point.x = entities->actors[eid]->world_position.x + ACTOR_SIZE/2;
-        entities->actors[eid]->world_center_point.y = entities->actors[eid]->world_position.y + ACTOR_SIZE/2;
+        entities->worldPositions[eid]->x = entities->worldPositions[eid]->x + ACTOR_SIZE/2;
+        entities->worldPositions[eid]->y = entities->worldPositions[eid]->y + ACTOR_SIZE/2;
 
-        entities->actors[eid]->velocity.x = -playerActor->velocity.x;
-        entities->actors[eid]->velocity.y = playerActor->velocity.y;
+        entities->velocities[eid]->x = -entities->velocities[playerId]->x;
+        entities->velocities[eid]->y = entities->velocities[playerId]->y;
 
         entities->renderDatas[eid]->alphaMod = 150;
 
         // pacman animation row
-        if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y == 0 ) { // right
+        if( entities->velocities[eid]->x > 0 && entities->velocities[eid]->y == 0 ) { // right
             entities->animatedSprites[ eid ]->current_anim_row = 0;
         }
-        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ eid ]->velocity.y == 0 ) { // left
+        if( entities->velocities[eid]->x < 0 && entities->velocities[eid]->y == 0 ) { // left
             entities->animatedSprites[ eid ]->current_anim_row = 1;
         }
-        if( entities->actors[ eid ]->velocity.x == 0 && entities->actors[ eid ]->velocity.y > 0 ) { // down
+        if( entities->velocities[eid]->x == 0 && entities->velocities[eid]->y > 0 ) { // down
             entities->animatedSprites[ eid ]->current_anim_row = 2;
         }
-        if( entities->actors[ eid ]->velocity.x == 0 && entities->actors[ eid ]->velocity.y < 0 ) { // up
+        if( entities->velocities[eid]->x == 0 && entities->velocities[eid]->y < 0 ) { // up
             entities->animatedSprites[ eid ]->current_anim_row = 3;
         }
-        if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y < 0 ) { //  up-right
+        if( entities->velocities[eid]->x > 0 && entities->velocities[eid]->y < 0 ) { //  up-right
             entities->animatedSprites[ eid ]->current_anim_row = 4;
         }
-        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ eid ]->velocity.y < 0 ) { // up-left
+        if( entities->velocities[eid]->x < 0 && entities->velocities[eid]->y < 0 ) { // up-left
             entities->animatedSprites[ eid ]->current_anim_row = 5;
         }
-        if( entities->actors[ eid ]->velocity.x > 0 && entities->actors[ eid ]->velocity.y > 0 ) { // down-right
+        if( entities->velocities[eid]->x > 0 && entities->velocities[eid]->y > 0 ) { // down-right
             entities->animatedSprites[ eid ]->current_anim_row = 6;
         }
-        if( entities->actors[ eid ]->velocity.x < 0 && entities->actors[ eid ]->velocity.y > 0 ) { // down-left
+        if( entities->velocities[eid]->x < 0 && entities->velocities[eid]->y > 0 ) { // down-left
             entities->animatedSprites[ eid ]->current_anim_row = 7;
         }
 
@@ -755,12 +751,12 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
             }
 
             // move it
-            if( points_equal( entities->actors[ eid ]->next_tile, entities->actors[ eid ]->current_tile ) ) {
+            if( points_equal( *entities->nextTiles[eid], *entities->currentTiles[eid] ) ) {
                 set_random_direction_and_next_tile( entities, eid, tilemap );    
             }
-            ghost_move( entities->actors, eid, tilemap, deltaTime );
-            entities->collisionRects[eid]->x = entities->actors[eid]->world_center_point.x - ACTOR_SIZE*0.5;
-            entities->collisionRects[eid]->y = entities->actors[eid]->world_center_point.y - ACTOR_SIZE*0.5;
+            ghost_move( entities, eid, tilemap, deltaTime );
+            entities->collisionRects[eid]->x = entities->worldPositions[eid]->x - ACTOR_SIZE*0.5;
+            entities->collisionRects[eid]->y = entities->worldPositions[eid]->y - ACTOR_SIZE*0.5;
             entities->collisionRects[eid]->w = ACTOR_SIZE;
             entities->collisionRects[eid]->h = ACTOR_SIZE;
 
@@ -781,7 +777,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                     for( int i = 0; i < g_NumTimedMessages; i++ ) {
                         if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
                             g_TimedMessages[ i ].remainingTime = 0.85f;
-                            g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( entities->actors[ playerId ]->current_tile );
+                            g_TimedMessages[ i ].world_position = tile_grid_point_to_world_point( *entities->currentTiles[playerId] );
                             snprintf( g_TimedMessages[ i ].message, 8, "%d", *entities->scores[eid] );
                             g_TimedMessages[ i ].color.r = 255 ;
                             g_TimedMessages[ i ].color.g = 255;

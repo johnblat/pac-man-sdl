@@ -35,23 +35,23 @@ GhostMode g_current_ghost_mode = MODE_SCATTER;
 void vulnerable_enter( Entities *entities, EntityId ghostId ) {
     uint8_t vulnerable_texture_atlas_id = 3;
     entities->animatedSprites[ ghostId ]->texture_atlas_id = vulnerable_texture_atlas_id;
-    entities->actors[ ghostId ]->direction = opposite_directions[ entities->actors[ ghostId ]->direction ];
-    entities->actors[ ghostId ]->next_tile = entities->actors[ ghostId ]->current_tile;
-    entities->actors[ ghostId ]->speed_multp = 0.4f;
+    *entities->directions[ghostId]= opposite_directions[ *entities->directions[ghostId]];
+    *entities->nextTiles[ghostId] = *entities->currentTiles[ghostId];
+    *entities->speedMultipliers[ghostId] = 0.4f;
 
 }
 
 
 void set_random_direction_and_next_tile( Entities *entities, EntityId eid, TileMap *tm ) {
     SDL_Point tile_above, tile_below, tile_left, tile_right;
-    tile_above.x = entities->actors[ eid ]->current_tile.x;
-    tile_above.y = entities->actors[ eid ]->current_tile.y - 1;
-    tile_below.x = entities->actors[ eid ]->current_tile.x;
-    tile_below.y = entities->actors[ eid ]->current_tile.y + 1;
-    tile_left.x  = entities->actors[ eid ]->current_tile.x - 1;
-    tile_left.y  = entities->actors[ eid ]->current_tile.y;
-    tile_right.x = entities->actors[ eid ]->current_tile.x + 1;
-    tile_right.y = entities->actors[ eid ]->current_tile.y;
+    tile_above.x = entities->currentTiles[eid]->x;
+    tile_above.y = entities->currentTiles[eid]->y - 1;
+    tile_below.x = entities->currentTiles[eid]->x;
+    tile_below.y = entities->currentTiles[eid]->y + 1;
+    tile_left.x  = entities->currentTiles[eid]->x - 1;
+    tile_left.y  = entities->currentTiles[eid]->y;
+    tile_right.x = entities->currentTiles[eid]->x + 1;
+    tile_right.y = entities->currentTiles[eid]->y;
 
     SDL_Point surrounding_tiles[ 4 ];
     surrounding_tiles[ DIR_UP ] = tile_above;
@@ -79,7 +79,7 @@ void set_random_direction_and_next_tile( Entities *entities, EntityId eid, TileM
     Direction randomDirection = rand() % 4; // 4 directions besides DIR_NONE
 
     // just choosing first open tile ghost sees
-    Direction direction_to_go = opposite_directions[ entities->actors[ eid ]->direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
+    Direction direction_to_go = opposite_directions[ *entities->directions[eid] ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
 
     // handle situation if random tile chosen is a wall
     
@@ -95,7 +95,7 @@ void set_random_direction_and_next_tile( Entities *entities, EntityId eid, TileM
                 continue;
         }
         
-        if( i == opposite_directions[ entities->actors[ eid ]->direction  ] ) continue;
+        if( i == opposite_directions[ *entities->directions[eid]  ] ) continue;
 
         direction_to_go = (Direction) i;
 
@@ -108,30 +108,30 @@ void set_random_direction_and_next_tile( Entities *entities, EntityId eid, TileM
         if( 
             !points_equal(surrounding_tiles[ randomDirection ], tm->one_way_tile) 
             && randomDirection != DIR_DOWN) {
-                if( randomDirection != opposite_directions[ entities->actors[ eid ]->direction  ] ) {
+                if( randomDirection != opposite_directions[ *entities->directions[eid]  ] ) {
                     direction_to_go = randomDirection;
                 }
             }
         
     }
      
-    entities->actors[ eid ]->direction = direction_to_go;
-    entities->actors[ eid ]->next_tile.x = surrounding_tiles[ direction_to_go ].x;
-    entities->actors[ eid ]->next_tile.y = surrounding_tiles[ direction_to_go ].y;
+    *entities->directions[eid] = direction_to_go;
+    entities->nextTiles[eid]->x = surrounding_tiles[ direction_to_go ].x;
+    entities->nextTiles[eid]->y = surrounding_tiles[ direction_to_go ].y;
 
     // 23 is the actual tilemap on the screen height - because of offset
 
-    if( entities->actors[ eid ]->next_tile.y > TILE_ROWS-1 ) {
-        entities->actors[ eid ]->next_tile.y = 1;
+    if( entities->nextTiles[eid]->y > TILE_ROWS-1 ) {
+        entities->nextTiles[eid]->y = 1;
     } 
-    if( entities->actors[ eid ]->next_tile.y < 0 ){
-        entities->actors[ eid ]->next_tile.y = TILE_ROWS-1;
+    if( entities->nextTiles[eid]->y < 0 ){
+        entities->nextTiles[eid]->y = TILE_ROWS-1;
     }
-    if( entities->actors[ eid ]->next_tile.x > TILE_COLS-1 ) {
-        entities->actors[ eid ]->next_tile.x = 1;
+    if( entities->nextTiles[eid]->x > TILE_COLS-1 ) {
+        entities->nextTiles[eid]->x = 1;
     }
-    if( entities->actors[ eid ]->next_tile.x < 0 ) {
-        entities->actors[ eid ]->next_tile.x = TILE_COLS-1;
+    if( entities->nextTiles[eid]->x < 0 ) {
+        entities->nextTiles[eid]->x = TILE_COLS-1;
     }
 
 }
@@ -140,7 +140,7 @@ void vulnerable_process( Entities *entities, EntityId ghostId, TileMap *tilemap 
     if( !Mix_Playing( GHOST_VULN_CHANNEL ) ) {
         Mix_PlayChannel( GHOST_VULN_CHANNEL, g_GhostVulnerableSound, 0 );
     }
-    if( points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile ) ) {
+    if( points_equal( *entities->nextTiles[ghostId], *entities->currentTiles[ghostId] ) ) {
         set_random_direction_and_next_tile( entities, ghostId, tilemap );    
     }
 }
@@ -151,14 +151,14 @@ void normal_enter( Entities *entities, EntityId ghostId )  {
     entities->animatedSprites[ ghostId ]->current_anim_row = 4;
     entities->animatedSprites[ ghostId ]->accumulator = 0.0f;
     entities->animatedSprites[ ghostId ]->texture_atlas_id = entities->animatedSprites[ ghostId ]->default_texture_atlas_id;
-    entities->actors[ ghostId ]->next_tile =  entities->actors[ ghostId ]->current_tile;
-    entities->actors[ ghostId ]->speed_multp = 0.8f;
+    *entities->nextTiles[ghostId] =  *entities->currentTiles[ghostId];
+    *entities->speedMultipliers[ghostId] = 0.8f;
 
 }
 
 
 void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, LevelConfig *levelConfig ){
-    Actor *ghostActor = entities->actors[ ghostId ];
+    // Actor *entities  ghostId,= entities->actors[ ghostId ];
     //TargetingBehavior *ghostTargetBehavior = entities->targetingBehaviors[ ghostId ];
 
     // play sound
@@ -169,10 +169,10 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
          
     // probably won't really help, but can do a lookup in hash table to get this out of a O(n^2)
     // may be useful if more ghosts or slow tiles are added in some circumstances
-    entities->actors[ ghostId ]->speed_multp = 0.85f;
+    *entities->speedMultipliers[ghostId] = 0.85f;
     for( int j = 0; j < MAX_SLOW_TILES; j++ ) {
-        if ( points_equal( entities->actors[ ghostId ]->current_tile, tilemap->tm_slow_tiles[ j ] ) ) {
-            entities->actors[ ghostId ]->speed_multp = 0.5f;
+        if ( points_equal( *entities->currentTiles[ghostId], tilemap->tm_slow_tiles[ j ] ) ) {
+            *entities->speedMultipliers[ghostId] = 0.5f;
             break;
         }
     }
@@ -182,27 +182,27 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
         case MODE_CHASE:
             switch ( *entities->targetingBehaviors[ ghostId ] ) {
                 case SHADOW_BEHAVIOR:
-                    if(points_equal(  entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile )) {
+                    if(points_equal(  *entities->nextTiles[ghostId], *entities->currentTiles[ghostId] )) {
                         set_shadow_target_tile( entities, ghostId, playerIds, numPlayers );
-                        set_direction_and_next_tile_shortest_to_target( ghostActor, tilemap, STATE_NORMAL );
+                        set_direction_and_next_tile_shortest_to_target( entities, ghostId, tilemap, STATE_NORMAL );
                     }
                     break;
                 case AMBUSH_BEHAVIOR:
-                    if( points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile ) ) {
+                    if( points_equal( *entities->nextTiles[ghostId], *entities->currentTiles[ghostId] ) ) {
                         set_ambush_target_tile( entities, ghostId, playerIds, numPlayers );
-                        set_direction_and_next_tile_shortest_to_target( ghostActor, tilemap, STATE_NORMAL );
+                        set_direction_and_next_tile_shortest_to_target( entities, ghostId, tilemap, STATE_NORMAL );
                     }
                     break;
                 case MOODY_BEHAVIOR:
-                    if(points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile ) ) {
+                    if(points_equal( *entities->nextTiles[ghostId], *entities->currentTiles[ghostId] ) ) {
                         set_moody_target_tile(  entities, ghostId, playerIds, numPlayers);
-                        set_direction_and_next_tile_shortest_to_target( ghostActor, tilemap, STATE_NORMAL );
+                        set_direction_and_next_tile_shortest_to_target( entities, ghostId, tilemap, STATE_NORMAL );
                     }
                     break;
                 case POKEY_BEHAVIOR:
-                    if( points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile )) {
+                    if( points_equal( *entities->nextTiles[ghostId], *entities->currentTiles[ghostId] )) {
                         set_pokey_target_tile(  entities, ghostId, playerIds, numPlayers );
-                        set_direction_and_next_tile_shortest_to_target( ghostActor, tilemap, STATE_NORMAL);
+                        set_direction_and_next_tile_shortest_to_target( entities, ghostId, tilemap, STATE_NORMAL);
                     }
                     break;
 
@@ -229,8 +229,8 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
                 break;
             }
             set_scatter_target_tile( entities, ghostId, homeTile);
-            if( points_equal( entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile ) ) {
-                set_direction_and_next_tile_shortest_to_target( entities->actors[ ghostId ], tilemap, STATE_NORMAL );
+            if( points_equal( *entities->nextTiles[ghostId], *entities->currentTiles[ghostId] ) ) {
+                set_direction_and_next_tile_shortest_to_target( entities, ghostId, tilemap, STATE_NORMAL );
             }
     }
 
@@ -249,7 +249,7 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
             continue;
         }
     
-        if ( entitiesIntersecting(entities, playerId, ghostId )){// points_equal(entities->actors[ playerId ]->current_tile, entities->actors[ ghostId ]->current_tile) ) {
+        if ( entitiesIntersecting(entities, playerId, ghostId )){// points_equal(entities->actors[ playerId ]->current_tile, *entities->currentTiles[ghostId]) ) {
             //Mix_PlayChannel(-1, g_PacDieOhNoSound, 0 );
             *entities->deathTimers[playerId] = 2.0f;
             Mix_PlayChannel(PAC_DIE_CHANNEL, g_PacDieSound, 0 );
@@ -297,8 +297,8 @@ void normal_process( Entities *entities, EntityId ghostId, EntityId *playerIds, 
  * In this state its a necessity
  */
 void go_to_pen_process( Entities *entities, LevelConfig *levelConfig, EntityId ghostId, TileMap *tm ) {
-    if( points_equal(entities->actors[ ghostId]->next_tile, entities->actors[ ghostId]->current_tile ) && !points_equal(entities->actors[ ghostId]->current_tile, levelConfig->ghostPenTile ) ) {
-        set_direction_and_next_tile_shortest_to_target( entities->actors[ ghostId ], tm, STATE_GO_TO_PEN );
+    if( points_equal(*entities->nextTiles[ghostId], *entities->currentTiles[ghostId] ) && !points_equal(*entities->currentTiles[ghostId], levelConfig->ghostPenTile ) ) {
+        set_direction_and_next_tile_shortest_to_target( entities, ghostId, tm, STATE_GO_TO_PEN );
     }
 }
 
@@ -308,21 +308,21 @@ void leave_pen_enter( Entities *entities, EntityId ghostId ) {
     entities->animatedSprites[ ghostId ]->current_anim_row = 4;
     entities->animatedSprites[ ghostId ]->accumulator = 0.0f;
     entities->animatedSprites[ ghostId ]->texture_atlas_id = entities->animatedSprites[ ghostId ]->default_texture_atlas_id;
-    entities->actors[ ghostId ]->next_tile =  entities->actors[ ghostId ]->current_tile;
-    entities->actors[ ghostId ]->next_tile.y -= 3;
-    entities->actors[ ghostId ]->speed_multp = 0.8f;
+    *entities->nextTiles[ghostId] =  *entities->currentTiles[ghostId];
+    entities->nextTiles[ghostId]->y -= 3;
+    *entities->speedMultipliers[ghostId] = 0.8f;
 
-    entities->actors[ ghostId ]->target_tile.x = entities->actors[ ghostId ]->current_tile.x;
-    entities->actors[ ghostId ]->target_tile.y = entities->actors[ ghostId ]->current_tile.y - 4;
+    entities->targetTiles[ghostId]->x = entities->currentTiles[ghostId]->x;
+    entities->targetTiles[ghostId]->y = entities->currentTiles[ghostId]->y - 4;
     
-    entities->actors[ ghostId ]->direction = DIR_UP;
+    *entities->directions[ghostId]= DIR_UP;
 }
 
 void leave_pen_process( Entities *entities, EntityId ghostId, TileMap *tm ){
-    entities->actors[ ghostId ]->speed_multp = 0.85f;
+    *entities->speedMultipliers[ghostId] = 0.85f;
     for( int j = 0; j < MAX_SLOW_TILES; j++ ) {
-        if ( points_equal( entities->actors[ ghostId ]->current_tile, tm->tm_slow_tiles[ j ] ) ) {
-            entities->actors[ ghostId ]->speed_multp = 0.5f;
+        if ( points_equal( *entities->currentTiles[ghostId], tm->tm_slow_tiles[ j ] ) ) {
+            *entities->speedMultipliers[ghostId] = 0.5f;
             break;
         }
     }
@@ -335,24 +335,24 @@ void stayPenEnter( Entities *entities, LevelConfig *levelConfig, EntityId ghostI
     entities->animatedSprites[ ghostId ]->texture_atlas_id = entities->animatedSprites[ ghostId ]->default_texture_atlas_id;
     
 
-    entities->actors[ ghostId ]->speed_multp = 0.8f;
+    *entities->speedMultipliers[ghostId] = 0.8f;
 
-    entities->actors[ ghostId ]->target_tile.x = entities->actors[ ghostId ]->current_tile.x - 1;
-    entities->actors[ ghostId ]->target_tile.y = entities->actors[ ghostId ]->current_tile.y;
+    entities->targetTiles[ghostId]->x = entities->currentTiles[ghostId]->x - 1;
+    entities->targetTiles[ghostId]->y = entities->currentTiles[ghostId]->y;
     
-    entities->actors[ ghostId ]->direction = DIR_LEFT;
+    *entities->directions[ghostId]= DIR_LEFT;
 }
 
 void stayPenProcess( Entities *entities, LevelConfig *levelConfig, TileMap *tilemap, EntityId ghostId ) {
     
-    if(points_equal(  entities->actors[ ghostId ]->next_tile, entities->actors[ ghostId ]->current_tile )) {
-        if( entities->actors[ghostId]->current_tile.x == levelConfig->ghostPenTile.x - 1 ) {
-            entities->actors[ghostId]->target_tile.x = levelConfig->ghostPenTile.x + 1;
+    if(points_equal(  *entities->nextTiles[ghostId], *entities->currentTiles[ghostId] )) {
+        if( entities->currentTiles[ghostId]->x == levelConfig->ghostPenTile.x - 1 ) {
+            entities->targetTiles[ghostId]->x = levelConfig->ghostPenTile.x + 1;
         }
-        else if( entities->actors[ghostId]->current_tile.x == levelConfig->ghostPenTile.x + 1 ) {
-            entities->actors[ghostId]->target_tile.x = levelConfig->ghostPenTile.x - 1;
+        else if( entities->currentTiles[ghostId]->x == levelConfig->ghostPenTile.x + 1 ) {
+            entities->targetTiles[ghostId]->x = levelConfig->ghostPenTile.x - 1;
         }
-        set_direction_and_next_tile_shortest_to_target( entities->actors[ ghostId ], tilemap, STATE_NORMAL );
+        set_direction_and_next_tile_shortest_to_target( entities, ghostId, tilemap, STATE_NORMAL );
     }
 }
 

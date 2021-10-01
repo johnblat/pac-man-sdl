@@ -68,23 +68,31 @@ int main( int argc, char *argv[] ) {
 
     // initialize entities
     for( int i = 0; i < MAX_NUM_ENTITIES; i ++ ) { 
-        entities.positions        [ i ] = NULL;
-        entities.actors           [ i ] = NULL;
-        entities.animatedSprites  [ i ] = NULL;
-        entities.renderDatas     [ i ] = NULL;
-        entities.ghostStates      [ i ] = NULL;
-        entities.targetingBehaviors [ i ] = NULL;
-        entities.chargeTimers     [ i ] = NULL;
-        entities.dashTimers       [ i ] = NULL;
-        entities.slowTimers       [ i ] = NULL;
-        entities.keybinds         [ i ] = NULL;
-        entities.inputMasks       [ i ] = NULL;
-        entities.pickupTypes      [ i ] = NULL;
-        entities.dashCooldownStocks [ i ] = NULL;
-        entities.activeTimers [ i ] = NULL;
-        entities.numDots [ i ] = NULL;
-        entities.scores [ i ] = NULL;
-        entities.mirrorEntityRefs[ i ] = NULL;
+        entities.worldPositions[i] = NULL;
+        entities.sensors[i] = NULL;
+        entities.currentTiles[i] = NULL;
+        entities.nextTiles[i] = NULL;
+        entities.targetTiles[i] = NULL;
+        entities.collisionRects[i] = NULL;
+        entities.velocities[i] = NULL;
+        entities.directions[i] = NULL;
+        entities.baseSpeeds[i] = NULL;
+        entities.speedMultipliers[i] = NULL;
+        entities.animatedSprites[i] = NULL;
+        entities.renderDatas[i] = NULL;
+        entities.ghostStates[i] = NULL;
+        entities.targetingBehaviors[i] = NULL;
+        entities.chargeTimers[i] = NULL;
+        entities.dashTimers[i] = NULL;
+        entities.slowTimers[i] = NULL;
+        entities.keybinds[i] = NULL;
+        entities.inputMasks[i] = NULL;
+        entities.pickupTypes[i] = NULL;
+        entities.dashCooldownStocks [i] = NULL;
+        entities.activeTimers [i] = NULL;
+        entities.numDots [i] = NULL;
+        entities.scores [i] = NULL;
+        entities.mirrorEntityRefs[i] = NULL;
         entities.invincibilityTimers[i] = NULL;
         entities.isActive[i] = NULL;
         entities.gameControllerIds[i] = NULL;
@@ -93,10 +101,6 @@ int main( int argc, char *argv[] ) {
         entities.mirrorEntityRefs[i] = NULL;
         entities.deathTimers[i] = NULL;
         entities.respawnTimers[i] = NULL;
-        entities.collisionRects[i] = NULL;
-        
-
-
     }
 
     
@@ -546,9 +550,41 @@ int main( int argc, char *argv[] ) {
 */
 
     for( int i = 0; i < MAX_NUM_ENTITIES; i++ ) {
-        if( entities.actors[ i ] != NULL ) {
-            free(entities.actors[ i ] );
-            entities.actors[ i ] = NULL;
+        if( entities.worldPositions[ i ] != NULL ) {
+            free(entities.worldPositions[ i ] );
+            entities.worldPositions[ i ] = NULL;
+        }
+        if( entities.currentTiles[ i ] != NULL ) {
+            free(entities.currentTiles[ i ] );
+            entities.currentTiles[ i ] = NULL;
+        }
+        if( entities.nextTiles[ i ] != NULL ) {
+            free(entities.nextTiles[ i ] );
+            entities.nextTiles[ i ] = NULL;
+        }
+        if( entities.targetTiles[ i ] != NULL ) {
+            free(entities.targetTiles[ i ] );
+            entities.targetTiles[ i ] = NULL;
+        }
+        if( entities.sensors[ i ] != NULL ) {
+            free(entities.sensors[ i ] );
+            entities.sensors[ i ] = NULL;
+        }
+        if( entities.directions[ i ] != NULL ) {
+            free(entities.directions[ i ] );
+            entities.directions[ i ] = NULL;
+        }
+        if( entities.baseSpeeds[ i ] != NULL ) {
+            free(entities.baseSpeeds[ i ] );
+            entities.baseSpeeds[ i ] = NULL;
+        }
+        if( entities.speedMultipliers[ i ] != NULL ) {
+            free(entities.speedMultipliers[ i ] );
+            entities.speedMultipliers[ i ] = NULL;
+        }
+        if( entities.velocities[ i ] != NULL ) {
+            free(entities.velocities[ i ] );
+            entities.velocities[ i ] = NULL;
         }
         if( entities.animatedSprites[ i ] != NULL ) {
             free(entities.animatedSprites[ i ] );
@@ -569,10 +605,6 @@ int main( int argc, char *argv[] ) {
         if( entities.inputMasks[ i ] != NULL ) {
             free(entities.inputMasks[ i ] );
             entities.inputMasks[ i ] = NULL;
-        }
-        if( entities.positions[ i ] != NULL ) {
-            free(entities.positions[ i ] );
-            entities.positions[ i ] = NULL;
         }
         if( entities.renderDatas[ i ] != NULL ) {
             free(entities.renderDatas[ i ] );

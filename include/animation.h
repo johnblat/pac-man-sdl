@@ -4,24 +4,12 @@
 #include <SDL2/SDL.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include "actor.h"
-
+#include "movement.h"
+#include "sprite.h"
 /**
  * Keeps track of sprite based animation. Meaning each frame is drawn out
  */
 
-
-typedef struct AnimatedSprite {
-    uint8_t texture_atlas_id;
-    uint8_t default_texture_atlas_id;
-    uint8_t current_anim_row;
-    uint8_t current_frame_col;
-    float frame_interval;
-    float accumulator;
-    uint8_t num_frames_col;
-
-    
-} AnimatedSprite;
 
 
 
@@ -31,7 +19,7 @@ float fps_to_frame_interval( int fps, int num_frames );
 
 void animatedSpriteIncProcess( AnimatedSprite **animatedSprites, float delta_time ) ;
 
-void set_animation_row(AnimatedSprite *animated_sprite, Actor *actor ) ;
+void set_animation_row(AnimatedSprite *animated_sprite, Direction direction ) ;
 
 
 #endif
