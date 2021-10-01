@@ -755,7 +755,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
             if( points_equal( *entities->nextTiles[eid], *entities->currentTiles[eid] ) ) {
                 set_random_direction_and_next_tile( entities, eid, tilemap );    
             }
-            ghost_move( entities, eid, tilemap, deltaTime );
+            nonPlayerInputEntityMovementSystem( entities, eid, tilemap, deltaTime );
             entities->collisionRects[eid]->x = entities->worldPositions[eid]->x - TILE_SIZE*0.5;
             entities->collisionRects[eid]->y = entities->worldPositions[eid]->y - TILE_SIZE*0.5;
             entities->collisionRects[eid]->w = TILE_SIZE;

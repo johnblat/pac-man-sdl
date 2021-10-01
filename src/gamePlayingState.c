@@ -599,8 +599,8 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         entities->renderDatas[eid]->alphaMod = 255;
     }
 
-    inputToTryMoveProcess( entities, tilemap, deltaTime);
-    dashTimersProcess( entities, deltaTime );
+    inputMovementSystem( entities, tilemap, deltaTime);
+    dashTimersSystem( entities, deltaTime );
     cooldownProcess( entities, deltaTime );
     processTempMirrorPlayers( entities, deltaTime);
     processSpeedBoostTimer( entities, deltaTime );
@@ -944,7 +944,7 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         if( *entities->stopTimers[i] > 0.0f ) {
             continue;
         }
-        ghost_move( entities, i, tilemap, deltaTime );
+        nonPlayerInputEntityMovementSystem( entities, i, tilemap, deltaTime );
         //align
         entities->collisionRects[i]->x = entities->worldPositions[i]->x - TILE_SIZE*0.5;
         entities->collisionRects[i]->y = entities->worldPositions[i]->y - TILE_SIZE*0.5;

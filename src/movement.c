@@ -7,7 +7,7 @@
 #include "input.h"
 #include "globalData.h"
 
-void tile_wrap( SDL_Point *tile ) {
+static void tile_wrap( SDL_Point *tile ) {
     if( tile->y >= TILE_ROWS ) 
         tile->y = 0;
     if( tile->y < 0 )
@@ -19,7 +19,7 @@ void tile_wrap( SDL_Point *tile ) {
 }
 
 
-void alignWorldDataBasedOnWorldPosition( Entities *entities, EntityId eid ) {
+static void alignWorldDataBasedOnWorldPosition( Entities *entities, EntityId eid ) {
 
     entities->currentTiles[eid]->x = entities->worldPositions[eid]->x / TILE_SIZE;
     entities->currentTiles[eid]->y = entities->worldPositions[eid]->y / TILE_SIZE;
@@ -130,7 +130,7 @@ static void trySetDirection( Entities *entities, EntityId entityId, TileMap *til
     }
 }
 
-void handlePlayerCollision(Entities *entities, EntityId eid ) {
+static void handlePlayerCollision(Entities *entities, EntityId eid ) {
     EntityId pid = 0;
     for( int pidx = 0; pidx < gNumPlayers; pidx++ ) {
         pid = gPlayerIds[pidx];
@@ -148,7 +148,44 @@ void handlePlayerCollision(Entities *entities, EntityId eid ) {
     }
 }
 
-void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTime ) {
+static void alignPositionToValueIfPassed(Entities *entities, EntityId eid, float vel, float *src, float target ){
+    if( vel > 0 ) {
+        if( *src > target ) {
+            *src = target;
+            alignWorldDataBasedOnWorldPosition(entities, eid);
+        }
+    }
+    else if( vel < 0 ) {
+        if( *src < target ) {
+            *src = target;
+            alignWorldDataBasedOnWorldPosition(entities, eid);
+        }
+    }
+}
+
+static void alignPositionToCurrentTileIfSensorColliding(Entities *entities, EntityId eid, SDL_Point sensor, TileMap *tilemap){
+    SDL_Point nextTileWorldPosition = tile_grid_point_to_world_point( *entities->nextTiles[eid]);
+    SDL_Rect nextTileRect = { nextTileWorldPosition.x, nextTileWorldPosition.y, TILE_SIZE, TILE_SIZE  };
+
+    if( sensor.y < nextTileRect.y + TILE_SIZE 
+    && sensor.y > nextTileRect.y
+    && sensor.x > nextTileRect.x 
+    && sensor.x < nextTileRect.x + TILE_SIZE ) {
+        // target tile is a wall
+        if ( tilemap->tm_walls[ entities->nextTiles[eid]->y ][ entities->nextTiles[eid]->x ] == 'x' ) {
+            Vector_f reversed_velocity = { -entities->velocities[eid]->x, -entities->velocities[eid]->y };
+            moveActor(entities,eid, reversed_velocity );
+        }
+
+        // other pac-men?
+        handlePlayerCollision(entities, eid );
+        alignWorldDataBasedOnWorldPosition(entities, eid);
+    }
+}
+
+
+
+void inputMovementSystem( Entities *entities, TileMap *tilemap, float deltaTime ) {
     uint8_t **inputMasks  = entities->inputMasks;
 
     for( int i = 0; i < g_NumEntities; ++i  ) {
@@ -196,37 +233,12 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             moveActor(entities, i, *entities->velocities[i]);
             
             // make sure pacman doesn't pass centerpt
-            if( entities->velocities[i]->x > 0 ) {
-                if( entities->worldPositions[i]->x > tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5);
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
-            else if( entities->velocities[i]->x < 0 ) {
-                if( entities->worldPositions[i]->x < tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5);
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
+            alignPositionToValueIfPassed(entities, i, entities->velocities[i]->x, &entities->worldPositions[i]->x, tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) );
 
             // collision
-
-            SDL_Point target_tile_screen_position = tile_grid_point_to_world_point( *entities->nextTiles[i]);
-            SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
-
             // top sensor is inside target tile
-            if( entities->sensors[i]->worldTopSensor.y < target_tile_rect.y + TILE_SIZE 
-            && entities->sensors[i]->worldTopSensor.x > target_tile_rect.x 
-            && entities->sensors[i]->worldTopSensor.x < target_tile_rect.x + TILE_SIZE ) {
-                // target tile is a wall
-                if ( tilemap->tm_walls[ entities->nextTiles[i]->y ][ entities->nextTiles[i]->x ] == 'x' ) {
-                    Vector_f reversed_velocity = { -entities->velocities[i]->x, -entities->velocities[i]->y };
-                    moveActor(entities,i, reversed_velocity );
-                }
+            alignPositionToCurrentTileIfSensorColliding(entities, i, entities->sensors[i]->worldTopSensor, tilemap );
 
-                // other pac-men?
-                handlePlayerCollision(entities, i );
-            }
         }
 
         if( *entities->directions[i] == DIR_DOWN ) {
@@ -255,40 +267,23 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             moveActor(entities, i, *entities->velocities[i] );
 
             // make sure pacman doesn't pass centerpt
-            if( entities->velocities[i]->x > 0 ) {
-                if( entities->worldPositions[i]->x > tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5) ;
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
-            else if( entities->velocities[i]->x < 0 ) {
-                if( entities->worldPositions[i]->x < tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->x = tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE*0.5);
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
+            alignPositionToValueIfPassed(entities, i, entities->velocities[i]->x, &entities->worldPositions[i]->x, tile_grid_point_to_world_point(*entities->currentTiles[i]).x + (TILE_SIZE * 0.5 ) );
+
 
             // collision
+            alignPositionToCurrentTileIfSensorColliding(entities, i, entities->sensors[i]->worldBottomSensor, tilemap );
 
             SDL_Point target_tile_screen_position = tile_grid_point_to_world_point( *entities->nextTiles[i]);
             SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
 
-            // sensor is inside target tile
             if( entities->sensors[i]->worldBottomSensor.y > target_tile_rect.y 
             && entities->sensors[i]->worldBottomSensor.x > target_tile_rect.x 
             && entities->sensors[i]->worldBottomSensor.x < target_tile_rect.x + TILE_SIZE ) {
-                // target tile is a wall
-                if ( tilemap->tm_walls[ entities->nextTiles[i]->y ][ entities->nextTiles[i]->x ] == 'x') {
-                    Vector_f reversed_velocity = { -entities->velocities[i]->x, -entities->velocities[i]->y };
-                    moveActor(entities,i, reversed_velocity );
-                }
                 // target tile is a one_way_tile
                 if( points_equal(tilemap->one_way_tile, *entities->nextTiles[i])) {
                     Vector_f reversed_velocity = { -entities->velocities[i]->x, -entities->velocities[i]->y };
                     moveActor(entities,i, reversed_velocity );
                 }
-                // other pac-men?
-                handlePlayerCollision(entities, i );
             }
         }
 
@@ -319,36 +314,12 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             moveActor(entities, i, *entities->velocities[i] );
 
             // make sure pacman doesn't pass centerpt
-            if( entities->velocities[i]->y > 0 ) {
-                if( entities->worldPositions[i]->y > tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5) ;
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
-            else if( entities->velocities[i]->y < 0 ) {
-                if( entities->worldPositions[i]->y < tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5) ;
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
+            alignPositionToValueIfPassed(entities, i, entities->velocities[i]->y, &entities->worldPositions[i]->y, tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) );
 
             // collision
 
-            SDL_Point target_tile_screen_position = tile_grid_point_to_world_point( *entities->nextTiles[i]);
-            SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
+            alignPositionToCurrentTileIfSensorColliding(entities, i, entities->sensors[i]->worldLeftSensor, tilemap );
 
-            // sensor is inside target tile
-            if( entities->sensors[i]->worldLeftSensor.x < target_tile_rect.x + TILE_SIZE
-            && entities->sensors[i]->worldLeftSensor.y > target_tile_rect.y 
-            && entities->sensors[i]->worldLeftSensor.y < target_tile_rect.y + TILE_SIZE ) {
-                // target tile is a wall
-                if ( tilemap->tm_walls[ entities->nextTiles[i]->y ][ entities->nextTiles[i]->x ] == 'x' ) {
-                    Vector_f reversed_velocity = { -entities->velocities[i]->x, -entities->velocities[i]->y };
-                    moveActor(entities,i, reversed_velocity );
-                }
-                // other pac-men?
-                handlePlayerCollision(entities, i );
-            }
         }
 
         if( *entities->directions[i] == DIR_RIGHT ) {
@@ -379,36 +350,11 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
             moveActor(entities, i, *entities->velocities[i] );
 
             // make sure pacman doesn't pass centerpt
-            if( entities->velocities[i]->y > 0 ) {
-                if( entities->worldPositions[i]->y > tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5);
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
-            else if( entities->velocities[i]->y < 0 ) {
-                if( entities->worldPositions[i]->y < tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) ) {
-                    entities->worldPositions[i]->y = tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE*0.5);
-                    alignWorldDataBasedOnWorldPosition(entities, i);
-                }
-            }
+            alignPositionToValueIfPassed(entities, i, entities->velocities[i]->y, &entities->worldPositions[i]->y, tile_grid_point_to_world_point(*entities->currentTiles[i]).y + (TILE_SIZE * 0.5 ) );
 
             // collision
+            alignPositionToCurrentTileIfSensorColliding(entities, i, entities->sensors[i]->worldRightSensor, tilemap );
 
-            SDL_Point target_tile_screen_position = tile_grid_point_to_world_point( *entities->nextTiles[i]);
-            SDL_Rect target_tile_rect = { target_tile_screen_position.x, target_tile_screen_position.y, TILE_SIZE, TILE_SIZE  };
-
-            // sensor is inside target tile
-            if( entities->sensors[i]->worldRightSensor.x > target_tile_rect.x 
-            && entities->sensors[i]->worldRightSensor.y > target_tile_rect.y 
-            && entities->sensors[i]->worldRightSensor.y < target_tile_rect.y + TILE_SIZE ) {
-                // target tile is a wall
-                if ( tilemap->tm_walls[ entities->nextTiles[i]->y ][ entities->nextTiles[i]->x ] == 'x') {
-                    Vector_f reversed_velocity = { -entities->velocities[i]->x, -entities->velocities[i]->y };
-                    moveActor(entities,i, reversed_velocity );
-                }
-                // other pac-men?
-                handlePlayerCollision(entities, i );
-            }
         }
 
         // pacman animation row
@@ -436,18 +382,12 @@ void inputToTryMoveProcess( Entities *entities, TileMap *tilemap, float deltaTim
         if( entities->velocities[i]->x < 0 && entities->velocities[i]->y > 0 ) { // down-left
             entities->animatedSprites[ i ]->current_anim_row = 7;
         }
-        //align
-        entities->collisionRects[i]->x = entities->worldPositions[i]->x - TILE_SIZE*0.5;
-        entities->collisionRects[i]->y = entities->worldPositions[i]->y - TILE_SIZE*0.5;
-        entities->collisionRects[i]->w = TILE_SIZE;
-        entities->collisionRects[i]->h = TILE_SIZE;
-
     }
     
 }
 
 
-void moveActor( Entities *entities, EntityId eid, Vector_f velocity ) {
+static void moveActor( Entities *entities, EntityId eid, Vector_f velocity ) {
     // skip if null actor
     if( entities->worldPositions[eid] == NULL ) {
         return;
@@ -477,7 +417,7 @@ void moveActor( Entities *entities, EntityId eid, Vector_f velocity ) {
 
 float g_PAC_DASH_SPEED_MULTR = 2.5f;
 float g_PAC_DASH_TIME_MAX = 1.0f;
-void dashTimersProcess( Entities *entities, float deltaTime ) {
+void dashTimersSystem( Entities *entities, float deltaTime ) {
     for( int eid = 0; eid < MAX_NUM_ENTITIES; eid++) {
         if( entities->dashTimers[ eid ] == NULL || entities->chargeTimers[ eid ] == NULL || entities->slowTimers[ eid ] == NULL || entities->inputMasks[ eid ] == NULL ) { //skip if doesn't have dash timers
             continue;
@@ -527,115 +467,113 @@ void dashTimersProcess( Entities *entities, float deltaTime ) {
 }
 
 
-void ghost_move( Entities *entities, EntityId ghostId, TileMap *tm, float delta_time ) {
-
-
+void nonPlayerInputEntityMovementSystem( Entities *entities, EntityId eid, TileMap *tm, float delta_time ) {
         Vector_f velocity = { 0, 0 };
-        if( *entities->directions[ghostId] == DIR_UP ) {
+        if( *entities->directions[eid] == DIR_UP ) {
             // set velocity
-            if( entities->worldPositions[ghostId]->x >= tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 ) - 2 
-            && ( entities->worldPositions[ghostId]->x <= tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 ) + 2) ) {
-                entities->worldPositions[ghostId]->x = tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 );
+            if( entities->worldPositions[eid]->x >= tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 ) - 2 
+            && ( entities->worldPositions[eid]->x <= tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 ) + 2) ) {
+                entities->worldPositions[eid]->x = tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 );
             }
-            if ( entities->worldPositions[ghostId]->x == tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 ) ) {
+            if ( entities->worldPositions[eid]->x == tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = -1;
             } 
-            else if( entities->worldPositions[ghostId]->x < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 ) ) {
+            else if( entities->worldPositions[eid]->x < tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
             }
-            else if( entities->worldPositions[ghostId]->x > tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 )){
+            else if( entities->worldPositions[eid]->x > tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
             }
         }
-        else if( *entities->directions[ghostId] == DIR_DOWN ){
+        else if( *entities->directions[eid] == DIR_DOWN ){
             // set velocity
-            if ( entities->worldPositions[ghostId]->x == tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 ) ) {
+            if ( entities->worldPositions[eid]->x == tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
                 
             } 
-            else if( entities->worldPositions[ghostId]->x < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 ) ) {
+            else if( entities->worldPositions[eid]->x < tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
 
             }
-            else if( entities->worldPositions[ghostId]->x >tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x  + ( TILE_SIZE / 2 )){
+            else if( entities->worldPositions[eid]->x >tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x  + ( TILE_SIZE / 2 )){
                 velocity.x = -1;
                 velocity.y = 0;
 
             }
         } 
-        else if( *entities->directions[ghostId] == DIR_LEFT ) {
+        else if( *entities->directions[eid] == DIR_LEFT ) {
             // set velocity
-            if ( entities->worldPositions[ghostId]->y == tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y  + ( TILE_SIZE / 2 ) ) {
+            if ( entities->worldPositions[eid]->y == tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = -1;
                 velocity.y = 0;
 
             } 
-            else if( entities->worldPositions[ghostId]->y < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y  + ( TILE_SIZE / 2 ) ) {
+            else if( entities->worldPositions[eid]->y < tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
                 
             }
-            else if( entities->worldPositions[ghostId]->y >tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y  + ( TILE_SIZE / 2 )){
+            else if( entities->worldPositions[eid]->y >tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
 
             }
         }
-        else if(*entities->directions[ghostId] == DIR_RIGHT ) {
+        else if(*entities->directions[eid] == DIR_RIGHT ) {
             // set velocity
-            if ( entities->worldPositions[ghostId]->y == tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y  + ( TILE_SIZE / 2 ) ) {
+            if ( entities->worldPositions[eid]->y == tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 1;
                 velocity.y = 0;
 
             } 
-            else if( entities->worldPositions[ghostId]->y < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y  + ( TILE_SIZE / 2 ) ) {
+            else if( entities->worldPositions[eid]->y < tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y  + ( TILE_SIZE / 2 ) ) {
                 velocity.x = 0;
                 velocity.y = 1;
 
             }
-            else if( entities->worldPositions[ghostId]->y >tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y  + ( TILE_SIZE / 2 )){
+            else if( entities->worldPositions[eid]->y >tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y  + ( TILE_SIZE / 2 )){
                 velocity.x = 0;
                 velocity.y = -1;
 
             }
         }
-        velocity.x *= *entities->baseSpeeds[ghostId] * *entities->speedMultipliers[ghostId] * delta_time;
-        velocity.y *= *entities->baseSpeeds[ghostId] * *entities->speedMultipliers[ghostId] * delta_time;
+        velocity.x *= *entities->baseSpeeds[eid] * *entities->speedMultipliers[eid] * delta_time;
+        velocity.y *= *entities->baseSpeeds[eid] * *entities->speedMultipliers[eid] * delta_time;
 
-        moveActor(entities, ghostId, velocity );
+        moveActor(entities, eid, velocity );
 
         // account for overshooting
         // note velocity will never be in x and y direction.
-        if( velocity.x > 0 && !( *entities->directions[ghostId] == DIR_RIGHT )) { // right
-            if( entities->worldPositions[ghostId]->x > tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) {
-                entities->worldPositions[ghostId]->x = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) ;
-                alignWorldDataBasedOnWorldPosition(entities, ghostId );
+        if( velocity.x > 0 && !( *entities->directions[eid] == DIR_RIGHT )) { // right
+            if( entities->worldPositions[eid]->x > tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x + ( TILE_SIZE / 2 ) ) {
+                entities->worldPositions[eid]->x = ( tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x + ( TILE_SIZE / 2 ) ) ;
+                alignWorldDataBasedOnWorldPosition(entities, eid );
 
             }
         }
-        else if( velocity.x < 0 && !( *entities->directions[ghostId] == DIR_LEFT )) { // left
-            if( entities->worldPositions[ghostId]->x < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) {
-                entities->worldPositions[ghostId]->x = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).x + ( TILE_SIZE / 2 ) ) ;
-                alignWorldDataBasedOnWorldPosition(entities, ghostId );
+        else if( velocity.x < 0 && !( *entities->directions[eid] == DIR_LEFT )) { // left
+            if( entities->worldPositions[eid]->x < tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x + ( TILE_SIZE / 2 ) ) {
+                entities->worldPositions[eid]->x = ( tile_grid_point_to_world_point( *entities->currentTiles[eid] ).x + ( TILE_SIZE / 2 ) ) ;
+                alignWorldDataBasedOnWorldPosition(entities, eid );
 
             }
         }
-        else if( velocity.y > 0 && !( *entities->directions[ghostId] == DIR_DOWN )) { // down
-            if( entities->worldPositions[ghostId]->y > tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) {
-                entities->worldPositions[ghostId]->y = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) ;
-                alignWorldDataBasedOnWorldPosition(entities, ghostId );
+        else if( velocity.y > 0 && !( *entities->directions[eid] == DIR_DOWN )) { // down
+            if( entities->worldPositions[eid]->y > tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y + ( TILE_SIZE / 2 ) ) {
+                entities->worldPositions[eid]->y = ( tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y + ( TILE_SIZE / 2 ) ) ;
+                alignWorldDataBasedOnWorldPosition(entities, eid );
 
             }
         }
-        else if( velocity.y < 0 && !( *entities->directions[ghostId] == DIR_UP )) { // up
-            if( entities->worldPositions[ghostId]->y < tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) {
-                entities->worldPositions[ghostId]->y = ( tile_grid_point_to_world_point( *entities->currentTiles[ghostId] ).y + ( TILE_SIZE / 2 ) ) ;
-                alignWorldDataBasedOnWorldPosition(entities, ghostId );
+        else if( velocity.y < 0 && !( *entities->directions[eid] == DIR_UP )) { // up
+            if( entities->worldPositions[eid]->y < tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y + ( TILE_SIZE / 2 ) ) {
+                entities->worldPositions[eid]->y = ( tile_grid_point_to_world_point( *entities->currentTiles[eid] ).y + ( TILE_SIZE / 2 ) ) ;
+                alignWorldDataBasedOnWorldPosition(entities, eid );
 
             }
         }
