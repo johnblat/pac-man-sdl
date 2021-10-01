@@ -4,13 +4,13 @@
 #include <SDL2/SDL_gamecontroller.h>
 #include "render.h"
 #include "ghostStates.h"
-#include "animation.h"
 #include "levelConfig.h"
 #include "render.h"
 #include "inttypes.h"
 #include "pickup.h"
 #include "input.h"
 #include "sprite.h"
+#include "tiles.h"
 
 #define MAX_NUM_ENTITIES 32
 #define INVALID_ENTITY_ID MAX_NUM_ENTITIES

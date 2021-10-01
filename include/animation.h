@@ -4,8 +4,8 @@
 #include <SDL2/SDL.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include "movement.h"
 #include "sprite.h"
+#include "entity.h"
 /**
  * Keeps track of sprite based animation. Meaning each frame is drawn out
  */

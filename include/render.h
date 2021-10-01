@@ -4,8 +4,9 @@
 #include "stdlib.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include "animation.h"
 #include "UI.h"
+#include "jb_types.h"
+#include "sprite.h"
 
 /**
  * Responsible for holding render details of textures to be rendered in each cycle through the game loop
