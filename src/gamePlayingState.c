@@ -946,10 +946,10 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         }
         nonPlayerInputEntityMovementSystem( entities, i, tilemap, deltaTime );
         //align
-        entities->collisionRects[i]->x = entities->worldPositions[i]->x - TILE_SIZE*0.5;
-        entities->collisionRects[i]->y = entities->worldPositions[i]->y - TILE_SIZE*0.5;
-        entities->collisionRects[i]->w = TILE_SIZE;
-        entities->collisionRects[i]->h = TILE_SIZE;
+        entities->collisionRects[ i]->w = TILE_SIZE*0.5;
+        entities->collisionRects[ i]->h = TILE_SIZE*0.5;
+        entities->collisionRects[ i]->x = entities->worldPositions[ i]->x - entities->collisionRects[ i]->w*0.5;
+        entities->collisionRects[ i]->y = entities->worldPositions[ i]->y - entities->collisionRects[ i]->h*0.5;
     }
     
     /*********************

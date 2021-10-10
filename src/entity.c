@@ -126,12 +126,10 @@ EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
     *entities->respawnTimers[entityId] = 0.0f;
 
-    *entities->collisionRects[entityId] = (SDL_Rect){
-        entities->worldPositions[entityId]->x - TILE_SIZE*0.5,
-        entities->worldPositions[entityId]->y - TILE_SIZE*0.5,
-        TILE_SIZE,
-        TILE_SIZE
-    };
+    entities->collisionRects[entityId]->w = TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->h = TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->x = entities->worldPositions[entityId]->x - entities->collisionRects[entityId]->w*0.5;
+    entities->collisionRects[entityId]->y = entities->worldPositions[entityId]->y - entities->collisionRects[entityId]->h*0.5;
 
     return entityId;
 }
@@ -192,10 +190,10 @@ EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSpr
 
     *entities->numDots[entityId] = 0;
 
-    entities->collisionRects[entityId]->x = entities->worldPositions[entityId]->x - TILE_SIZE*0.5;
-    entities->collisionRects[entityId]->y = entities->worldPositions[entityId]->y - TILE_SIZE*0.5;
-    entities->collisionRects[entityId]->w = TILE_SIZE;
-    entities->collisionRects[entityId]->h = TILE_SIZE;
+    entities->collisionRects[entityId]->w = TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->h = TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->x = entities->worldPositions[entityId]->x - entities->collisionRects[entityId]->w*0.5;
+    entities->collisionRects[entityId]->y = entities->worldPositions[entityId]->y - entities->collisionRects[entityId]->h*0.5;
 
     return entityId;
 }
@@ -244,12 +242,11 @@ EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelCon
 
     *entities->numDots[entityId] = 0;
 
-    *entities->collisionRects[entityId] = (SDL_Rect){
-        entities->worldPositions[entityId]->x - (TILE_SIZE*0.5),
-        entities->worldPositions[entityId]->y - (TILE_SIZE*0.5),
-        TILE_SIZE,
-        TILE_SIZE
-    };
+    entities->collisionRects[entityId]->w = TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->h = TILE_SIZE*0.5;
+    entities->collisionRects[entityId]->x = entities->worldPositions[entityId]->x - entities->collisionRects[entityId]->w*0.5;
+    entities->collisionRects[entityId]->y = entities->worldPositions[entityId]->y - entities->collisionRects[entityId]->h*0.5;
+
 
     entities->animatedSprites[ entityId ] = init_animation( 0, 15, 1, 20 ); // need to set texture atlas later. This is an initial invalid texture atlas id.
 
@@ -756,10 +753,6 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
                 set_random_direction_and_next_tile( entities, eid, tilemap );    
             }
             nonPlayerInputEntityMovementSystem( entities, eid, tilemap, deltaTime );
-            entities->collisionRects[eid]->x = entities->worldPositions[eid]->x - TILE_SIZE*0.5;
-            entities->collisionRects[eid]->y = entities->worldPositions[eid]->y - TILE_SIZE*0.5;
-            entities->collisionRects[eid]->w = TILE_SIZE;
-            entities->collisionRects[eid]->h = TILE_SIZE;
 
             EntityId playerId;
             for( int i = 0; i < numPlayers; i++ ) {
@@ -775,6 +768,7 @@ void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned i
 
                     Mix_PlayChannel( PICKUP_EAT_CHANNEL, g_PickupEaten, 0 );
 
+                    // spawnNewTimedMessage(0.85f,*entities->scores[eid], 8, 255,255,255, *entities->currentTiles[playerId], )
                     for( int i = 0; i < g_NumTimedMessages; i++ ) {
                         if( g_TimedMessages[ i ].remainingTime <= 0.0f ) {
                             g_TimedMessages[ i ].remainingTime = 0.85f;
