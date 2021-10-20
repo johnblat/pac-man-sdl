@@ -31,26 +31,43 @@ GhostMode g_current_ghost_mode = MODE_SCATTER;
 //     } 
 // }
 
-void vulnerable_enter( Entities *entities, EntityId ghostId ) {
+void vulnerableEnter(AnimatedSprite *as, Direction *d, CurrentTile *ct, NextTile *nt, SpeedMultiplier *sm){
     uint8_t vulnerable_texture_atlas_id = 3;
-    entities->animatedSprites[ ghostId ]->texture_atlas_id = vulnerable_texture_atlas_id;
-    *entities->directions[ghostId]= opposite_directions[ *entities->directions[ghostId]];
-    *entities->nextTiles[ghostId] = *entities->currentTiles[ghostId];
-    *entities->speedMultipliers[ghostId] = 0.4f;
-
+    as->texture_atlas_id = vulnerable_texture_atlas_id;
+    *d = opposite_directions[*d];
+    *nt = *ct;
+    *sm = 0.4f;
 }
 
 
-void set_random_direction_and_next_tile( Entities *entities, EntityId eid, TileMap *tm ) {
+// void vulnerable_enter( Entities *entities, EntityId ghostId ) {
+//     uint8_t vulnerable_texture_atlas_id = 3;
+//     entities->animatedSprites[ ghostId ]->texture_atlas_id = vulnerable_texture_atlas_id;
+//     *entities->directions[ghostId]= opposite_directions[ *entities->directions[ghostId]];
+//     *entities->nextTiles[ghostId] = *entities->currentTiles[ghostId];
+//     *entities->speedMultipliers[ghostId] = 0.4f;
+
+// }
+
+
+void set_random_direction_and_next_tile(ecs_entity_t eid, TileMap *tm ) {
+    ECS_COMPONENT(gEcsWorld, CurrentTile);
+    ECS_COMPONENT(gEcsWorld, Direction);
+    ECS_COMPONENT(gEcsWorld, NextTile);
+
+    CurrentTile *currentTile = ecs_get(gEcsWorld, eid, CurrentTile);
+    Direction *direction = ecs_get(gEcsWorld, eid, Direction);
+    NextTile *nextTile = ecs_get(gEcsWorld, eid, NextTile);
+
     SDL_Point tile_above, tile_below, tile_left, tile_right;
-    tile_above.x = entities->currentTiles[eid]->x;
-    tile_above.y = entities->currentTiles[eid]->y - 1;
-    tile_below.x = entities->currentTiles[eid]->x;
-    tile_below.y = entities->currentTiles[eid]->y + 1;
-    tile_left.x  = entities->currentTiles[eid]->x - 1;
-    tile_left.y  = entities->currentTiles[eid]->y;
-    tile_right.x = entities->currentTiles[eid]->x + 1;
-    tile_right.y = entities->currentTiles[eid]->y;
+    tile_above.x = currentTile->x;
+    tile_above.y = currentTile->y - 1;
+    tile_below.x = currentTile->x;
+    tile_below.y = currentTile->y + 1;
+    tile_left.x  = currentTile->x - 1;
+    tile_left.y  = currentTile->y;
+    tile_right.x = currentTile->x + 1;
+    tile_right.y = currentTile->y;
 
     SDL_Point surrounding_tiles[ 4 ];
     surrounding_tiles[ DIR_UP ] = tile_above;
@@ -74,63 +91,52 @@ void set_random_direction_and_next_tile( Entities *entities, EntityId eid, TileM
         }
     }
 
-
     Direction randomDirection = rand() % 4; // 4 directions besides DIR_NONE
-
     // just choosing first open tile ghost sees
-    Direction direction_to_go = opposite_directions[ *entities->directions[eid] ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
-
+    Direction direction_to_go = opposite_directions[ *direction ]; // this will ensure, that if all options are run through and ghost hasnt found a tile NOT behind him, he/she will just turn around
     // handle situation if random tile chosen is a wall
-    
-   
     for( int i = 0; i < 4; ++i ) {
         if( tm->tm_walls[ surrounding_tiles[ i ].y ][ surrounding_tiles[ i ].x ] == 'x' ) { 
             continue;
         }
-
         if( 
             points_equal(surrounding_tiles[ i ], tm->one_way_tile) 
             && i == DIR_DOWN) {
                 continue;
         }
-        
-        if( i == opposite_directions[ *entities->directions[eid]  ] ) continue;
-
+        if( i == opposite_directions[ *direction  ] ) continue;
         direction_to_go = (Direction) i;
 
         break;
-
     }
     
-
     if( tm->tm_walls[ surrounding_tiles[randomDirection].y ][ surrounding_tiles[randomDirection].x ] != 'x') {
         if( 
             !points_equal(surrounding_tiles[ randomDirection ], tm->one_way_tile) 
             && randomDirection != DIR_DOWN) {
-                if( randomDirection != opposite_directions[ *entities->directions[eid]  ] ) {
+                if( randomDirection != opposite_directions[*direction] ) {
                     direction_to_go = randomDirection;
                 }
             }
         
     }
      
-    *entities->directions[eid] = direction_to_go;
-    entities->nextTiles[eid]->x = surrounding_tiles[ direction_to_go ].x;
-    entities->nextTiles[eid]->y = surrounding_tiles[ direction_to_go ].y;
+    *direction = direction_to_go;
+    nextTile->x = surrounding_tiles[ direction_to_go ].x;
+    nextTile->y = surrounding_tiles[ direction_to_go ].y;
 
     // 23 is the actual tilemap on the screen height - because of offset
-
-    if( entities->nextTiles[eid]->y > TILE_ROWS-1 ) {
-        entities->nextTiles[eid]->y = 1;
+    if( nextTile->y > TILE_ROWS-1 ) {
+        nextTile->y = 1;
     } 
-    if( entities->nextTiles[eid]->y < 0 ){
-        entities->nextTiles[eid]->y = TILE_ROWS-1;
+    if( nextTile->y < 0 ){
+        nextTile->y = TILE_ROWS-1;
     }
-    if( entities->nextTiles[eid]->x > TILE_COLS-1 ) {
-        entities->nextTiles[eid]->x = 1;
+    if( nextTile->x > TILE_COLS-1 ) {
+        nextTile->x = 1;
     }
-    if( entities->nextTiles[eid]->x < 0 ) {
-        entities->nextTiles[eid]->x = TILE_COLS-1;
+    if( nextTile->x < 0 ) {
+        nextTile->x = TILE_COLS-1;
     }
 
 }

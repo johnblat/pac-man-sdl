@@ -104,25 +104,19 @@ int render_sort( SDL_bool **isActive, RenderData **renderDatas, RenderData **ren
     return numRenderDatasCopied;
 }
 
-RenderData *renderDataInit( ) {
+RenderData renderDataInit(){
     
-    RenderData *render_clip = ( RenderData * ) malloc (sizeof(RenderData ));
+    RenderData render_clip;
 
-    render_clip->dest_rect.x = 0;
-    render_clip->dest_rect.y = 0;
-    render_clip->dest_rect.w = 0;
-    render_clip->dest_rect.h = 0;
-
-    render_clip->rotation = 0.0f;
-
-    render_clip->textureAtlasId = 0;
-
-    render_clip->flip = SDL_FLIP_NONE;
-
-    render_clip->alphaMod = 255;
-
-    render_clip->scale = 1.0f;
-
+    render_clip.dest_rect.x = 0;
+    render_clip.dest_rect.y = 0;
+    render_clip.dest_rect.w = 0;
+    render_clip.dest_rect.h = 0;
+    render_clip.rotation = 0.0f;
+    render_clip.textureAtlasId = 0;
+    render_clip.flip = SDL_FLIP_NONE;
+    render_clip.alphaMod = 255;
+    render_clip.scale = 1.0f;
 
     return render_clip;
 }

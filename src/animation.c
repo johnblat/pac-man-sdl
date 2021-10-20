@@ -3,15 +3,15 @@
 #include "animation.h"
 #include "entity.h"
 
-AnimatedSprite *init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim ){
-    AnimatedSprite *animation = (AnimatedSprite *) malloc(sizeof(AnimatedSprite));
-    animation->frame_interval = ( (float) num_frames_per_anim / (float) fps ) / (float) num_frames_per_anim ; // length of time for each frame
-    animation->accumulator = 0.0f;
-    animation->current_anim_row = 0;
-    animation->current_frame_col = 0;
-    animation->num_frames_col = num_frames_per_anim;
-    animation->texture_atlas_id = texture_atlas_id;
-    animation->default_texture_atlas_id = texture_atlas_id;
+AnimatedSprite init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim ){
+    AnimatedSprite animation;
+    animation.frame_interval = ( (float) num_frames_per_anim / (float) fps ) / (float) num_frames_per_anim ; // length of time for each frame
+    animation.accumulator = 0.0f;
+    animation.current_anim_row = 0;
+    animation.current_frame_col = 0;
+    animation.num_frames_col = num_frames_per_anim;
+    animation.texture_atlas_id = texture_atlas_id;
+    animation.default_texture_atlas_id = texture_atlas_id;
 
     return animation;
 }

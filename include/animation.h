@@ -13,7 +13,7 @@
 
 
 
-AnimatedSprite *init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim );
+AnimatedSprite init_animation( uint8_t texture_atlas_id, uint8_t fps, uint8_t num_anims, Uint8 num_frames_per_anim );
 
 float fps_to_frame_interval( int fps, int num_frames );
 

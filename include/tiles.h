@@ -20,6 +20,7 @@
 #define DOT_RADIUS  ( DOT_SIZE / 2 )
 #define DOT_PADDING 15
 #define DOT_SPEED  35
+#define DOT_SCORE_VALUE 10
 
 /**
  * This is used even for dots that are not on the screen
@@ -27,8 +28,8 @@
  * with the other dots
  */
 typedef struct {
-    Position_f position;
-    Vector_f velocity;
+    Position position;
+    Velocity velocity;
 } DotParticle;
 
 /**
@@ -41,6 +42,7 @@ typedef struct idx2D {
 extern const idx2D EMPTY_TILE_TEXTURE_ATLAS_INDEX;
 extern const SDL_Point TILE_NONE;
 extern const int MAX_SLOW_TILES;
+
 
 typedef struct TileMap {
     /** The screen position where the tilemap begins

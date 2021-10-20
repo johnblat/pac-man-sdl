@@ -40,7 +40,7 @@ typedef struct RenderData {
 
 int addTextureAtlas( SDL_Renderer *renderer, const char *textureName, const char *filename, int num_rows, int num_cols );
 
-RenderData *renderDataInit(  ) ;
+RenderData renderDataInit() ;
 
 void updateScoreTexture( Score *score, SDL_Renderer *renderer );
 void updateLivesRemainingTexture(LivesRemainingUI *lr );

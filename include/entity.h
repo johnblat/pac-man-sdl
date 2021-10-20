@@ -59,7 +59,7 @@ typedef struct Sensor{
 
 typedef struct Entities {
     SDL_bool           *isActive          [ MAX_NUM_ENTITIES ]; // process. If deactivated, can be overwritten
-    Position_f          *worldPositions[MAX_NUM_ENTITIES]; //center pt
+    Position          *worldPositions[MAX_NUM_ENTITIES]; //center pt
     SDL_Point           *currentTiles[MAX_NUM_ENTITIES];
     SDL_Point           *nextTiles[MAX_NUM_ENTITIES];
     SDL_Point           *targetTiles[MAX_NUM_ENTITIES];
@@ -68,7 +68,7 @@ typedef struct Entities {
     Direction           *directions[MAX_NUM_ENTITIES];
     float               *baseSpeeds[MAX_NUM_ENTITIES];
     float               *speedMultipliers[MAX_NUM_ENTITIES];
-    Vector_f            *velocities[MAX_NUM_ENTITIES];
+    Velocity           *velocities[MAX_NUM_ENTITIES];
     AnimatedSprite     *animatedSprites   [ MAX_NUM_ENTITIES ]; 
     RenderData         *renderDatas       [ MAX_NUM_ENTITIES ]; 
     GhostState         *ghostStates       [ MAX_NUM_ENTITIES ];
@@ -93,15 +93,17 @@ typedef struct Entities {
     
 } Entities;
 
-EntityId createPlayer( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite );
+ecs_entity_t createPlayer(LevelConfig *levelConfig, AnimatedSprite animatedSprite );
 
-EntityId createGhost(  Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, TargetingBehavior targetingBehavior );
+ecs_entity_t createGhost(LevelConfig *levelConfig, AnimatedSprite animatedSprite, TargetingBehavior targetingBehavior );
 
 EntityId createFruit( Entities *entities, LevelConfig *levelConfig, AnimatedSprite *animatedSprite, unsigned int numDots  );
 
 void ghostsProcess( Entities *entities, EntityId *playerIds, unsigned int numPlayers, TileMap *tilemap, float deltaTime, LevelConfig *levelConfig );
 
-EntityId createPowerPellet(Entities *entities, AnimatedSprite *animatedSprite, SDL_Point tile );
+ecs_entity_t createPowerPellet(AnimatedSprite animatedSprite, SDL_Point tile );
+
+void playerDotCollectionSystem(ecs_iter_t *it);
 
 void collectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], unsigned int *num_dots, Score *score, SDL_Renderer *renderer );
 
@@ -109,26 +111,27 @@ void cooldownProcess( Entities *entities, float deltaTime ) ;
 
 void processTemporaryPickup( Entities *entities, EntityId *playerIds, unsigned int numPlayers, LevelConfig *levelConfig, Score *score, TileMap *tilemap, unsigned int numDotsLeft, float deltaTime );
 
-EntityId createInitialTemporaryPickup( Entities *entities, LevelConfig *levelConfig );
+ecs_entity_t createInitialTemporaryPickup(LevelConfig *levelConfig );
 void processTempMirrorPlayers( Entities *entities, float deltaTime );
 
 void tempMirrorPlayerCollectDotProcess( Entities *entities, char dots[ TILE_ROWS ][ TILE_COLS ], Score *score ) ;
 
 void processSpeedBoostTimer( Entities *entities, float deltaTime ) ;
 
-void overwriteSpeedBoostTimer(Entities *entities,EntityId playerId, float speed, float duration ) ;
+void overwriteSpeedBoostTimer(ecs_entity_t playerId, float speed, float duration);
 
-void stopGhostsForDuration(Entities *entities, float duration);
+void stopGhostsForDuration(float duration);
 
-void stopPlayersForDuration(Entities *entities, EntityId *playerIds, unsigned int numPlayers, float duration );
+void stopPlayersForDuration(float duration );
 
 void processStopTimers(Entities *entities, float deltaTime );
 
-void makePlayerInvincibleForDuration( Entities *entities, EntityId playerId, float duration);
-void processInvincibilityTimers( Entities *entities, float deltaTime) ;
+void makePlayerInvincibleForDuration(ecs_entity_t eid, float duration);
+void invincibilityTimerSystem(ecs_iter_it *it) ;
 
 void processDeathTimers( Entities *entities, LevelConfig *levelConfig, float deltaTime );
 void processRespawnTimers( Entities *entities, float deltaTime );
-SDL_bool entitiesIntersecting(Entities *entities, EntityId eid1, EntityId eid2 );
+
+SDL_bool entitiesIntersecting(CollisionRect *cr1, CollisionRect *cr2);
 
 #endif

@@ -8,6 +8,9 @@
 #include "programState.h"
 #include "gamePlayingState.h"
 #include "UI.h"
+#include "flecs.h"
+
+ecs_world_t *gEcsWorld;
 
 SDL_bool g_show_debug_info = SDL_FALSE;
 
@@ -78,6 +81,8 @@ unsigned int gInitialLivesRemaining = 2;
 unsigned int gCheatAdditionalLivesRemaining = 0;
 
 Blink pickupBlink;
+
+LevelConfig *gLevelConfig;
 // viewport
 // int gViewportWidth = 1920;
 // int gViewportHeight = 1080;

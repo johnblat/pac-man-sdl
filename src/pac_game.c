@@ -24,7 +24,8 @@
 #include "menu.h"
 #include "gamePlayingState.h"
 #include <unistd.h>
-
+#include "flecs.h"
+#include "userTypeDefinitions.h"
 //unsigned int gNumLevels = 0;
 
 
@@ -51,6 +52,7 @@ void set_cross( SDL_Point center_point, int starting_index, SDL_Point tilemap_sc
 
 
 
+
 int main( int argc, char *argv[] ) {
     printf("Starting up...\n");
     char cwd[128];
@@ -64,6 +66,49 @@ int main( int argc, char *argv[] ) {
     for(int i = 0; i < 8; i++ ){
         gGhostIds[ i ] = INVALID_ENTITY_ID;
     }
+
+    gEcsWorld = ecs_init();
+
+    ECS_COMPONENT(gEcsWorld, Position);
+    ECS_COMPONENT(gEcsWorld, Velocity);
+    ECS_COMPONENT(gEcsWorld, Sensor );
+    ECS_COMPONENT(gEcsWorld, CurrentTile);
+    ECS_COMPONENT(gEcsWorld, NextTile);
+    ECS_COMPONENT(gEcsWorld, TargetTile);
+    ECS_COMPONENT(gEcsWorld, CollisionRect);
+    ECS_COMPONENT(gEcsWorld, Direction);
+    ECS_COMPONENT(gEcsWorld, BaseSpeed);
+    ECS_COMPONENT(gEcsWorld, SpeedMultiplier);
+    ECS_COMPONENT(gEcsWorld, AnimatedSprite);
+    ECS_COMPONENT(gEcsWorld, RenderData);
+    ECS_COMPONENT(gEcsWorld, GhostState);
+    ECS_COMPONENT(gEcsWorld, TargetingBehavior);
+    ECS_COMPONENT(gEcsWorld, ChargeTimer);
+    ECS_COMPONENT(gEcsWorld, DashTimer);
+    ECS_COMPONENT(gEcsWorld, SlowTimer);
+    ECS_COMPONENT(gEcsWorld, SDL_ScancodeToInputMask);
+    ECS_COMPONENT(gEcsWorld, InputMask);
+    ECS_COMPONENT(gEcsWorld, PickupType);
+    ECS_COMPONENT(gEcsWorld, CooldownStock);
+    ECS_COMPONENT(gEcsWorld, ActiveTimer);
+    ECS_COMPONENT(gEcsWorld, DotCount);
+    ECS_COMPONENT(gEcsWorld, ScoreValue);
+    ECS_COMPONENT(gEcsWorld, MirrorEntityRef);
+    ECS_COMPONENT(gEcsWorld, InvincibilityTimer);
+    ECS_COMPONENT(gEcsWorld, IsActive);
+    ECS_COMPONENT(gEcsWorld, GameControllerId);
+    ECS_COMPONENT(gEcsWorld, SpeedBoostTimer);
+    ECS_COMPONENT(gEcsWorld, StopTimer);
+    ECS_COMPONENT(gEcsWorld, DeathTimer);
+    ECS_COMPONENT(gEcsWorld, RespawnTimer);
+
+    ecs_system_init(gEcsWorld, &(ecs_system_desc_t){
+        .entity = {.name = "playerDotCollectionSystem"},
+        .callback = playerDotCollectionSystem,
+        .ctx = tilemap.tm_dots
+    });
+
+
 
     // initialize entities
     for( int i = 0; i < MAX_NUM_ENTITIES; i ++ ) { 
@@ -315,8 +360,8 @@ int main( int argc, char *argv[] ) {
 
     
     for( int i = 0; i < 4; i++ ) {
-        AnimatedSprite *powerPelletSprite = init_animation( 5, 12, 1, 20 );
-        createPowerPellet( &entities, powerPelletSprite, levelConfig.powerPelletTiles[ i ] );
+        AnimatedSprite powerPelletSprite = init_animation( 5, 12, 1, 20 );
+        createPowerPellet(powerPelletSprite, levelConfig.powerPelletTiles[ i ]);
     }
     
 

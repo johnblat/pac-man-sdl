@@ -60,7 +60,7 @@ Blink ghostVulnerableBlink;
 Blink invincibleTimerAlmostUpBlink;
 
 void resetPositionalData( Entities *entities, EntityId eid, SDL_Point initial_tile ) {
-    *entities->worldPositions[eid] = (Position_f){
+    *entities->worldPositions[eid] = (Position){
         initial_tile.x * TILE_SIZE + (TILE_SIZE*0.5), 
         initial_tile.y * TILE_SIZE + (TILE_SIZE*0.5)
     };
@@ -402,19 +402,15 @@ inline void gamePlayingProcess( Entities *entities, TileMap *tilemap, SDL_Event 
         if( shouldBreak ) break;
  
         if ( event->type == SDL_KEYDOWN ) {
-            
             if (event->key.keysym.sym == SDLK_v ) {
                 // ghost_vulnerable_timer = 20.0f;
                 // for( int i = 1; i < 5; ++i ) {
                 //     ghost_states[ i ] = STATE_VULNERABLE;
                 //     vulnerable_enter( actors, animations, i, renderDatas[ i ] );
                 // }
-                
             }
-
         }
         if( event->type == SDL_KEYUP ) {
-
             if( event->key.keysym.sym == SDLK_RETURN ) {
                 gGamePlayingState = GAME_PAUSED;
                 break;

@@ -9,3 +9,4 @@
 #include "pac_game.c"
 #include "programStateProcessing.c"
 #include "gamePlayingState.c"
+#include "flecs.c"

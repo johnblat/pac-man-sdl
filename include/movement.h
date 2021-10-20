@@ -3,6 +3,7 @@
 
 #include "tiles.h"
 #include "entity.h"
+#include "userTypeDefinitions.h"
 #include <inttypes.h>
 
 
@@ -11,11 +12,11 @@ static void alignWorldDataBasedOnWorldPosition( Entities *entities, EntityId eid
 
 void inputMovementSystem( Entities *entities, TileMap *tilemap, float deltaTime );
 
-void dashTimersSystem( Entities *entities, float deltaTime );
+void dashTimersSystem(ecs_iter_t *it );
 
-static void moveActor( Entities *entities, EntityId eid, Vector_f vel );
+void moveActor( Position *position, Velocity velocity, CurrentTile *currentTile, CollisionRect *collisionRect, Sensor *sensor);
 
-void nonPlayerInputEntityMovementSystem( Entities *entities, EntityId ghostId, TileMap *tm, float delta_time ) ;
+void nonPlayerInputEntityMovementSystem( ecs_iter_t *it) ;
 
 
 #endif

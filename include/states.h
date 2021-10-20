@@ -4,6 +4,7 @@
 #include "entity.h"
 #include "resources.h"
 #include "tiles.h"
+#include "userTypeDefinitions.h"
 
 extern SDL_Point ghost_pen_tile;
 
@@ -30,9 +31,11 @@ extern GhostMode g_current_ghost_mode;
 
 void vulnerable_enter_all( Entities *entities );
 
-void vulnerable_enter( Entities *entities, EntityId ghostId );
+void vulnerableEnter(AnimatedSprite *as, Direction *d, CurrentTile *ct, NextTile *nt, SpeedMultiplier *sm);
 
-void set_random_direction_and_next_tile( Entities *entities, EntityId ghostId, TileMap *tm );
+// void vulnerable_enter( Entities *entities, EntityId ghostId );
+
+void set_random_direction_and_next_tile(ecs_entity_t eid, TileMap *tm  );
 
 /**
  * Ghosts will basically wander aimlessly in the priority tiles. They will not choose targets.
