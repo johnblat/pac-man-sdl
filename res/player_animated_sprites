@@ -1,0 +1,9 @@
+# texture_atlas_id, fps, rows, cols
+#pacman
+0 48 8 10
+# p2 pacman
+8 48 8 10
+# p3 pacman
+14 48 8 10
+# p4 pacman
+15 48 8 10
