@@ -244,8 +244,8 @@ int main( int argc, char *argv[] ) {
 
     // determine what level to edit
     FILE *f = fopen("res/tilemap_editor_level", "r");
-    char contents[ 2 ];
-    fread( contents, sizeof(char), 2 , f );
+    char contents[ 3 ];
+    fread( contents, sizeof(char), 3 , f );
     levelNum = strtol( contents, NULL, 10 );
     gCurrentLevel = levelNum;
     
@@ -263,7 +263,7 @@ int main( int argc, char *argv[] ) {
         exit( EXIT_FAILURE );
     }
 
-    renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED );
+    renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
     if (renderer == NULL ) {
         fprintf( stderr, "Error %s\n ", SDL_GetError() );
         exit( EXIT_FAILURE );
